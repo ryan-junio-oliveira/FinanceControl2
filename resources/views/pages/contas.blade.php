@@ -1,0 +1,130 @@
+@extends('layouts.app')
+@section('title','Contas')
+@section('breadcrumb','Banco / Contas')
+
+@section('content')
+@php use App\Support\Fin; $isGestor = auth()->user()->isAdmin(); @endphp
+
+<div class="flex flex-wrap items-end justify-between gap-3">
+    <div>
+        <h1 class="text-[24px] font-extrabold tracking-tight text-gray-900">Contas Bancárias &amp; Saldos</h1>
+        <p class="text-[13px] text-gray-400 mt-0.5 font-medium">Saldos calculados a partir dos lançamentos pagos + saldo inicial.</p>
+    </div>
+    @if($isGestor)
+    <div class="flex gap-2 flex-wrap">
+        <a href="{{ route('contas.transfer.create') }}" class="btn-ghost">
+            <span class="material-symbols-outlined text-[17px] text-blue-500">swap_horiz</span>
+            Transferência Interna
+        </a>
+        <a href="{{ route('contas.create') }}" class="btn-secondary">
+            <span class="material-symbols-outlined text-[17px]">add_circle</span>
+            Nova Conta
+        </a>
+    </div>
+    @endif
+</div>
+
+{{-- Saldo consolidado hero --}}
+<div class="relative overflow-hidden rounded-lg text-white p-6 flex items-center gap-6"
+    style="background: linear-gradient(135deg, #042f1e 0%, #064E3B 40%, #047857 100%);">
+    <div class="absolute -right-10 -top-10 w-48 h-48 rounded-full opacity-20 blur-3xl"
+        style="background: radial-gradient(circle, #34D399, transparent)"></div>
+    <div class="absolute left-1/3 bottom-0 w-32 h-32 rounded-full opacity-10 blur-2xl"
+        style="background: radial-gradient(circle, #A7F3D0, transparent)"></div>
+    <div class="w-12 h-12 rounded-lg grid place-items-center shrink-0 relative" style="background: rgba(255,255,255,0.12);">
+        <span class="material-symbols-outlined text-[26px]"
+            style="font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24">account_balance_wallet</span>
+    </div>
+    <div class="relative">
+        <p class="text-[11px] font-bold uppercase tracking-widest text-emerald-200/70">Saldo Total Consolidado</p>
+        <p class="num text-[32px] font-extrabold mt-0.5 tracking-tight">{{ Fin::money($saldoTotal) }}</p>
+        <p class="text-[12px] text-emerald-100/60 mt-0.5">{{ $contas->where('active', true)->count() }} conta(s) ativa(s)</p>
+    </div>
+</div>
+
+{{-- Cards de contas --}}
+<div class="grid sm:grid-cols-2 xl:grid-cols-4 gap-4">
+    @forelse($contas as $c)
+    <div class="section-card hover:-translate-y-1 hover:shadow-[var(--shadow-lift)] transition-all duration-200">
+        <div class="flex items-center gap-3 mb-3">
+            <span class="w-11 h-11 rounded-lg grid place-items-center text-white text-[13px] font-extrabold shadow-sm"
+                style="background:{{ $c->color ?? '#0F172A' }}">{{ mb_strtoupper(mb_substr($c->name, 0, 2)) }}</span>
+            <div class="flex-1 min-w-0">
+                <p class="font-extrabold text-[14px] truncate text-gray-800">{{ $c->name }}</p>
+                <p class="text-[11px] text-gray-400">{{ $c->label }} · {{ ucfirst($c->kind) }}</p>
+            </div>
+            @if(!$c->active)<x-badge type="warning">Inativa</x-badge>@endif
+        </div>
+        <p class="num text-[24px] font-extrabold text-gray-900">{{ Fin::money($c->balance) }}</p>
+        <p class="text-[12px] text-gray-400 num mt-0.5">Inicial: {{ Fin::money($c->initial_balance) }}</p>
+        @if($isGestor)
+        <div class="mt-4 pt-3 border-t border-gray-500 flex items-center gap-2">
+            <a href="{{ route('contas.edit', $c) }}" class="btn-ghost h-8 px-3 text-[12px] rounded-lg">
+                <span class="material-symbols-outlined text-[15px]">edit</span>
+                Editar
+            </a>
+            <form method="POST" action="{{ route('contas.destroy', $c) }}"
+                onsubmit="return confirm('Excluir esta conta? Só é possível sem movimentações.')" class="inline">
+                @csrf @method('DELETE')
+                <button class="h-8 px-3 rounded-lg border border-red-100 text-red-400 hover:text-red-600 hover:bg-red-50 hover:border-red-200 text-[12px] font-bold transition-all">Excluir</button>
+            </form>
+        </div>
+        @endif
+    </div>
+    @empty
+    <div class="col-span-full text-center py-16 text-gray-400 bg-white rounded-lg border border-dashed border-gray-500">
+        <span class="material-symbols-outlined text-[52px] text-gray-300">account_balance</span>
+        <p class="text-[15px] font-extrabold mt-4 text-gray-500">Nenhuma conta cadastrada</p>
+        <p class="text-[13px] mt-1">Conecte a primeira conta para começar o controle.</p>
+        @if($isGestor)
+        <a href="{{ route('contas.create') }}" class="btn-secondary inline-flex mt-5">
+            <span class="material-symbols-outlined text-[17px]">add_circle</span>
+            Nova Conta
+        </a>
+        @endif
+    </div>
+    @endforelse
+</div>
+
+{{-- Extrato integrado --}}
+<x-section-card title="Extrato Integrado" :subtitle="$extrato->total().' movimentação(ões)'">
+    <div class="overflow-x-auto -mx-5 lg:-mx-6 px-5 lg:px-6">
+        <table class="w-full text-left min-w-[900px] table-modern">
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Operação</th>
+                    <th>Conta</th>
+                    <th>Responsável</th>
+                    <th>Natureza</th>
+                    <th class="text-right">Valor</th>
+                    <th class="text-right">Status</th>
+                </tr>
+            </thead>
+            <tbody class="text-[13px]">
+                @forelse($extrato as $e)
+                <tr data-ledger-row>
+                    <td class="num text-gray-400 whitespace-nowrap text-[12px]">{{ $e->occurred_on->format('d/m/Y') }}</td>
+                    <td class="font-bold text-gray-800">{{ $e->description }}</td>
+                    <td class="text-gray-500 text-[12px]">{{ $e->account->name ?? '—' }}</td>
+                    <td class="text-gray-600">{{ $e->member->name ?? '—' }}</td>
+                    <td><x-badge :type="$e->type === 'receita' ? 'success' : 'neutral'">{{ ucfirst($e->type) }}</x-badge></td>
+                    <td class="text-right font-extrabold num {{ $e->type === 'receita' ? 'text-emerald-600' : 'text-gray-800' }}">
+                        {{ $e->type === 'receita' ? '+' : '−' }}{{ Fin::money($e->amount) }}
+                    </td>
+                    <td class="text-right"><x-badge :type="$e->display_status_type">{{ $e->display_status }}</x-badge></td>
+                </tr>
+                @empty
+                <tr>
+                    <td colspan="7" class="text-center py-12 text-gray-400">
+                        <span class="material-symbols-outlined text-[44px] text-gray-300">receipt_long</span>
+                        <p class="text-[13px] font-bold mt-3 text-gray-500">Nenhuma movimentação registrada.</p>
+                    </td>
+                </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+    <div class="mt-5">{{ $extrato->links() }}</div>
+</x-section-card>
+@endsection
