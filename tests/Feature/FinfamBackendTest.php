@@ -120,8 +120,8 @@ class FinfamBackendTest extends TestCase
         $this->post('/familia/convites', ['name' => 'Lucas Silva', 'email' => 'lucas@email.com', 'role' => 'dependente'])->assertSessionHasNoErrors();
         $convite = Invitation::where('email', 'lucas@email.com')->first();
         $this->assertNotNull($convite);
-        // e-mail de boas-vindas enviado com o link de primeiro acesso
-        \Illuminate\Support\Facades\Mail::assertSent(\App\Mail\WelcomeEmail::class, function ($mail) use ($convite) {
+        // e-mail de boas-vindas enfileirado com o link de primeiro acesso
+        \Illuminate\Support\Facades\Mail::assertQueued(\App\Mail\WelcomeEmail::class, function ($mail) use ($convite) {
             return $mail->hasTo('lucas@email.com')
                 && str_contains($mail->render(), '/primeiro-acesso/'.$convite->token);
         });

@@ -56,3 +56,45 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+## FinFamília — Deploy em produção (Docker)
+
+Infra completa: Nginx + PHP-FPM 8.3 + MariaDB 11 + phpMyAdmin + RabbitMQ (fila) + Redis (cache/sessão) + worker + scheduler.
+
+| Serviço   | Porta host | Acesso                          |
+|-----------|------------|---------------------------------|
+| App       | 8080       | http://localhost:8080           |
+| phpMyAdmin| 8081       | http://localhost:8081           |
+| RabbitMQ  | 15672      | http://localhost:15672 (mgmt)   |
+| MariaDB   | 3306       | usuário/senha do `.env.docker`  |
+| Redis     | 6379       | cache e sessões                 |
+
+### Subir
+
+```bash
+cp docker/.env.docker.example .env.docker
+# gere a chave e cole em APP_KEY:
+php artisan key:generate --show
+# ajuste senhas (DB_PASSWORD, DB_ROOT_PASSWORD, RABBITMQ_PASSWORD) e o MAIL_*
+docker compose up -d --build
+docker compose logs -f app   # acompanhe migrations + caches
+```
+
+O entrypoint do container `app` aguarda o banco, roda `migrate --force` e gera os caches de config/rotas/views. O `worker` consome a fila `rabbitmq` (e-mails de convite) e o `scheduler` executa o `schedule:work` (`market:warm` a cada 30 min).
+
+### Operação
+
+```bash
+docker compose ps                                   # status
+docker compose exec app php artisan migrate --force # migrations manuais
+docker compose exec app php artisan categories:seed # catálogo p/ famílias existentes
+docker compose exec rabbitmq rabbitmq-diagnostics -q ping
+docker compose down                                 # parar (volumes preservados)
+docker compose down -v                              # parar APAGANDO banco, fila e cache
+```
+
+### Backup do banco
+
+```bash
+docker compose exec db mariadb-dump -u root -p"$DB_ROOT_PASSWORD" finfamilia > backup.sql
+```

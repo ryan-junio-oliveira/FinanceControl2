@@ -1,0 +1,164 @@
+name: finfamilia
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    container_name: finfamiglia-app
+    restart: unless-stopped
+    env_file:
+      - .env.docker
+    environment:
+      CONTAINER_MODE: app
+    volumes:
+      - storage_data:/var/www/storage
+    networks:
+      - finfam
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
+
+  nginx:
+    image: nginx:1.28-alpine
+    container_name: finfamiglia-nginx
+    restart: unless-stopped
+    ports:
+      - "${NGINX_PORT:-8080}:80"
+    volumes:
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./public:/var/www/public:ro
+    networks:
+      - finfam
+    depends_on:
+      - app
+
+  db:
+    image: mariadb:11.4
+    container_name: finfamiglia-db
+    restart: unless-stopped
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    ports:
+      - "${DB_PORT_PUBLISHED:-3306}:3306"
+    environment:
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?Defina DB_ROOT_PASSWORD no .env.docker}
+      MARIADB_DATABASE: ${DB_DATABASE:?Defina DB_DATABASE no .env.docker}
+      MARIADB_USER: ${DB_USERNAME:?Defina DB_USERNAME no .env.docker}
+      MARIADB_PASSWORD: ${DB_PASSWORD:?Defina DB_PASSWORD no .env.docker}
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - finfam
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  phpmyadmin:
+    image: phpmyadmin:5.2
+    container_name: finfamiglia-pma
+    restart: unless-stopped
+    ports:
+      - "${PMA_PORT:-8081}:80"
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+      UPLOAD_LIMIT: 64M
+    networks:
+      - finfam
+    depends_on:
+      db:
+        condition: service_healthy
+
+  rabbitmq:
+    image: rabbitmq:4-management-alpine
+    container_name: finfamiglia-rabbit
+    restart: unless-stopped
+    ports:
+      - "${RABBITMQ_AMQP_PORT_PUBLISHED:-5672}:5672"
+      - "${RABBITMQ_MGMT_PORT_PUBLISHED:-15672}:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-finfam}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:?Defina RABBITMQ_PASSWORD no .env.docker}
+      RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_VHOST:-/}
+    volumes:
+      - rabbit_data:/var/lib/rabbitmq
+    networks:
+      - finfam
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+
+  redis:
+    image: redis:8-alpine
+    container_name: finfamiglia-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    ports:
+      - "${REDIS_PORT_PUBLISHED:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - finfam
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  worker:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    container_name: finfamiglia-worker
+    restart: unless-stopped
+    env_file:
+      - .env.docker
+    environment:
+      CONTAINER_MODE: worker
+    command: ["php", "artisan", "queue:work", "rabbitmq", "--sleep=3", "--tries=3", "--timeout=120"]
+    volumes:
+      - storage_data:/var/www/storage
+    networks:
+      - finfam
+    depends_on:
+      app:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
+
+  scheduler:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    container_name: finfamiglia-scheduler
+    restart: unless-stopped
+    env_file:
+      - .env.docker
+    environment:
+      CONTAINER_MODE: scheduler
+    command: ["php", "artisan", "schedule:work"]
+    volumes:
+      - storage_data:/var/www/storage
+    networks:
+      - finfam
+    depends_on:
+      app:
+        condition: service_started
+
+volumes:
+  db_data:
+  redis_data:
+  rabbit_data:
+  storage_data:
+
+networks:
+  finfam:
+    driver: bridge

@@ -56,8 +56,8 @@ class FamilyController extends Controller
         $invitation = $family->invitations()->create($data + ['token' => Str::random(48)]);
 
         try {
-            Mail::to($data['email'])->send(new WelcomeEmail($invitation));
-            $status = 'Convite criado e e-mail enviado para '.$data['email'].'.';
+            Mail::to($data['email'])->queue(new WelcomeEmail($invitation));
+            $status = 'Convite criado e e-mail enfileirado para '.$data['email'].'.';
         } catch (\Throwable $e) {
             $status = 'Convite criado, mas não foi possível enviar o e-mail agora. Compartilhe o link de primeiro acesso com '.$data['name'].'.';
         }
