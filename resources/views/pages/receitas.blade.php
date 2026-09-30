@@ -11,52 +11,37 @@
         <p class="text-[13px] text-gray-400 mt-0.5 font-medium">Entradas em {{ $mes }}.</p>
     </div>
     <div class="flex gap-2">
-        <a href="{{ route('receitas.create') }}" class="btn-primary">
-            <span class="material-symbols-outlined text-[17px]">add_circle</span>
-            Nova Receita
-        </a>
+        <x-btn-link :href="route('receitas.create')" icon="add_circle">Nova Receita</x-btn-link>
     </div>
-</div>
-
-<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-    <x-kpi-card label="Total no Mês"       :value="Fin::money($total)"    icon="payments"   accent="green" />
-    <x-kpi-card label="Fixas"              :value="Fin::money($fixas)"    icon="schedule"   accent="emerald" />
-    <x-kpi-card label="Variáveis / Extras" :value="Fin::money($variaveis)" icon="hub"        accent="blue" />
-    <x-kpi-card label="A Receber"          :value="Fin::money($aVencer)"  icon="event_busy" accent="amber" />
 </div>
 
 <x-section-card title="Ledger de Receitas" :subtitle="'Página '.$ledger->currentPage().' de '.$ledger->lastPage().' · '.$ledger->total().' registro(s)'">
     <x-slot:action>
-        <form method="GET" action="{{ route('receitas') }}" class="flex flex-wrap gap-2 items-center">
+        <x-table-toolbar
+            :action="route('receitas')"
+            placeholder="Buscar receita…"
+            :clearUrl="route('receitas', ['mes' => $mes])"
+            :hasActiveFilters="request()->filled('q') || request()->filled('status') || request()->filled('categoria') || request()->filled('membro')">
             <input type="hidden" name="mes" value="{{ $mes }}">
-            <select name="status" onchange="this.form.submit()"
-                class="h-9 rounded-lg border border-gray-500 text-[12px] font-bold px-3 bg-white text-gray-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/10 outline-none transition">
+            <select name="status" onchange="this.form.submit()" class="table-filter" aria-label="Filtrar por situação">
                 <option value="">Todos status</option>
                 @foreach(['pago'=>'Recebidas','pendente'=>'Pendentes','agendado'=>'Agendadas'] as $v=>$l)
                     <option value="{{ $v }}" {{ request('status')===$v?'selected':'' }}>{{ $l }}</option>
                 @endforeach
             </select>
-            <select name="categoria" onchange="this.form.submit()"
-                class="h-9 rounded-lg border border-gray-500 text-[12px] font-bold px-3 bg-white text-gray-700 max-w-[180px] focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/10 outline-none transition">
+            <select name="categoria" onchange="this.form.submit()" class="table-filter" style="max-width:180px" aria-label="Filtrar por categoria">
                 <option value="">Todas categorias</option>
                 @foreach($categorias as $c)
                     <option value="{{ $c->id }}" {{ (string)request('categoria')===(string)$c->id?'selected':'' }}>{{ $c->name }}</option>
                 @endforeach
             </select>
-            <select name="membro" onchange="this.form.submit()"
-                class="h-9 rounded-lg border border-gray-500 text-[12px] font-bold px-3 bg-white text-gray-700 max-w-[160px] focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/10 outline-none transition">
+            <select name="membro" onchange="this.form.submit()" class="table-filter" style="max-width:160px" aria-label="Filtrar por pessoa">
                 <option value="">Todas as pessoas</option>
                 @foreach($membros as $m)
                     <option value="{{ $m->id }}" {{ (string)request('membro')===(string)$m->id?'selected':'' }}>{{ $m->name }}</option>
                 @endforeach
             </select>
-            @if(request('q') || request('status') || request('categoria') || request('membro'))
-            <a href="{{ route('receitas', ['mes' => $mes]) }}"
-                class="h-9 px-3 rounded-lg text-[12px] font-bold text-gray-400 hover:text-red-500 hover:bg-red-50 flex items-center gap-1 transition">
-                <span class="material-symbols-outlined text-[15px]">close</span> Limpar
-            </a>
-            @endif
-        </form>
+        </x-table-toolbar>
     </x-slot:action>
     <div class="overflow-x-auto -mx-5 lg:-mx-6 px-5 lg:px-6">
         <table class="w-full text-left min-w-[860px] table-modern">
@@ -86,21 +71,14 @@
                         @if($t->status !== 'pago')
                         <form method="POST" action="{{ route('lancamentos.settle', $t) }}" class="inline">
                             @csrf
-                            <button title="Marcar recebido" class="w-8 h-8 rounded-lg hover:bg-emerald-50 text-emerald-500 hover:text-emerald-700 transition inline-grid place-items-center">
-                                <span class="material-symbols-outlined text-[19px]">check_circle</span>
-                            </button>
+                            <x-btn-submit color="success" iconOnly icon="check_circle" title="Marcar recebido" />
                         </form>
                         @endif
-                        <a title="Editar" href="{{ route('lancamentos.edit', $t) }}"
-                            class="w-8 h-8 rounded-lg hover:bg-slate-100 text-gray-400 hover:text-gray-600 transition inline-grid place-items-center">
-                            <span class="material-symbols-outlined text-[19px]">edit</span>
-                        </a>
+                        <x-btn-link :href="route('lancamentos.edit', $t)" iconOnly icon="edit" title="Editar" />
                         @if($isGestor)
                         <form method="POST" action="{{ route('lancamentos.destroy', $t) }}" class="inline" onsubmit="return confirm('Excluir esta receita?')">
                             @csrf @method('DELETE')
-                            <button title="Excluir" class="w-8 h-8 rounded-lg hover:bg-red-50 text-gray-300 hover:text-red-500 transition inline-grid place-items-center">
-                                <span class="material-symbols-outlined text-[19px]">delete</span>
-                            </button>
+                            <x-btn-submit color="danger" iconOnly icon="delete" title="Excluir" />
                         </form>
                         @endif
                     </td>

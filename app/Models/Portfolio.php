@@ -34,6 +34,10 @@ class Portfolio extends Model
 
     public function getTotalAttribute(): float
     {
+        if (array_key_exists('total', $this->attributes) && $this->attributes['total'] !== null) {
+            return (float) $this->attributes['total'];
+        }
+
         return (float) $this->assets()->sum('current_value');
     }
 

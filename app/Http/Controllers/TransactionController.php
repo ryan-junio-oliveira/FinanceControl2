@@ -3,11 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\TransactionRequest;
-use App\Models\Category;
 use App\Models\Transaction;
 use App\Support\Fin;
+use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class TransactionController extends Controller
@@ -46,19 +48,13 @@ class TransactionController extends Controller
 
         $ledger = $q->inMonth($mes)->orderByDesc('occurred_on')->orderByDesc('id')->paginate(15)->withQueryString();
 
-        $sumBase = Transaction::ofFamily($fid)->where('type', $type)->inMonth($mes);
-        $total = (float) (clone $sumBase)->whereIn('status', ['pago', 'pendente'])->sum('amount');
-        $fixas = (float) (clone $sumBase)->where('is_fixed', true)->whereIn('status', ['pago', 'pendente'])->sum('amount');
-        $variaveis = $total - $fixas;
-        $aVencer = (float) (clone $sumBase)->where('status', 'pendente')->sum('amount');
-
         $categorias = $family->categories()->where('type', $type)->where('archived', false)->orderBy('name')->get();
         $membros = $family->users()->orderBy('name')->get();
         $contas = $family->accounts()->where('active', true)->orderBy('name')->get();
 
         $view = $type === 'despesa' ? 'pages.despesas' : 'pages.receitas';
 
-        return view($view, compact('mes', 'type', 'ledger', 'total', 'fixas', 'variaveis', 'aVencer', 'categorias', 'membros', 'contas'));
+        return view($view, compact('mes', 'type', 'ledger', 'categorias', 'membros', 'contas'));
     }
 
     public function create(string $type): View
@@ -81,6 +77,7 @@ class TransactionController extends Controller
         $family = Fin::family();
         abort_if($transaction->family_id !== $family->id, 404);
         abort_if(! in_array($transaction->type, ['despesa', 'receita'], true), 404);
+        $this->authorize('update', $transaction);
 
         return view('pages.transactions.form', [
             'type' => $transaction->type,
@@ -106,7 +103,6 @@ class TransactionController extends Controller
         if (! empty($data['category_id'])) {
             $cat = $family->categories()->findOrFail($data['category_id']);
             abort_if($cat->type !== $type, 422, 'Categoria de outro tipo.');
-            $data['subcategory_id'] = null;
         }
 
         // Dependentes/júnior acima do limiar exigem aprovação (registra como pendente)
@@ -115,15 +111,50 @@ class TransactionController extends Controller
             $data['status'] = 'pendente';
         }
 
-        Transaction::create($data + [
-            'family_id' => $family->id,
-            'type' => $type,
-            'is_fixed' => $request->boolean('is_fixed'),
-        ]);
+        $parcelas = max(1, min(48, (int) ($data['installments_total'] ?? 1)));
+        unset($data['installments_total']);
+
+        DB::transaction(function () use ($family, $data, $type, $parcelas, $request) {
+            if ($parcelas === 1) {
+                Transaction::create($data + [
+                    'family_id' => $family->id,
+                    'type' => $type,
+                    'is_fixed' => $request->boolean('is_fixed'),
+                ]);
+
+                return;
+            }
+
+            // Parcelado: divide em centavos (sem drift de float) e vence 1x ao mês.
+            $group = (string) Str::uuid();
+            $totalCents = (int) round((float) $data['amount'] * 100);
+            $base = intdiv($totalCents, $parcelas);
+            $resto = $totalCents % $parcelas;
+            $baseDate = Carbon::parse($data['occurred_on']);
+            $baseDue = ! empty($data['due_on']) ? Carbon::parse($data['due_on']) : null;
+
+            for ($i = 1; $i <= $parcelas; $i++) {
+                $cents = $base + ($i <= $resto ? 1 : 0);
+                $occ = $baseDate->copy()->addMonthsNoOverflow($i - 1)->toDateString();
+                Transaction::create($data + [
+                    'family_id' => $family->id,
+                    'type' => $type,
+                    'is_fixed' => false,
+                    'description' => "{$data['description']} ({$i}/{$parcelas})",
+                    'amount' => $cents / 100,
+                    'occurred_on' => $occ,
+                    'due_on' => $baseDue ? $baseDue->copy()->addMonthsNoOverflow($i - 1)->toDateString() : $occ,
+                    'status' => $i === 1 ? $data['status'] : 'pendente',
+                    'installment_group_id' => $group,
+                    'installment_number' => $i,
+                    'installments_total' => $parcelas,
+                ]);
+            }
+        });
 
         $rota = $type === 'despesa' ? 'despesas' : 'receitas';
 
-        return redirect()->route($rota, ['mes' => Fin::month()])->with('status', 'Lançamento registrado.');
+        return redirect()->route($rota, ['mes' => Fin::month()])->with('status', $parcelas > 1 ? "Lançamento parcelado em {$parcelas}x." : 'Lançamento registrado.');
     }
 
     public function update(TransactionRequest $request, Transaction $transaction): RedirectResponse
@@ -131,15 +162,25 @@ class TransactionController extends Controller
         $family = Fin::family();
         abort_if($transaction->family_id !== $family->id, 404);
         abort_if(! in_array($transaction->type, ['despesa', 'receita'], true), 404);
+        $this->authorize('update', $transaction);
 
         $data = $request->validated();
 
-        $family->users()->findOrFail($data['user_id']);
+        $member = $family->users()->findOrFail($data['user_id']);
+        if (! empty($data['account_id'])) {
+            $family->accounts()->findOrFail($data['account_id']);
+        }
         if (! empty($data['category_id'])) {
             $cat = $family->categories()->findOrFail($data['category_id']);
             abort_if($cat->type !== $transaction->type, 422, 'Categoria de outro tipo.');
         }
         $data['is_fixed'] = $request->boolean('is_fixed');
+
+        // Reaplica a trava de aprovação também na edição (evita bypass).
+        $threshold = (float) $family->setting()->approval_threshold;
+        if (! $member->isAdmin() && (float) $data['amount'] > $threshold && $transaction->type === 'despesa') {
+            $data['status'] = 'pendente';
+        }
 
         $transaction->update($data);
 
@@ -152,6 +193,7 @@ class TransactionController extends Controller
     {
         $family = Fin::family();
         abort_if($transaction->family_id !== $family->id, 404);
+        $this->authorize('delete', $transaction);
         $rota = in_array($transaction->type, ['despesa', 'receita'], true) ? $transaction->type.'s' : 'dashboard';
         $transaction->delete();
 
@@ -163,6 +205,7 @@ class TransactionController extends Controller
     {
         $family = Fin::family();
         abort_if($transaction->family_id !== $family->id, 404);
+        $this->authorize('settle', $transaction);
         $transaction->update(['status' => 'pago', 'due_on' => $transaction->due_on ?? $transaction->occurred_on]);
 
         return back()->with('status', 'Lançamento liquidado.');

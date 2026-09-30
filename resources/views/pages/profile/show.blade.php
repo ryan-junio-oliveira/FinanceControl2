@@ -71,51 +71,9 @@
 
         {{-- Atividade --}}
         <x-section-card title="Sua atividade" :subtitle="'Em '.$mes">
-            {{-- Stats pills --}}
-            <div class="space-y-2.5">
-                <div class="stat-pill">
-                    <div class="stat-icon bg-red-50">
-                        <span class="material-symbols-outlined text-red-500 text-[18px]"
-                            style="font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 20">trending_down</span>
-                    </div>
-                    <div>
-                        <p class="stat-label">Despesas no mês</p>
-                        <p class="stat-value">{{ Fin::money($gastoMes) }}</p>
-                    </div>
-                </div>
-
-                <div class="stat-pill">
-                    <div class="stat-icon bg-amber-50">
-                        <span class="material-symbols-outlined text-amber-500 text-[18px]"
-                            style="font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 20">calendar_clock</span>
-                    </div>
-                    <div>
-                        <p class="stat-label">Mesada</p>
-                        <p class="stat-value">
-                            @if($mesada)
-                                {{ Fin::money($mesada->amount) }}
-                                <span class="text-[11px] font-semibold text-gray-400">/ {{ $mesada->frequency === 'mensal' ? 'mês' : 'semana' }}</span>
-                            @else —
-                            @endif
-                        </p>
-                    </div>
-                </div>
-
-                <div class="stat-pill">
-                    <div class="stat-icon bg-blue-50">
-                        <span class="material-symbols-outlined text-blue-500 text-[18px]"
-                            style="font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 20">receipt_long</span>
-                    </div>
-                    <div>
-                        <p class="stat-label">Lançamentos totais</p>
-                        <p class="stat-value">{{ number_format($user->transactions()->count()) }}</p>
-                    </div>
-                </div>
-            </div>
-
             @if($mesada && $mesada->amount > 0)
             @php $pctMesada = min(100, $gastoMes / (float) $mesada->amount * 100); @endphp
-            <div class="mt-4 pt-4 border-t border-gray-500">
+            <div>
                 <div class="flex items-center justify-between mb-2">
                     <p class="text-[11px] font-bold uppercase tracking-widest text-gray-400">Uso da mesada</p>
                     <span class="text-[12px] font-bold {{ $pctMesada > 90 ? 'text-red-500' : ($pctMesada > 75 ? 'text-amber-500' : 'text-emerald-600') }} num">
@@ -127,6 +85,8 @@
                     {{ Fin::money($gastoMes) }} de {{ Fin::money($mesada->amount) }} consumidos
                 </p>
             </div>
+            @else
+            <p class="text-[13px] text-gray-400">Nenhuma mesada configurada para você.</p>
             @endif
         </x-section-card>
     </div>

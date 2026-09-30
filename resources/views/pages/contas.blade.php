@@ -12,34 +12,10 @@
     </div>
     @if($isGestor)
     <div class="flex gap-2 flex-wrap">
-        <a href="{{ route('contas.transfer.create') }}" class="btn-ghost">
-            <span class="material-symbols-outlined text-[17px] text-blue-500">swap_horiz</span>
-            Transferência Interna
-        </a>
-        <a href="{{ route('contas.create') }}" class="btn-secondary">
-            <span class="material-symbols-outlined text-[17px]">add_circle</span>
-            Nova Conta
-        </a>
+        <x-btn-link :href="route('contas.transfer.create')" color="ghost" icon="swap_horiz">Transferência Interna</x-btn-link>
+        <x-btn-link :href="route('contas.create')" icon="add_circle">Nova Conta</x-btn-link>
     </div>
     @endif
-</div>
-
-{{-- Saldo consolidado hero --}}
-<div class="relative overflow-hidden rounded-lg text-white p-6 flex items-center gap-6"
-    style="background: linear-gradient(135deg, #042f1e 0%, #064E3B 40%, #047857 100%);">
-    <div class="absolute -right-10 -top-10 w-48 h-48 rounded-full opacity-20 blur-3xl"
-        style="background: radial-gradient(circle, #34D399, transparent)"></div>
-    <div class="absolute left-1/3 bottom-0 w-32 h-32 rounded-full opacity-10 blur-2xl"
-        style="background: radial-gradient(circle, #A7F3D0, transparent)"></div>
-    <div class="w-12 h-12 rounded-lg grid place-items-center shrink-0 relative" style="background: rgba(255,255,255,0.12);">
-        <span class="material-symbols-outlined text-[26px]"
-            style="font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24">account_balance_wallet</span>
-    </div>
-    <div class="relative">
-        <p class="text-[11px] font-bold uppercase tracking-widest text-emerald-200/70">Saldo Total Consolidado</p>
-        <p class="num text-[32px] font-extrabold mt-0.5 tracking-tight">{{ Fin::money($saldoTotal) }}</p>
-        <p class="text-[12px] text-emerald-100/60 mt-0.5">{{ $contas->where('active', true)->count() }} conta(s) ativa(s)</p>
-    </div>
 </div>
 
 {{-- Cards de contas --}}
@@ -51,22 +27,19 @@
                 style="background:{{ $c->color ?? '#0F172A' }}">{{ mb_strtoupper(mb_substr($c->name, 0, 2)) }}</span>
             <div class="flex-1 min-w-0">
                 <p class="font-extrabold text-[14px] truncate text-gray-800">{{ $c->name }}</p>
-                <p class="text-[11px] text-gray-400">{{ $c->label }} · {{ ucfirst($c->kind) }}</p>
+                <p class="text-[11px] text-gray-400">{{ ucfirst($c->kind) }}</p>
             </div>
             @if(!$c->active)<x-badge type="warning">Inativa</x-badge>@endif
         </div>
         <p class="num text-[24px] font-extrabold text-gray-900">{{ Fin::money($c->balance) }}</p>
         <p class="text-[12px] text-gray-400 num mt-0.5">Inicial: {{ Fin::money($c->initial_balance) }}</p>
         @if($isGestor)
-        <div class="mt-4 pt-3 border-t border-gray-500 flex items-center gap-2">
-            <a href="{{ route('contas.edit', $c) }}" class="btn-ghost h-8 px-3 text-[12px] rounded-lg">
-                <span class="material-symbols-outlined text-[15px]">edit</span>
-                Editar
-            </a>
+        <div class="mt-4 pt-3 border-t border-gray-500 flex items-center gap-1.5">
+            <x-btn-link :href="route('contas.edit', $c)" iconOnly icon="edit" title="Editar conta" />
             <form method="POST" action="{{ route('contas.destroy', $c) }}"
                 onsubmit="return confirm('Excluir esta conta? Só é possível sem movimentações.')" class="inline">
                 @csrf @method('DELETE')
-                <button class="h-8 px-3 rounded-lg border border-red-100 text-red-400 hover:text-red-600 hover:bg-red-50 hover:border-red-200 text-[12px] font-bold transition-all">Excluir</button>
+                <x-btn-submit color="danger" iconOnly icon="delete" title="Excluir conta" />
             </form>
         </div>
         @endif
@@ -77,10 +50,7 @@
         <p class="text-[15px] font-extrabold mt-4 text-gray-500">Nenhuma conta cadastrada</p>
         <p class="text-[13px] mt-1">Conecte a primeira conta para começar o controle.</p>
         @if($isGestor)
-        <a href="{{ route('contas.create') }}" class="btn-secondary inline-flex mt-5">
-            <span class="material-symbols-outlined text-[17px]">add_circle</span>
-            Nova Conta
-        </a>
+        <x-btn-link :href="route('contas.create')" icon="add_circle" class="mt-5">Nova Conta</x-btn-link>
         @endif
     </div>
     @endforelse

@@ -9,7 +9,7 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @stack('head')
@@ -135,15 +135,6 @@
 
                 <div class="flex-1"></div>
 
-                {{-- Busca --}}
-                <form method="GET" action="{{ url()->current() }}"
-                    class="hidden md:flex items-center gap-2 bg-white border border-gray-500 rounded-lg px-3 h-10 w-60 focus-within:border-emerald-500 focus-within:ring-4 focus-within:ring-emerald-500/10 shadow-sm transition-all">
-                    @foreach(request()->except('q') as $k => $v)<input type="hidden" name="{{ $k }}" value="{{ $v }}">@endforeach
-                    <span class="material-symbols-outlined text-gray-400 text-[18px]">search</span>
-                    <input id="globalSearch" name="q" value="{{ request('q') }}" placeholder="Buscar lançamento…"
-                        class="bg-transparent outline-none text-[13px] w-full placeholder:text-gray-300">
-                </form>
-
                 {{-- Avatar usuário (dropdown) --}}
                 <div class="relative" data-user-menu>
                     <button type="button" data-user-menu-btn
@@ -264,16 +255,6 @@ document.querySelectorAll('[data-toast]').forEach(box=>{
   box.querySelector('[data-toast-close]')?.addEventListener('click', dismiss);
 });
 
-// Busca client-side
-document.getElementById('globalSearch')?.addEventListener('input',e=>{
-  const q=e.target.value.toLowerCase().trim();
-  document.querySelectorAll('[data-ledger-row]').forEach(r=>{
-    const hit = r.textContent.toLowerCase().includes(q);
-    const passFilter = r.dataset.hiddenByFilter !== '1';
-    r.style.display = (hit && passFilter) ? '' : 'none';
-  });
-});
-
 // Filtros client-side por tokens
 document.querySelectorAll('[data-filter-group]').forEach(group=>{
   const key = group.dataset.filterGroup;
@@ -286,9 +267,7 @@ document.querySelectorAll('[data-filter-group]').forEach(group=>{
       let show = true;
       if(f !== 'all') show = (r.dataset[key] ?? ' ').toLowerCase().split(/\s+/).includes(f.toLowerCase());
       r.dataset.hiddenByFilter = show ? '' : '1';
-      const q = (document.getElementById('globalSearch')?.value ?? '').toLowerCase().trim();
-      const hit = !q || r.textContent.toLowerCase().includes(q);
-      r.style.display = (show && hit) ? '' : 'none';
+      r.style.display = show ? '' : 'none';
     });
   }));
 });

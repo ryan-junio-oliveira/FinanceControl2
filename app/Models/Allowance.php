@@ -34,7 +34,7 @@ class Allowance extends Model
             ->sum('amount');
     }
 
-    /** Próxima data de repasse a partir de hoje. */
+    /** Próxima data de repasse a partir de hoje (timezone da família quando houver). */
     public function nextPayday(): Carbon
     {
         $today = Carbon::today();

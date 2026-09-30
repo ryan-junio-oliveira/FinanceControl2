@@ -9,7 +9,7 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @stack('head')
@@ -32,7 +32,7 @@
                 <p class="text-[13px] text-emerald-100/75 mt-2 leading-relaxed max-w-sm">Contas, cartões e orçamentos organizados por pessoa.</p>
                 <ul class="mt-5 pt-5 border-t border-white/15 grid gap-3">
                     <li class="flex items-center gap-2.5 text-[13px] font-semibold"><span class="material-symbols-outlined text-[18px] text-emerald-300">check_circle</span> Lançamentos por pessoa</li>
-                    <li class="flex items-center gap-2.5 text-[13px] font-semibold"><span class="material-symbols-outlined text-[18px] text-emerald-300">check_circle</span> Tetos por categoria</li>
+                    <li class="flex items-center gap-2.5 text-[13px] font-semibold"><span class="material-symbols-outlined text-[18px] text-emerald-300">check_circle</span> Gastos por categoria</li>
                     <li class="flex items-center gap-2.5 text-[13px] font-semibold"><span class="material-symbols-outlined text-[18px] text-emerald-300">check_circle</span> Gastos mensais organizados</li>
                 </ul>
             </div>

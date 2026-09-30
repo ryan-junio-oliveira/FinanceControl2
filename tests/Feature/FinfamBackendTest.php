@@ -52,7 +52,7 @@ class FinfamBackendTest extends TestCase
         }
 
         // --- categoria ---
-        $this->post('/categorias', ['name' => 'Alimentação', 'type' => 'despesa', 'monthly_cap' => '3500'])->assertSessionHasNoErrors();
+        $this->post('/categorias', ['name' => 'Alimentação', 'type' => 'despesa'])->assertSessionHasNoErrors();
         $this->assertDatabaseHas('categories', ['name' => 'Alimentação']);
         $catDesp = \App\Models\Category::where('name', 'Alimentação')->first();
         $this->post('/categorias', ['name' => 'Salário', 'type' => 'receita'])->assertSessionHasNoErrors();

@@ -2,6 +2,9 @@
 
 namespace App\Http\Requests;
 
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
+
 class TransactionRequest extends FormRequest
 {
     protected function prepareForValidation(): void
@@ -11,16 +14,19 @@ class TransactionRequest extends FormRequest
 
     public function rules(): array
     {
+        $fid = Auth::user()?->family_id;
+
         return [
             'description' => ['required', 'string', 'max:255'],
             'amount' => ['required', 'numeric', 'min:0.01'],
             'occurred_on' => ['required', 'date'],
-            'due_on' => ['nullable', 'date'],
+            'due_on' => ['nullable', 'date', 'after_or_equal:occurred_on'],
             'status' => ['required', 'in:pago,pendente,agendado'],
-            'user_id' => ['required', 'exists:users,id'],
-            'account_id' => ['nullable', 'exists:accounts,id'],
-            'category_id' => ['nullable', 'exists:categories,id'],
+            'user_id' => ['required', Rule::exists('users', 'id')->where('family_id', $fid)],
+            'account_id' => ['nullable', Rule::exists('accounts', 'id')->where('family_id', $fid)],
+            'category_id' => ['nullable', Rule::exists('categories', 'id')->where('family_id', $fid)],
             'is_fixed' => ['sometimes', 'boolean'],
+            'installments_total' => ['sometimes', 'nullable', 'integer', 'min:1', 'max:48'],
             'notes' => ['nullable', 'string'],
         ];
     }
@@ -35,6 +41,7 @@ class TransactionRequest extends FormRequest
             'occurred_on.required' => 'Informe a data do lançamento.',
             'occurred_on.date' => 'Essa data não é válida.',
             'due_on.date' => 'Esse vencimento não é válido.',
+            'due_on.after_or_equal' => 'O vencimento não pode ser anterior à data do lançamento.',
             'status.required' => 'Escolha a situação do lançamento.',
             'status.in' => 'Situação inválida. Escolha entre pago, pendente ou agendado.',
             'user_id.required' => 'Escolha o membro responsável.',

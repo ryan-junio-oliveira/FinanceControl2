@@ -8,6 +8,7 @@ use App\Models\Account;
 use App\Models\Transaction;
 use App\Support\Fin;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class AccountController extends Controller
@@ -18,14 +19,18 @@ class AccountController extends Controller
         $fid = $family->id;
 
         $contas = $family->accounts()->orderBy('name')->get();
-        $saldoTotal = $contas->sum(fn ($a) => $a->balance);
+        $balances = Account::balancesForFamily($fid);
+        $contas->each(function ($a) use ($balances) {
+            // Expõe saldo pré-calculado sem N+1; getBalanceAttribute segue disponível.
+            $a->setAttribute('balance_cached', $balances[$a->id] ?? (float) $a->initial_balance);
+        });
 
         $extrato = Transaction::ofFamily($fid)
             ->with(['member', 'category', 'account'])
             ->orderByDesc('occurred_on')->orderByDesc('id')
             ->paginate(15);
 
-        return view('pages.contas', compact('contas', 'saldoTotal', 'extrato'));
+        return view('pages.contas', compact('contas', 'extrato'));
     }
 
     public function create(): View
@@ -36,6 +41,7 @@ class AccountController extends Controller
     public function edit(Account $conta): View
     {
         abort_if($conta->family_id !== Fin::familyId(), 404);
+        $this->authorize('manage', $conta);
 
         return view('pages.accounts.form', ['conta' => $conta]);
     }
@@ -54,6 +60,7 @@ class AccountController extends Controller
     {
         $family = Fin::family();
         abort_if($conta->family_id !== $family->id, 404);
+        $this->authorize('manage', $conta);
 
         $conta->update($request->validated() + ['active' => $request->boolean('active')]);
 
@@ -64,6 +71,7 @@ class AccountController extends Controller
     {
         $family = Fin::family();
         abort_if($conta->family_id !== $family->id, 404);
+        $this->authorize('manage', $conta);
         abort_if($conta->transactions()->exists(), 422, 'Conta com movimentações não pode ser excluída. Desative-a.');
         $conta->delete();
 
@@ -87,21 +95,23 @@ class AccountController extends Controller
         $family = Fin::family();
         $data = $request->validated();
 
-        $from = $family->accounts()->findOrFail($data['from_account_id']);
-        $to = $family->accounts()->findOrFail($data['to_account_id']);
-        $family->users()->findOrFail($data['user_id']);
+        DB::transaction(function () use ($family, $data) {
+            $from = $family->accounts()->findOrFail($data['from_account_id']);
+            $to = $family->accounts()->findOrFail($data['to_account_id']);
+            $family->users()->findOrFail($data['user_id']);
 
-        Transaction::create([
-            'family_id' => $family->id,
-            'user_id' => $data['user_id'],
-            'account_id' => $from->id,
-            'type' => 'transferencia',
-            'description' => $data['description'] ?? "Transferência {$from->name} → {$to->name}",
-            'amount' => $data['amount'],
-            'occurred_on' => $data['occurred_on'],
-            'status' => 'pago',
-            'transfer_to_account_id' => $to->id,
-        ]);
+            Transaction::create([
+                'family_id' => $family->id,
+                'user_id' => $data['user_id'],
+                'account_id' => $from->id,
+                'type' => 'transferencia',
+                'description' => $data['description'] ?? "Transferência {$from->name} → {$to->name}",
+                'amount' => $data['amount'],
+                'occurred_on' => $data['occurred_on'],
+                'status' => 'pago',
+                'transfer_to_account_id' => $to->id,
+            ]);
+        });
 
         return redirect()->route('contas')->with('status', 'Transferência registrada.');
     }

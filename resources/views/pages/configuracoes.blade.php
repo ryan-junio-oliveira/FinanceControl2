@@ -31,57 +31,50 @@
 {{-- Painel: Perfil --}}
 <div data-panel="perfil" class="cfg-panel space-y-4">
     <x-section-card title="Identidade da Conta" subtitle="Dados da sua conta">
-        <form method="POST" action="{{ route('configuracoes.update') }}" class="grid sm:grid-cols-2 gap-4">
+        <form method="POST" action="{{ route('configuracoes.update') }}" class="form-grid form-grid-2">
             @csrf @method('PATCH')
-            <div class="sm:col-span-2 field">
-                <label>Nome da conta</label>
-                <input name="name" value="{{ auth()->user()->family->name }}" required placeholder="Ex.: Família Silva">
+            <div class="sm:col-span-2">
+                <x-form.field label="Nome da conta" :required="true">
+                    <x-form.input name="name" value="{{ auth()->user()->family->name }}" required placeholder="Ex.: Família Silva" />
+                </x-form.field>
             </div>
-            <div class="field">
-                <label>Moeda base</label>
-                <select name="currency">
+            <x-form.field label="Moeda base">
+                <x-form.select name="currency">
                     <option value="BRL" {{ $settings->currency==='BRL'?'selected':'' }}>Real (BRL)</option>
                     <option value="USD" {{ $settings->currency==='USD'?'selected':'' }}>Dólar (USD)</option>
                     <option value="EUR" {{ $settings->currency==='EUR'?'selected':'' }}>Euro (EUR)</option>
-                </select>
-            </div>
-            <div class="field">
-                <label>Fuso horário</label>
-                <select name="timezone">
+                </x-form.select>
+            </x-form.field>
+            <x-form.field label="Fuso horário">
+                <x-form.select name="timezone">
                     <option value="America/Sao_Paulo" {{ $settings->timezone==='America/Sao_Paulo'?'selected':'' }}>Brasília (GMT-3)</option>
                     <option value="America/Manaus" {{ $settings->timezone==='America/Manaus'?'selected':'' }}>Manaus (GMT-4)</option>
                     <option value="America/Noronha" {{ $settings->timezone==='America/Noronha'?'selected':'' }}>Noronha (GMT-2)</option>
-                </select>
-            </div>
-            <div class="field">
-                <label>Fechamento do ciclo (dia)</label>
-                <input name="closing_day" type="number" min="1" max="28" value="{{ $settings->closing_day }}">
-            </div>
-            <div class="field">
-                <label>Aprovação acima de (R$)</label>
-                <input name="approval_threshold" value="{{ number_format($settings->approval_threshold, 2, ',', '.') }}" inputmode="decimal" placeholder="Ex.: 500,00" class="num">
-            </div>
-            <div class="field">
-                <label>Ocultar despesas abaixo de (R$)</label>
-                <input name="privacy_hide_under" value="{{ number_format($settings->privacy_hide_under, 2, ',', '.') }}" inputmode="decimal" placeholder="Ex.: 50,00" class="num">
-            </div>
+                </x-form.select>
+            </x-form.field>
+            <x-form.field label="Fechamento do ciclo (dia)">
+                <x-form.input name="closing_day" type="number" min="1" max="28" value="{{ $settings->closing_day }}" />
+            </x-form.field>
+            <x-form.field label="Aprovação acima de">
+                <x-form.money name="approval_threshold" value="{{ number_format($settings->approval_threshold, 2, ',', '.') }}" placeholder="500,00" />
+            </x-form.field>
+            <x-form.field label="Ocultar despesas abaixo de">
+                <x-form.money name="privacy_hide_under" value="{{ number_format($settings->privacy_hide_under, 2, ',', '.') }}" placeholder="50,00" />
+            </x-form.field>
             <div class="sm:col-span-2 flex items-center gap-3">
                 <label class="relative inline-flex items-center cursor-pointer gap-3">
                     <div class="relative">
                         <input type="checkbox" name="consolidate_dependent_yield" value="1"
                             {{ $settings->consolidate_dependent_yield ? 'checked' : '' }}
                             class="sr-only peer" id="toggle-consolidate">
-                        <div class="w-10 h-6 bg-slate-200 rounded-lg peer peer-checked:bg-emerald-500 peer-focus:ring-2 peer-focus:ring-emerald-500/30 transition-all"></div>
+                        <div class="w-10 h-6 bg-slate-200 rounded-full peer peer-checked:bg-emerald-500 peer-focus:ring-2 peer-focus:ring-emerald-500/30 transition-all"></div>
                         <div class="absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow transition-all peer-checked:translate-x-4"></div>
                     </div>
                     <span class="text-[13px] font-semibold text-gray-700">Consolidar proventos de dependentes</span>
                 </label>
             </div>
             <div class="sm:col-span-2">
-                <button class="btn-primary">
-                    <span class="material-symbols-outlined text-[17px]">save</span>
-                    Salvar configurações
-                </button>
+                <x-btn-submit icon="save">Salvar configurações</x-btn-submit>
             </div>
         </form>
     </x-section-card>
@@ -90,17 +83,15 @@
 {{-- Painel: Segurança --}}
 <div data-panel="seg" class="cfg-panel hidden space-y-4">
     <x-section-card title="Encerrar Outras Sessões" subtitle="Exige sua senha atual para segurança">
-        <form method="POST" action="{{ route('configuracoes.sessoes') }}" class="flex flex-wrap gap-3">
+        <form method="POST" action="{{ route('configuracoes.sessoes') }}" class="flex flex-wrap gap-3 items-end">
             @csrf
-            <div class="field flex-1 min-w-[200px]">
-                <label>Sua senha atual</label>
-                <input name="password" type="password" required placeholder="••••••••">
+            <div class="flex-1 min-w-[200px]">
+                <x-form.field label="Sua senha atual" :required="true">
+                    <x-form.input name="password" type="password" required placeholder="••••••••" />
+                </x-form.field>
             </div>
-            <div class="flex items-end">
-                <button class="h-11 px-5 rounded-lg bg-red-600 hover:bg-red-700 text-white font-bold text-[13px] flex items-center gap-2 transition shadow-sm hover:shadow-md">
-                    <span class="material-symbols-outlined text-[17px]">logout</span>
-                    Encerrar outras sessões
-                </button>
+            <div>
+                <x-btn-submit color="danger" icon="logout">Encerrar outras sessões</x-btn-submit>
             </div>
         </form>
     </x-section-card>
@@ -112,7 +103,6 @@
         <form method="POST" action="{{ route('configuracoes.notificacoes') }}" class="divide-y divide-slate-50">
             @csrf @method('PATCH')
             @php $opts = [
-                'teto_85' => 'Alerta de teto 85%',
                 'compra_dependente' => 'Compra de dependente',
                 'fatura_vencimento' => 'Fatura próxima do vencimento',
                 'resumo_semanal' => 'Resumo semanal',
@@ -131,10 +121,7 @@
             </label>
             @endforeach
             <div class="pt-4">
-                <button class="btn-primary">
-                    <span class="material-symbols-outlined text-[17px]">notifications_active</span>
-                    Salvar notificações
-                </button>
+                <x-btn-submit icon="notifications_active">Salvar notificações</x-btn-submit>
             </div>
         </form>
     </x-section-card>

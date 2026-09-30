@@ -2,6 +2,9 @@
 
 namespace App\Http\Requests;
 
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
+
 class CardItemRequest extends FormRequest
 {
     protected function prepareForValidation(): void
@@ -11,13 +14,16 @@ class CardItemRequest extends FormRequest
 
     public function rules(): array
     {
+        $fid = Auth::user()?->family_id;
+
         return [
-            'credit_card_id' => ['required', 'exists:credit_cards,id'],
+            'credit_card_id' => ['required', Rule::exists('credit_cards', 'id')->where('family_id', $fid)],
             'description' => ['required', 'string', 'max:255'],
             'amount' => ['required', 'numeric', 'min:0.01'],
             'occurred_on' => ['required', 'date'],
-            'user_id' => ['required', 'exists:users,id'],
-            'category_id' => ['nullable', 'exists:categories,id'],
+            'user_id' => ['required', Rule::exists('users', 'id')->where('family_id', $fid)],
+            'category_id' => ['nullable', Rule::exists('categories', 'id')->where('family_id', $fid)],
+            'installments_total' => ['sometimes', 'nullable', 'integer', 'min:1', 'max:48'],
         ];
     }
 

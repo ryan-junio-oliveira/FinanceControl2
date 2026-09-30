@@ -115,7 +115,9 @@ Route::middleware('auth')->group(function () {
             Route::patch('/familia/membros/{membro}/papel', [FamilyController::class, 'updateRole'])->name('familia.membros.papel');
             Route::get('/familia/mesadas/criar', [FamilyController::class, 'createAllowance'])->name('familia.mesadas.create');
             Route::post('/familia/mesadas', [FamilyController::class, 'storeAllowance'])->name('familia.mesadas.store');
-            Route::delete('/familia/mesadas', [FamilyController::class, 'destroyAllowance'])->name('familia.mesadas.destroy');
+            Route::delete('/familia/mesadas/{allowance}', [FamilyController::class, 'destroyAllowance'])->name('familia.mesadas.destroy');
+
+            Route::post('/cartoes/{cartao}/pagar-fatura', [CardController::class, 'payInvoice'])->name('cartoes.fatura.pagar');
 
             Route::get('/configuracoes', [SettingsController::class, 'index'])->name('configuracoes');
             Route::patch('/configuracoes', [SettingsController::class, 'update'])->name('configuracoes.update');

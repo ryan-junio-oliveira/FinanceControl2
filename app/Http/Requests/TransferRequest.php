@@ -2,6 +2,9 @@
 
 namespace App\Http\Requests;
 
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
+
 class TransferRequest extends FormRequest
 {
     protected function prepareForValidation(): void
@@ -11,12 +14,14 @@ class TransferRequest extends FormRequest
 
     public function rules(): array
     {
+        $fid = Auth::user()?->family_id;
+
         return [
-            'from_account_id' => ['required', 'exists:accounts,id'],
-            'to_account_id' => ['required', 'exists:accounts,id', 'different:from_account_id'],
+            'from_account_id' => ['required', Rule::exists('accounts', 'id')->where('family_id', $fid)],
+            'to_account_id' => ['required', Rule::exists('accounts', 'id')->where('family_id', $fid), 'different:from_account_id'],
             'amount' => ['required', 'numeric', 'min:0.01'],
             'occurred_on' => ['required', 'date'],
-            'user_id' => ['required', 'exists:users,id'],
+            'user_id' => ['required', Rule::exists('users', 'id')->where('family_id', $fid)],
             'description' => ['nullable', 'string', 'max:255'],
         ];
     }

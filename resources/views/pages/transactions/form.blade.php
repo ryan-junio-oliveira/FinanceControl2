@@ -14,148 +14,108 @@
     $dataVenc = old('due_on', $transaction?->due_on?->format('Y-m-d') ?? '');
 @endphp
 
-<div class="max-w-2xl mx-auto w-full">
-    <a href="{{ $voltar }}" class="back-link">
-        <span class="material-symbols-outlined text-[16px]">arrow_back</span>
-        Voltar para {{ $isDespesa ? 'despesas' : 'receitas' }}
-    </a>
+<div class="max-w-4xl mx-auto w-full">
+    <x-form.header
+        :title="$titulo"
+        subtitle="Preencha os dados do lançamento."
+        :backUrl="$voltar"
+        :backLabel="'Voltar para ' . ($isDespesa ? 'despesas' : 'receitas')"
+        :icon="$isDespesa ? 'trending_down' : 'trending_up'"
+        :iconBg="$isDespesa ? 'linear-gradient(135deg,#FEE2E2,#FECACA)' : 'linear-gradient(135deg,#D1FAE5,#A7F3D0)'"
+        :iconColor="$isDespesa ? '#DC2626' : '#059669'" />
 
-    <div class="flex items-center gap-3 mt-3 mb-6">
-        <div class="w-11 h-11 rounded-lg grid place-items-center text-white shadow-sm
-            {{ $isDespesa ? '' : '' }}"
-            style="background: {{ $isDespesa ? 'linear-gradient(135deg,#FEE2E2,#FCA5A5)' : 'linear-gradient(135deg,#D1FAE5,#6EE7B7)' }}">
-            <span class="material-symbols-outlined text-[22px]"
-                style="font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24; color: {{ $isDespesa ? '#DC2626' : '#059669' }}">
-                {{ $isDespesa ? 'trending_down' : 'trending_up' }}
-            </span>
-        </div>
-        <div>
-            <h1 class="text-[24px] font-extrabold tracking-tight capitalize">{{ $titulo }}</h1>
-            <p class="text-[13px] text-gray-400 mt-0.5 font-medium">Preencha os dados do lançamento.</p>
-        </div>
-    </div>
-
-    <form method="POST" action="{{ $action }}" class="form-card space-y-5">
+    <form method="POST" action="{{ $action }}" class="form-card {{ $isDespesa ? 'tint-danger' : 'tint-success' }}">
         @csrf
         @if($transaction) @method('PATCH') @endif
 
-        {{-- Descrição --}}
-        <div class="float-field {{ $errors->has('description') ? 'error' : '' }}">
-            <input id="f-desc" name="description" required value="{{ $val('description') }}"
-                placeholder=" " autocomplete="off">
-            <label for="f-desc">Descrição *</label>
-            @error('description')
-            <p class="text-[12px] text-red-500 font-semibold mt-1.5 flex items-center gap-1">
-                <span class="material-symbols-outlined text-[13px]">error</span>{{ $message }}
-            </p>
-            @enderror
+        <div class="form-grid">
+            <x-form.field label="Descrição" for="f-desc" :required="true" :error="$errors->first('description')">
+                <x-form.input id="f-desc" name="description" required value="{{ $val('description') }}" placeholder="Ex.: Mercado Central" autocomplete="off" :error="$errors->has('description')" />
+            </x-form.field>
+
+            <div class="form-grid form-grid-2">
+                <x-form.field label="Valor" for="f-valor" :required="true" :error="$errors->first('amount')">
+                    <x-form.money id="f-valor" name="amount" required value="{{ $val('amount') }}" placeholder="0,00" :error="$errors->has('amount')" />
+                </x-form.field>
+
+                <x-form.field label="Responsável" for="f-membro" :required="true" :error="$errors->first('user_id')">
+                    <x-form.select id="f-membro" name="user_id">
+                        <option value="">Selecione o membro</option>
+                        @foreach($membros as $m)
+                            <option value="{{ $m->id }}" {{ (string)$val('user_id', auth()->id()) === (string)$m->id ? 'selected' : '' }}>{{ $m->name }}</option>
+                        @endforeach
+                    </x-form.select>
+                </x-form.field>
+            </div>
+
+            <div class="form-grid form-grid-2">
+                <x-form.field label="Categoria" for="f-cat" :error="$errors->first('category_id')">
+                    <x-form.select id="f-cat" name="category_id">
+                        <option value="">Selecione a categoria</option>
+                        @foreach($categorias as $c)
+                            <option value="{{ $c->id }}" {{ (string)$val('category_id') === (string)$c->id ? 'selected' : '' }}>{{ $c->name }}</option>
+                        @endforeach
+                    </x-form.select>
+                </x-form.field>
+
+                <x-form.field label="Conta" for="f-conta" :error="$errors->first('account_id')">
+                    <x-form.select id="f-conta" name="account_id">
+                        <option value="">Selecione a conta</option>
+                        @foreach($contas as $c)
+                            <option value="{{ $c->id }}" {{ (string)$val('account_id') === (string)$c->id ? 'selected' : '' }}>{{ $c->label }}</option>
+                        @endforeach
+                    </x-form.select>
+                </x-form.field>
+            </div>
+
+            <div class="form-grid form-grid-3">
+                <x-form.field label="Data" for="f-data" :required="true" :error="$errors->first('occurred_on')">
+                    <x-form.input id="f-data" name="occurred_on" type="date" required value="{{ $dataOcorrido }}" />
+                </x-form.field>
+
+                <x-form.field label="Vencimento" for="f-venc" :error="$errors->first('due_on')">
+                    <x-form.input id="f-venc" name="due_on" type="date" value="{{ $dataVenc }}" />
+                </x-form.field>
+
+                <x-form.field label="Situação" for="f-status" :required="true" :error="$errors->first('status')">
+                    <x-form.select id="f-status" name="status">
+                        @foreach(['pago' => $isDespesa ? 'Paga' : 'Recebida', 'pendente' => 'Pendente', 'agendado' => 'Agendada'] as $v => $l)
+                            <option value="{{ $v }}" {{ $val('status', 'pago') === $v ? 'selected' : '' }}>{{ $l }}</option>
+                        @endforeach
+                    </x-form.select>
+                </x-form.field>
+            </div>
+
+            @if(!$transaction)
+                <x-form.field label="Parcelas" for="f-parc" hint="À vista = 1. Parcelado divide o valor em vencimentos mensais.">
+                    <x-form.select id="f-parc" name="installments_total">
+                        <option value="1" {{ old('installments_total', '1') === '1' ? 'selected' : '' }}>À vista</option>
+                        @for($i = 2; $i <= 12; $i++)
+                            <option value="{{ $i }}" {{ (string)old('installments_total') === (string)$i ? 'selected' : '' }}>{{ $i }}x</option>
+                        @endfor
+                        @foreach([18, 24, 36, 48] as $i)
+                            <option value="{{ $i }}" {{ (string)old('installments_total') === (string)$i ? 'selected' : '' }}>{{ $i }}x</option>
+                        @endforeach
+                    </x-form.select>
+                </x-form.field>
+            @endif
+
+            <x-form.field label="Observações" for="f-obs">
+                <x-form.input id="f-obs" name="notes" value="{{ $val('notes') }}" placeholder="Opcional" />
+            </x-form.field>
+
+            <x-form.field label="Lançamento fixo" hint="Fixas se repetem todo mês (ex.: aluguel, salário) e podem ser filtradas nas listagens.">
+                <label class="toggle-switch mt-1">
+                    <input type="checkbox" name="is_fixed" value="1" {{ $val('is_fixed') ? 'checked' : '' }}>
+                    <div class="toggle-track">
+                        <div class="toggle-thumb"></div>
+                    </div>
+                    <span class="toggle-label-text">{{ $isDespesa ? 'Despesa' : 'Receita' }} fixa mensal</span>
+                </label>
+            </x-form.field>
         </div>
 
-        <div class="grid sm:grid-cols-2 gap-4">
-            {{-- Valor --}}
-            <div>
-                <p class="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-1.5">Valor (R$) *</p>
-                <div class="input-group {{ $errors->has('amount') ? 'error' : '' }}">
-                    <span class="prefix">R$</span>
-                    <input id="f-valor" name="amount" required inputmode="decimal"
-                        value="{{ $val('amount') }}" placeholder="0,00" class="num">
-                </div>
-                @error('amount')<p class="text-[12px] text-red-500 font-semibold mt-1.5">{{ $message }}</p>@enderror
-            </div>
-
-            {{-- Membro --}}
-            <div class="float-field {{ $errors->has('user_id') ? 'error' : '' }}">
-                <select id="f-membro" name="user_id">
-                    <option value="">Selecione o membro</option>
-                    @foreach($membros as $m)
-                        <option value="{{ $m->id }}" {{ (string)$val('user_id', auth()->id()) === (string)$m->id ? 'selected' : '' }}>{{ $m->name }}</option>
-                    @endforeach
-                </select>
-                <label for="f-membro">Responsável *</label>
-                @error('user_id')<p class="text-[12px] text-red-500 font-semibold mt-1.5">{{ $message }}</p>@enderror
-            </div>
-        </div>
-
-        <div class="grid sm:grid-cols-2 gap-4">
-            {{-- Categoria --}}
-            <div class="float-field {{ $errors->has('category_id') ? 'error' : '' }}">
-                <select id="f-cat" name="category_id">
-                    <option value="">Selecione a categoria</option>
-                    @foreach($categorias as $c)
-                        <option value="{{ $c->id }}" {{ (string)$val('category_id') === (string)$c->id ? 'selected' : '' }}>{{ $c->name }}</option>
-                    @endforeach
-                </select>
-                <label for="f-cat">Categoria</label>
-                @error('category_id')<p class="text-[12px] text-red-500 font-semibold mt-1.5">{{ $message }}</p>@enderror
-            </div>
-
-            {{-- Conta --}}
-            <div class="float-field {{ $errors->has('account_id') ? 'error' : '' }}">
-                <select id="f-conta" name="account_id">
-                    <option value="">Selecione a conta</option>
-                    @foreach($contas as $c)
-                        <option value="{{ $c->id }}" {{ (string)$val('account_id') === (string)$c->id ? 'selected' : '' }}>{{ $c->label }}</option>
-                    @endforeach
-                </select>
-                <label for="f-conta">Conta</label>
-                @error('account_id')<p class="text-[12px] text-red-500 font-semibold mt-1.5">{{ $message }}</p>@enderror
-            </div>
-        </div>
-
-        <div class="grid sm:grid-cols-3 gap-4">
-            {{-- Data --}}
-            <div class="float-field {{ $errors->has('occurred_on') ? 'error' : '' }}">
-                <input id="f-data" name="occurred_on" type="date" required value="{{ $dataOcorrido }}" placeholder=" ">
-                <label for="f-data">Data *</label>
-                @error('occurred_on')<p class="text-[12px] text-red-500 font-semibold mt-1.5">{{ $message }}</p>@enderror
-            </div>
-
-            {{-- Vencimento --}}
-            <div class="float-field {{ $errors->has('due_on') ? 'error' : '' }}">
-                <input id="f-venc" name="due_on" type="date" value="{{ $dataVenc }}" placeholder=" ">
-                <label for="f-venc">Vencimento</label>
-                @error('due_on')<p class="text-[12px] text-red-500 font-semibold mt-1.5">{{ $message }}</p>@enderror
-            </div>
-
-            {{-- Status --}}
-            <div class="float-field {{ $errors->has('status') ? 'error' : '' }}">
-                <select id="f-status" name="status">
-                    @foreach(['pago' => $isDespesa ? 'Paga' : 'Recebida', 'pendente' => 'Pendente', 'agendado' => 'Agendada'] as $v => $l)
-                        <option value="{{ $v }}" {{ $val('status', 'pago') === $v ? 'selected' : '' }}>{{ $l }}</option>
-                    @endforeach
-                </select>
-                <label for="f-status">Situação *</label>
-                @error('status')<p class="text-[12px] text-red-500 font-semibold mt-1.5">{{ $message }}</p>@enderror
-            </div>
-        </div>
-
-        {{-- Observações --}}
-        <div class="float-field">
-            <input id="f-obs" name="notes" value="{{ $val('notes') }}" placeholder=" ">
-            <label for="f-obs">Observações (opcional)</label>
-        </div>
-
-        {{-- Toggle: Fixa --}}
-        <label class="toggle-switch">
-            <input type="checkbox" name="is_fixed" value="1" {{ $val('is_fixed') ? 'checked' : '' }}>
-            <div class="toggle-track">
-                <div class="toggle-thumb"></div>
-            </div>
-            <span class="toggle-label-text">{{ $isDespesa ? 'Despesa' : 'Receita' }} fixa mensal (recorrente)</span>
-        </label>
-
-        {{-- Botões --}}
-        <div class="flex justify-end gap-3 pt-2 border-t border-gray-500 mt-2">
-            <a href="{{ $voltar }}" class="btn-ghost">
-                <span class="material-symbols-outlined text-[17px]">close</span>
-                Cancelar
-            </a>
-            <button class="{{ $isDespesa ? '' : 'btn-primary' }} {{ $isDespesa ? 'h-10 px-5 rounded-lg font-bold text-[13px] flex items-center gap-2 text-white shadow-md transition-all' : '' }}"
-                style="{{ $isDespesa ? 'background: linear-gradient(135deg,#DC2626,#B91C1C); box-shadow: 0 4px 12px rgba(220,38,38,0.3);' : '' }}">
-                <span class="material-symbols-outlined text-[17px]">{{ $transaction ? 'save' : 'add_circle' }}</span>
-                {{ $transaction ? 'Salvar alterações' : 'Salvar' }}
-            </button>
-        </div>
+        <x-form.actions :cancelUrl="$voltar" :submitLabel="$transaction ? 'Salvar alterações' : 'Salvar'" :submitIcon="$transaction ? 'save' : 'add_circle'" :color="$isDespesa ? 'danger' : 'success'" />
     </form>
 </div>
 @endsection

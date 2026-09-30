@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\RegisterRequest;
 use App\Models\Family;
 use App\Models\User;
+use App\Support\CategoryCatalog;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -30,6 +31,9 @@ class RegisteredUserController extends Controller
                 'trial_ends_at' => now()->addDays(14),
             ]);
             $family->settings()->create([]);
+
+            // Catálogo padrão: a família já nasce com ~100 categorias.
+            CategoryCatalog::seedForFamily($family);
 
             return User::create([
                 'name' => $data['manager_name'],

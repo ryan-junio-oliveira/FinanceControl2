@@ -9,88 +9,87 @@
     $val = fn($k, $d = null) => old($k, $cartao?->$k ?? $d);
     $contaSel = old('account_id', $cartao?->account_id);
 @endphp
-<div class="max-w-2xl mx-auto w-full">
-    <a href="{{ route('cartoes') }}" class="inline-flex items-center gap-1 text-[12px] font-bold text-gray-500 hover:text-gray-800"><span class="material-symbols-outlined text-[16px]">arrow_back</span> Voltar para cartões</a>
-    <h1 class="text-[24px] font-extrabold tracking-tight mt-1">{{ $cartao ? 'Editar cartão' : 'Novo cartão' }}</h1>
-    <p class="text-[13px] text-gray-500">Vincule o cartão a uma conta para herdar a cor dela no visual.</p>
+<div class="max-w-4xl mx-auto w-full">
+    <x-form.header
+        :title="$cartao ? 'Editar cartão' : 'Novo cartão'"
+        subtitle="Vincule o cartão a uma conta para herdar a cor dela no visual."
+        :backUrl="route('cartoes')"
+        backLabel="Voltar para cartões"
+        icon="credit_card"
+        iconBg="linear-gradient(135deg,#FFF7ED,#FFEDD5)"
+        iconColor="#EA580C" />
 
-    <div class="grid lg:grid-cols-5 gap-4 mt-5">
+    <div class="grid lg:grid-cols-5 gap-4">
         <div class="lg:col-span-2">
-            <div id="prev-cartao" class="cc-sheen rounded-lg text-white p-4 min-h-[190px] flex flex-col justify-between shadow-md" style="background:{{ $cartao?->display_color ?? 'linear-gradient(135deg,#0f172a,#334155)' }}">
-                <p class="text-[11px] font-extrabold tracking-widest" id="prev-nome">{{ $val('name', 'SEU CARTÃO') }}</p>
+            <div id="prev-cartao" class="cc-sheen rounded-2xl text-white p-5 min-h-[190px] flex flex-col justify-between shadow-md" style="background:{{ $cartao?->display_color ?? 'linear-gradient(135deg,#0f172a,#334155)' }}">
+                <div class="flex items-center justify-between gap-2">
+                    <p class="text-[11px] font-extrabold tracking-widest" id="prev-nome">{{ $val('name', 'SEU CARTÃO') }}</p>
+                    <span class="text-[10px] font-bold rounded-lg px-2 py-0.5 uppercase tracking-wider" style="background: rgba(0,0,0,0.2);" id="prev-bandeira">{{ $cartao?->brand_label ?? '' }}</span>
+                </div>
                 <p class="text-[11px] opacity-70" id="prev-titular">Titular</p>
                 <div>
                     <p class="font-extrabold num text-[17px]" id="prev-limite">Limite</p>
                     <p class="text-[11px] opacity-80" id="prev-datas">Fecha · Vence</p>
                 </div>
             </div>
-            <p class="text-[11px] text-gray-400 mt-2">Pré-visualização ao vivo da cor e dos dados.</p>
+            <p class="fld-hint">Pré-visualização ao vivo da cor e dos dados.</p>
+            @if($cartao && $cartao->open_invoice > 0)
+                <form method="POST" action="{{ route('cartoes.fatura.pagar', $cartao) }}" onsubmit="return confirm('Pagar a fatura de {{ $cartao->name }}? Isso liquida todos os itens pendentes.')" class="mt-4">
+                    @csrf
+                    <x-btn-submit color="orange" icon="payments" class="w-full">Pagar fatura</x-btn-submit>
+                </form>
+            @endif
         </div>
 
-        <form method="POST" action="{{ $action }}" class="lg:col-span-3 bg-white rounded-lg border border-gray-500 p-5 space-y-4">
+        <form method="POST" action="{{ $action }}" class="lg:col-span-3 form-card tint-orange">
             @csrf
             @if($cartao) @method('PATCH') @endif
 
-            <div>
-                <label class="text-[12px] font-bold text-gray-600" for="f-nome">Nome do cartão *</label>
-                <input id="f-nome" name="name" required value="{{ $val('name') }}" placeholder="Digite o nome (ex.: Nubank Ultravioleta)"
-                    class="mt-1.5 w-full h-12 rounded-lg border px-4 text-[14px] outline-none focus:ring-4 focus:ring-emerald-500/10 {{ $errors->has('name') ? 'border-red-400 focus:border-red-500' : 'border-gray-500 focus:border-emerald-600' }}">
-                @error('name')<p class="text-[12px] text-red-600 font-bold mt-1">{{ $message }}</p>@enderror
+            <div class="form-grid">
+                <x-form.field label="Nome do cartão" for="f-nome" :required="true" :error="$errors->first('name')">
+                    <x-form.input id="f-nome" name="name" required value="{{ $val('name') }}" placeholder="Ex.: Nubank Ultravioleta" />
+                </x-form.field>
+
+                <div class="form-grid form-grid-2">
+                    <x-form.field label="Titular" for="f-tit" :error="$errors->first('holder_user_id')">
+                        <x-form.select id="f-tit" name="holder_user_id">
+                            <option value="">Selecione o titular</option>
+                            @foreach($membros as $m)<option value="{{ $m->id }}" {{ (string)$val('holder_user_id') === (string)$m->id ? 'selected' : '' }}>{{ $m->name }}</option>@endforeach
+                        </x-form.select>
+                    </x-form.field>
+                    <x-form.field label="Bandeira" for="f-bandeira" :error="$errors->first('brand')">
+                        <x-form.select id="f-bandeira" name="brand">
+                            <option value="">Selecione a bandeira</option>
+                            @foreach(\App\Enums\CardBrand::cases() as $b)<option value="{{ $b->value }}" {{ (string)$val('brand') === $b->value ? 'selected' : '' }}>{{ $b->label() }}</option>@endforeach
+                        </x-form.select>
+                    </x-form.field>
+                </div>
+
+                <x-form.field label="Conta vinculada" for="f-conta" hint="O cartão herda a cor da conta (ex.: Inter → laranja)." :error="$errors->first('account_id')">
+                    <x-form.select id="f-conta" name="account_id">
+                        <option value="">Sem vínculo (cor padrão)</option>
+                        @foreach($contas as $c)<option value="{{ $c->id }}" data-cor="{{ $c->color }}" {{ (string)$contaSel === (string)$c->id ? 'selected' : '' }}>{{ $c->name }}</option>@endforeach
+                    </x-form.select>
+                </x-form.field>
+
+                <div class="form-grid form-grid-3">
+                    <x-form.field label="Limite" for="f-lim" :required="true" :error="$errors->first('credit_limit')">
+                        <x-form.money id="f-lim" name="credit_limit" required value="{{ $val('credit_limit', '0') }}" placeholder="0,00" />
+                    </x-form.field>
+                    <x-form.field label="Fecha dia" for="f-fecha" :required="true" :error="$errors->first('closing_day')">
+                        <x-form.input id="f-fecha" name="closing_day" type="number" min="1" max="28" required value="{{ $val('closing_day', '1') }}" />
+                    </x-form.field>
+                    <x-form.field label="Vence dia" for="f-vence" :required="true" :error="$errors->first('due_day')">
+                        <x-form.input id="f-vence" name="due_day" type="number" min="1" max="28" required value="{{ $val('due_day', '10') }}" />
+                    </x-form.field>
+                </div>
+
+                @if($cartao)
+                    <x-form.check name="active" value="1" :checked="(bool) old('active', $cartao->active)" label="Cartão ativo" />
+                @endif
             </div>
 
-            <div class="grid sm:grid-cols-2 gap-3">
-                <div>
-                    <label class="text-[12px] font-bold text-gray-600" for="f-tit">Titular</label>
-                    <select id="f-tit" name="holder_user_id" class="mt-1.5 w-full h-12 rounded-lg border border-gray-500 px-2 text-[14px] bg-white">
-                        <option value="">Selecione o titular</option>
-                        @foreach($membros as $m)<option value="{{ $m->id }}" {{ (string)$val('holder_user_id') === (string)$m->id ? 'selected' : '' }}>{{ $m->name }}</option>@endforeach
-                    </select>
-                    @error('holder_user_id')<p class="text-[12px] text-red-600 font-bold mt-1">{{ $message }}</p>@enderror
-                </div>
-                <div>
-                    <label class="text-[12px] font-bold text-gray-600" for="f-bandeira">Bandeira</label>
-                    <input id="f-bandeira" name="brand" value="{{ $val('brand') }}" placeholder="Digite a bandeira (ex.: Mastercard)"
-                        class="mt-1.5 w-full h-12 rounded-lg border border-gray-500 px-4 text-[14px] outline-none focus:border-emerald-600 focus:ring-4 focus:ring-emerald-500/10">
-                </div>
-            </div>
-
-            <div>
-                <label class="text-[12px] font-bold text-gray-600" for="f-conta">Conta vinculada</label>
-                <select id="f-conta" name="account_id" class="mt-1.5 w-full h-12 rounded-lg border border-gray-500 px-2 text-[14px] bg-white">
-                    <option value="">Sem vínculo (cor padrão)</option>
-                    @foreach($contas as $c)<option value="{{ $c->id }}" data-cor="{{ $c->color }}" {{ (string)$contaSel === (string)$c->id ? 'selected' : '' }}>{{ $c->name }}</option>@endforeach
-                </select>
-                <p class="text-[11px] text-gray-500 mt-1">O cartão herda a cor da conta (ex.: Inter → laranja).</p>
-                @error('account_id')<p class="text-[12px] text-red-600 font-bold mt-1">{{ $message }}</p>@enderror
-            </div>
-
-            <div class="grid grid-cols-3 gap-3">
-                <div>
-                    <label class="text-[12px] font-bold text-gray-600" for="f-lim">Limite (R$) *</label>
-                    <input id="f-lim" name="credit_limit" required inputmode="decimal" value="{{ $val('credit_limit', '0') }}" placeholder="Digite o limite"
-                        class="mt-1.5 w-full h-12 rounded-lg border px-3 text-[14px] num outline-none focus:ring-4 focus:ring-emerald-500/10 {{ $errors->has('credit_limit') ? 'border-red-400 focus:border-red-500' : 'border-gray-500 focus:border-emerald-600' }}">
-                    @error('credit_limit')<p class="text-[12px] text-red-600 font-bold mt-1">{{ $message }}</p>@enderror
-                </div>
-                <div>
-                    <label class="text-[12px] font-bold text-gray-600" for="f-fecha">Fecha dia *</label>
-                    <input id="f-fecha" name="closing_day" type="number" min="1" max="28" required value="{{ $val('closing_day', '1') }}" class="mt-1.5 w-full h-12 rounded-lg border border-gray-500 px-3 text-[14px]">
-                    @error('closing_day')<p class="text-[12px] text-red-600 font-bold mt-1">{{ $message }}</p>@enderror
-                </div>
-                <div>
-                    <label class="text-[12px] font-bold text-gray-600" for="f-vence">Vence dia *</label>
-                    <input id="f-vence" name="due_day" type="number" min="1" max="28" required value="{{ $val('due_day', '10') }}" class="mt-1.5 w-full h-12 rounded-lg border border-gray-500 px-3 text-[14px]">
-                    @error('due_day')<p class="text-[12px] text-red-600 font-bold mt-1">{{ $message }}</p>@enderror
-                </div>
-            </div>
-
-            @if($cartao)
-            <label class="flex items-center gap-2 text-[13px] text-gray-600"><input type="checkbox" name="active" value="1" {{ old('active', $cartao->active) ? 'checked' : '' }} class="w-4 h-4 accent-emerald-600"> Cartão ativo</label>
-            @endif
-
-            <div class="flex justify-end gap-2 pt-2">
-                <a href="{{ route('cartoes') }}" class="h-11 px-5 rounded-lg border border-gray-500 bg-white text-[13px] font-bold flex items-center">Cancelar</a>
-                <button class="h-11 px-6 rounded-lg bg-slate-900 text-white text-[13px] font-bold">{{ $cartao ? 'Salvar alterações' : 'Salvar cartão' }}</button>
-            </div>
+            <x-form.actions :cancelUrl="route('cartoes')" :submitLabel="$cartao ? 'Salvar alterações' : 'Salvar cartão'" :submitIcon="$cartao ? 'save' : 'add_circle'" color="orange" />
         </form>
     </div>
 </div>
@@ -106,17 +105,20 @@ const corConta = () => {
 function atualizaPrev(){
   const nome = document.getElementById('f-nome').value.trim() || 'SEU CARTÃO';
   const tit = document.getElementById('f-tit');
+  const band = document.getElementById('f-bandeira');
   const lim = document.getElementById('f-lim').value.trim() || 'Limite';
   const fe = document.getElementById('f-fecha').value || '·';
   const ve = document.getElementById('f-vence').value || '·';
   document.getElementById('prev-nome').textContent = nome.toUpperCase();
   document.getElementById('prev-titular').textContent = tit.options[tit.selectedIndex]?.text || 'Titular';
+  document.getElementById('prev-bandeira').textContent = band.options[band.selectedIndex]?.text || '';
   document.getElementById('prev-limite').textContent = 'R$ ' + lim;
   document.getElementById('prev-datas').textContent = `Fecha ${fe} · Vence ${ve}`;
   prev.style.background = corConta();
 }
-['f-nome','f-tit','f-lim','f-fecha','f-vence','f-conta'].forEach(id=>document.getElementById(id)?.addEventListener('input', atualizaPrev));
+['f-nome','f-tit','f-bandeira','f-lim','f-fecha','f-vence','f-conta'].forEach(id=>document.getElementById(id)?.addEventListener('input', atualizaPrev));
 document.getElementById('f-conta')?.addEventListener('change', atualizaPrev);
+document.getElementById('f-bandeira')?.addEventListener('change', atualizaPrev);
 atualizaPrev();
 </script>
 @endpush

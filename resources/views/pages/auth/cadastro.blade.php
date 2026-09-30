@@ -63,7 +63,7 @@
         <span>Li e concordo com os <a href="#" class="text-[13px] font-semibold text-emerald-700 underline decoration-emerald-200 underline-offset-[3px] hover:text-emerald-800">Termos de Uso</a> e a <a href="#" class="text-[13px] font-semibold text-emerald-700 underline decoration-emerald-200 underline-offset-[3px] hover:text-emerald-800">Política de Privacidade</a>.</span>
     </label>
 
-    <button class="flex items-center justify-center gap-2 h-11 px-5 rounded-lg bg-emerald-700 text-white text-sm font-semibold border border-emerald-700 hover:bg-emerald-800 transition w-full">Criar conta</button>
+    <x-btn-submit icon="person_add" class="w-full">Criar conta</x-btn-submit>
 </form>
 
 <p class="text-center text-[13px] text-gray-500 mt-5">

@@ -4,7 +4,7 @@
 @source '../../storage/framework/views/*.php';
 
 @theme {
-    --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-sans: 'Montserrat', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 
     --color-canvas: #F8FAFC;
     --color-card: #FFFFFF;
@@ -141,10 +141,27 @@ dialog::backdrop { background: rgba(15,23,42,.45); backdrop-filter: blur(6px); }
     top: 0; left: 0; right: 0;
     height: 3px;
     border-radius: 8px 8px 0 0;
-    background: linear-gradient(90deg, var(--color-brand), var(--color-brand-dark));
-    opacity: 0;
+    background: #059669;
+    opacity: 1;
     transition: opacity .22s ease;
 }
+/* Faixa superior e borda seguem a cor do módulo (accent) */
+.kpi-card.accent-emerald { border-color: #a7f3d0; }
+.kpi-card.accent-emerald::before { background: linear-gradient(90deg, #059669, #047857); }
+.kpi-card.accent-green { border-color: #bbf7d0; }
+.kpi-card.accent-green::before { background: linear-gradient(90deg, #16a34a, #15803d); }
+.kpi-card.accent-slate { border-color: #e2e8f0; }
+.kpi-card.accent-slate::before { background: #94a3b8; }
+.kpi-card.accent-blue { border-color: #bfdbfe; }
+.kpi-card.accent-blue::before { background: linear-gradient(90deg, #2563eb, #1d4ed8); }
+.kpi-card.accent-amber { border-color: #fde68a; }
+.kpi-card.accent-amber::before { background: linear-gradient(90deg, #f59e0b, #d97706); }
+.kpi-card.accent-red { border-color: #fecaca; }
+.kpi-card.accent-red::before { background: linear-gradient(90deg, #dc2626, #991b1b); }
+.kpi-card.accent-cyan { border-color: #a5f3fc; }
+.kpi-card.accent-cyan::before { background: linear-gradient(90deg, #0891b2, #0e7490); }
+.kpi-card.accent-orange { border-color: #fed7aa; }
+.kpi-card.accent-orange::before { background: linear-gradient(90deg, #ea580c, #c2410c); }
 .kpi-card:hover {
     transform: translateY(-3px);
     box-shadow: var(--shadow-lift);
@@ -204,23 +221,25 @@ dialog::backdrop { background: rgba(15,23,42,.45); backdrop-filter: blur(6px); }
 }
 .sidebar-brand-icon:hover { box-shadow: 0 6px 16px rgba(5, 150, 105, 0.5); }
 
-/* ── Botões premium ── */
+/* ── Botões premium — altura única 3rem ── */
 .btn-primary {
     background: linear-gradient(135deg, #059669, #047857);
     color: #fff;
-    border-radius: 8px;
+    border-radius: 12px;
     font-weight: 700;
-    font-size: .8125rem;
+    font-size: .875rem;
     display: inline-flex;
     align-items: center;
-    gap: .375rem;
-    padding: 0 1rem;
-    height: 2.5rem;
+    justify-content: center;
+    gap: .5rem;
+    padding: 0 1.5rem;
+    height: 3rem;
     box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
     transition: all .2s ease;
     border: none;
     cursor: pointer;
     text-decoration: none;
+    white-space: nowrap;
 }
 .btn-primary:hover {
     background: linear-gradient(135deg, #047857, #064E3B);
@@ -230,19 +249,21 @@ dialog::backdrop { background: rgba(15,23,42,.45); backdrop-filter: blur(6px); }
 .btn-secondary {
     background: #0F172A;
     color: #fff;
-    border-radius: 8px;
+    border-radius: 12px;
     font-weight: 700;
-    font-size: .8125rem;
+    font-size: .875rem;
     display: inline-flex;
     align-items: center;
-    gap: .375rem;
-    padding: 0 1rem;
-    height: 2.5rem;
+    justify-content: center;
+    gap: .5rem;
+    padding: 0 1.5rem;
+    height: 3rem;
     box-shadow: 0 4px 12px rgba(15, 23, 42, 0.25);
     transition: all .2s ease;
     border: none;
     cursor: pointer;
     text-decoration: none;
+    white-space: nowrap;
 }
 .btn-secondary:hover {
     background: #1E293B;
@@ -250,25 +271,26 @@ dialog::backdrop { background: rgba(15,23,42,.45); backdrop-filter: blur(6px); }
     transform: translateY(-1px);
 }
 .btn-ghost {
-    background: transparent;
     color: #4b5563;
-    border: 1px solid #6b7280;
-    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
     font-weight: 600;
-    font-size: .8125rem;
+    font-size: .875rem;
     display: inline-flex;
     align-items: center;
-    gap: .375rem;
-    padding: 0 1rem;
-    height: 2.5rem;
+    justify-content: center;
+    gap: .5rem;
+    padding: 0 1.25rem;
+    height: 3rem;
     transition: all .18s ease;
     cursor: pointer;
     text-decoration: none;
     background: #fff;
+    white-space: nowrap;
 }
 .btn-ghost:hover {
     background: #F8FAFC;
-    border-color: #6b7280;
+    border-color: #cbd5e1;
     color: #111827;
 }
 
@@ -285,7 +307,7 @@ dialog::backdrop { background: rgba(15,23,42,.45); backdrop-filter: blur(6px); }
     letter-spacing: .01em;
 }
 
-/* ── Formulários refinados ── */
+/* ── Formulários refinados — altura única 3rem ── */
 .field {
     display: flex;
     flex-direction: column;
@@ -298,9 +320,9 @@ dialog::backdrop { background: rgba(15,23,42,.45); backdrop-filter: blur(6px); }
     letter-spacing: .01em;
 }
 .field input, .field select, .field textarea {
-    height: 2.75rem;
-    border-radius: 8px;
-    border: 1.5px solid #6b7280;
+    height: 3rem;
+    border-radius: 12px;
+    border: 1.5px solid #e2e8f0;
     padding: 0 .875rem;
     font-size: .875rem;
     background: #fff;
@@ -308,15 +330,95 @@ dialog::backdrop { background: rgba(15,23,42,.45); backdrop-filter: blur(6px); }
     transition: border-color .15s ease, box-shadow .15s ease;
     outline: none;
     font-family: inherit;
+    width: 100%;
 }
+.field textarea { height: auto; padding: .75rem .875rem; }
 .field input:focus, .field select:focus, .field textarea:focus {
     border-color: #059669;
     box-shadow: 0 0 0 4px rgba(5, 150, 105, .1);
 }
 
+/* ── Toolbar padrão de tabelas (x-table-toolbar) ── */
+.table-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .5rem;
+}
+.table-search {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    height: 2.5rem;
+    min-width: 0;
+    flex: 1 1 200px;
+    max-width: 320px;
+    border-radius: 12px;
+    border: 1.5px solid #e2e8f0;
+    background: #fff;
+    padding: 0 .75rem;
+    transition: border-color .15s ease, box-shadow .15s ease;
+}
+.table-search:focus-within {
+    border-color: #059669;
+    box-shadow: 0 0 0 4px rgba(5, 150, 105, .1);
+}
+.table-search > span {
+    font-size: 19px;
+    color: #94a3b8;
+    flex-shrink: 0;
+}
+.table-search input {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: .8125rem;
+    color: #0f172a;
+    height: 100%;
+    font-family: inherit;
+}
+.table-search input::placeholder { color: #94a3b8; }
+.table-filter {
+    height: 2.5rem;
+    border-radius: 12px;
+    border: 1.5px solid #e2e8f0;
+    background: #fff;
+    padding: 0 2.25rem 0 .75rem;
+    font-size: .75rem;
+    font-weight: 700;
+    color: #475569;
+    outline: none;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right .625rem center;
+    transition: border-color .15s ease, box-shadow .15s ease;
+}
+.table-filter:focus {
+    border-color: #059669;
+    box-shadow: 0 0 0 4px rgba(5, 150, 105, .1);
+}
+.table-clear {
+    display: inline-flex;
+    align-items: center;
+    gap: .25rem;
+    height: 2.5rem;
+    padding: 0 .75rem;
+    font-size: .75rem;
+    font-weight: 700;
+    color: #94a3b8;
+    border-radius: 12px;
+    transition: all .15s ease;
+    white-space: nowrap;
+}
+.table-clear:hover { color: #dc2626; background: #fef2f2; }
+
 /* ── Tabelas modernas ── */
-.table-modern thead tr th {
-    font-size: .6875rem;
+.table-modern thead tr th {    font-size: .6875rem;
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: .06em;
@@ -356,12 +458,12 @@ dialog::backdrop { background: rgba(15,23,42,.45); backdrop-filter: blur(6px); }
     -webkit-backdrop-filter: blur(12px);
 }
 
-/* ── Form card premium ── */
+/* ── Form card premium — borda clara, sem animação infinita ── */
 .form-card {
     background: #fff;
-    border-radius: 8px;
-    border: 1px solid #6b7280;
-    padding: 2rem;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    padding: 1.5rem;
     box-shadow: var(--shadow-card);
     position: relative;
     overflow: hidden;
@@ -370,22 +472,152 @@ dialog::backdrop { background: rgba(15,23,42,.45); backdrop-filter: blur(6px); }
     content: '';
     position: absolute;
     top: 0; left: 0; right: 0;
-    height: 4px;
+    height: 3px;
     background: linear-gradient(90deg, #059669, #34D399, #3B82F6);
-    background-size: 200% 100%;
-    animation: gradientSlide 3s linear infinite;
 }
-@keyframes gradientSlide {
-    0% { background-position: 0% 0%; }
-    100% { background-position: 200% 0%; }
+/* Faixa superior segue a cor do módulo (mesma convenção dos botões) */
+.form-card.tint-danger { border-color: #fecaca; }
+.form-card.tint-danger::before { background: linear-gradient(90deg, #dc2626, #991b1b); }
+.form-card.tint-success { border-color: #bbf7d0; }
+.form-card.tint-success::before { background: linear-gradient(90deg, #16a34a, #15803d); }
+.form-card.tint-blue { border-color: #bfdbfe; }
+.form-card.tint-blue::before { background: linear-gradient(90deg, #2563eb, #1e40af); }
+.form-card.tint-orange { border-color: #fed7aa; }
+.form-card.tint-orange::before { background: linear-gradient(90deg, #ea580c, #c2410c); }
+@media (min-width: 1024px) {
+    .form-card { padding: 2rem; }
 }
 
-/* ── Input grupo com prefixo ── */
+/* ── Sistema unificado de formulários (x-form.*) ──
+   Altura única 3rem p/ input/select/money. Label sempre acima. */
+.fld { display: flex; flex-direction: column; min-width: 0; }
+.fld-label {
+    display: block;
+    font-size: .8125rem;
+    font-weight: 700;
+    color: #334155;
+    margin-bottom: .375rem;
+}
+.fld-label .req { color: #dc2626; font-weight: 800; }
+.fld-control {
+    width: 100%;
+    height: 3rem;
+    border-radius: 12px;
+    border: 1.5px solid #e2e8f0;
+    background: #fff;
+    padding: 0 .875rem;
+    font-size: .875rem;
+    color: #0f172a;
+    outline: none;
+    font-family: inherit;
+    transition: border-color .15s ease, box-shadow .15s ease;
+}
+.fld-control::placeholder { color: #94a3b8; }
+.fld-control:focus {
+    border-color: #059669;
+    box-shadow: 0 0 0 4px rgba(5, 150, 105, .1);
+}
+.fld-control:disabled {
+    background: #f8fafc;
+    color: #64748b;
+    cursor: not-allowed;
+}
+select.fld-control {
+    appearance: none;
+    -webkit-appearance: none;
+    padding-right: 2.5rem;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right .875rem center;
+    cursor: pointer;
+}
+textarea.fld-control { height: auto; min-height: 5.5rem; padding: .75rem .875rem; resize: vertical; }
+input[type='date'].fld-control { cursor: text; }
+/* Dinheiro com prefixo R$ — mesma altura */
+.fld-money {
+    display: flex;
+    align-items: stretch;
+    height: 3rem;
+    border-radius: 12px;
+    border: 1.5px solid #e2e8f0;
+    background: #fff;
+    overflow: hidden;
+    transition: border-color .15s ease, box-shadow .15s ease;
+}
+.fld-money:focus-within {
+    border-color: #059669;
+    box-shadow: 0 0 0 4px rgba(5, 150, 105, .1);
+}
+.fld-money .prefix {
+    display: flex;
+    align-items: center;
+    padding: 0 .875rem;
+    background: #f8fafc;
+    border-right: 1.5px solid #e2e8f0;
+    font-size: .8125rem;
+    font-weight: 700;
+    color: #64748b;
+    white-space: nowrap;
+}
+.fld-money input {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    outline: none;
+    padding: 0 .875rem;
+    font-size: .875rem;
+    background: transparent;
+    height: 100%;
+    font-family: inherit;
+    color: #0f172a;
+    font-variant-numeric: tabular-nums;
+}
+/* Estados */
+.fld-error .fld-control, .fld-error .fld-money { border-color: #f87171; }
+.fld-error .fld-control:focus, .fld-error .fld-money:focus-within {
+    border-color: #ef4444;
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, .1);
+}
+.fld-msg-error {
+    display: flex;
+    align-items: center;
+    gap: .25rem;
+    font-size: .75rem;
+    font-weight: 600;
+    color: #dc2626;
+    margin-top: .375rem;
+}
+.fld-hint { font-size: .75rem; color: #94a3b8; margin-top: .375rem; }
+/* Grids e ações */
+.form-grid { display: grid; gap: 1rem; }
+@media (min-width: 640px) { .form-grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 640px) { .form-grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.form-actions {
+    display: flex;
+    flex-direction: column-reverse;
+    gap: .75rem;
+    padding-top: 1.25rem;
+    margin-top: .5rem;
+    border-top: 1px solid #f1f5f9;
+}
+@media (min-width: 640px) {
+    .form-actions { flex-direction: row; justify-content: flex-end; align-items: center; }
+}
+.form-section-title {
+    font-size: .6875rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #94a3b8;
+    margin-bottom: -.25rem;
+}
+
+/* ── Input grupo com prefixo (legado — alinhado a 3rem) ── */
 .input-group {
     display: flex;
-    height: 2.75rem;
-    border-radius: 8px;
-    border: 1.5px solid #6b7280;
+    height: 3rem;
+    border-radius: 12px;
+    border: 1.5px solid #e2e8f0;
     overflow: hidden;
     transition: border-color .15s ease, box-shadow .15s ease;
 }
@@ -398,10 +630,10 @@ dialog::backdrop { background: rgba(15,23,42,.45); backdrop-filter: blur(6px); }
     place-items: center;
     padding: 0 .875rem;
     background: #F8FAFC;
-    border-right: 1.5px solid #6b7280;
+    border-right: 1.5px solid #e2e8f0;
     font-size: .8125rem;
     font-weight: 700;
-    color: #6b7280;
+    color: #64748b;
     white-space: nowrap;
 }
 .input-group input {
@@ -550,15 +782,15 @@ nav[role=navigation] a:hover {
     background: rgba(255,255,255,0.6);
 }
 
-/* ── Floating label input ── */
+/* ── Floating label input (legado — altura alinhada a 3rem) ── */
 .float-field {
     position: relative;
 }
 .float-field input, .float-field select {
     width: 100%;
-    height: 3.25rem;
-    border-radius: 8px;
-    border: 1.5px solid #6b7280;
+    height: 3rem;
+    border-radius: 12px;
+    border: 1.5px solid #e2e8f0;
     padding: 1.25rem 1rem .375rem;
     font-size: .9375rem;
     background: #fff;

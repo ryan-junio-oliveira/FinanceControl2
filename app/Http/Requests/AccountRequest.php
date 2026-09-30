@@ -13,8 +13,6 @@ class AccountRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
-            'agency' => ['nullable', 'string', 'max:50'],
-            'number' => ['nullable', 'string', 'max:50'],
             'kind' => ['required', 'in:corrente,poupanca,digital,investimento,carteira'],
             'initial_balance' => ['required', 'numeric'],
             'active' => ['sometimes', 'boolean'],

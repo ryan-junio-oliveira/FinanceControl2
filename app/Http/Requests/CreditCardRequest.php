@@ -2,6 +2,9 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\CardBrand;
+use Illuminate\Validation\Rule;
+
 class CreditCardRequest extends FormRequest
 {
     protected function prepareForValidation(): void
@@ -13,7 +16,7 @@ class CreditCardRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
-            'brand' => ['nullable', 'string', 'max:100'],
+            'brand' => ['nullable', Rule::enum(CardBrand::class)],
             'account_id' => ['nullable', 'exists:accounts,id'],
             'credit_limit' => ['required', 'numeric', 'min:0'],
             'closing_day' => ['required', 'integer', 'min:1', 'max:28'],
@@ -28,6 +31,7 @@ class CreditCardRequest extends FormRequest
     {
         return [
             'name.required' => 'Dê um nome ao cartão (ex.: Nubank Ultravioleta).',
+            'brand.enum' => 'Escolha uma bandeira válida (Visa, Mastercard, Elo…).',
             'account_id.exists' => 'A conta vinculada não pertence à sua conta.',
             'credit_limit.required' => 'Informe o limite do cartão (pode ser 0).',
             'credit_limit.min' => 'O limite não pode ser negativo.',

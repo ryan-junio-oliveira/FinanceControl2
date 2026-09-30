@@ -5,11 +5,14 @@ namespace App\Http\Controllers;
 use App\Http\Requests\AllowanceRequest;
 use App\Http\Requests\InviteRequest;
 use App\Http\Requests\MemberRoleRequest;
+use App\Mail\WelcomeEmail;
+use App\Models\Allowance;
 use App\Models\Invitation;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Support\Fin;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 
@@ -53,7 +56,7 @@ class FamilyController extends Controller
         $invitation = $family->invitations()->create($data + ['token' => Str::random(48)]);
 
         try {
-            \Illuminate\Support\Facades\Mail::to($data['email'])->send(new \App\Mail\WelcomeEmail($invitation));
+            Mail::to($data['email'])->send(new WelcomeEmail($invitation));
             $status = 'Convite criado e e-mail enviado para '.$data['email'].'.';
         } catch (\Throwable $e) {
             $status = 'Convite criado, mas não foi possível enviar o e-mail agora. Compartilhe o link de primeiro acesso com '.$data['name'].'.';
@@ -77,6 +80,7 @@ class FamilyController extends Controller
         abort_if($membro->id === request()->user()->id, 422, 'Você não pode remover a si mesmo.');
         abort_if($membro->role === 'admin', 422, 'O administrador principal não pode ser removido.');
         abort_if($membro->transactions()->exists(), 422, 'Membro com lançamentos não pode ser removido.');
+        abort_if($membro->cardTransactions()->exists(), 422, 'Membro com compras no cartão não pode ser removido.');
 
         $membro->allowance()->delete();
         $membro->delete();
@@ -120,11 +124,10 @@ class FamilyController extends Controller
         return redirect()->route('familia')->with('status', 'Mesada configurada.');
     }
 
-    public function destroyAllowance(AllowanceRequest $request): RedirectResponse
+    public function destroyAllowance(Allowance $allowance): RedirectResponse
     {
-        $family = Fin::family();
-        $data = $request->validated();
-        $family->allowances()->where('user_id', $data['user_id'])->delete();
+        abort_if($allowance->family_id !== Fin::familyId(), 404);
+        $allowance->delete();
 
         return back()->with('status', 'Mesada removida.');
     }

@@ -11,10 +11,6 @@ class AllowanceRequest extends FormRequest
 
     public function rules(): array
     {
-        if ($this->isMethod('delete')) {
-            return ['user_id' => ['required', 'exists:users,id']];
-        }
-
         return [
             'user_id' => ['required', 'exists:users,id'],
             'amount' => ['required', 'numeric', 'min:0'],

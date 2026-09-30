@@ -31,7 +31,7 @@
         @error('email')<p class="flex items-center gap-1 text-xs font-semibold text-red-600"><span class="material-symbols-outlined text-[14px]">error</span>{{ $message }}</p>@enderror
     </div>
 
-    <button class="flex items-center justify-center gap-2 h-11 px-5 rounded-lg bg-emerald-700 text-white text-sm font-semibold border border-emerald-700 hover:bg-emerald-800 transition w-full">Enviar link</button>
+    <x-btn-submit icon="mail" class="w-full">Enviar link</x-btn-submit>
 </form>
 
 <div class="flex gap-2.5 items-start text-xs leading-relaxed text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-3.5 mt-5">

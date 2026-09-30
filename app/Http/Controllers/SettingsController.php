@@ -43,7 +43,7 @@ class SettingsController extends Controller
     public function updateNotifications(Request $request): RedirectResponse
     {
         $family = Fin::family();
-        $keys = ['teto_85', 'compra_dependente', 'fatura_vencimento', 'resumo_semanal', 'dividendo'];
+        $keys = ['compra_dependente', 'fatura_vencimento', 'resumo_semanal', 'dividendo'];
         $notifications = [];
         foreach ($keys as $k) {
             $notifications[$k] = $request->boolean("notifications.$k");

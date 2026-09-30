@@ -38,7 +38,7 @@
             class="h-12 rounded-lg border border-gray-500 px-4 text-sm w-full bg-white text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-emerald-700 focus:ring-[3px] focus:ring-emerald-700/10">
         <p id="pa-match" class="text-xs mt-1 text-gray-400">As senhas devem coincidir.</p>
     </div>
-    <button class="flex items-center justify-center gap-2 h-11 px-5 rounded-lg bg-emerald-700 text-white text-sm font-semibold border border-emerald-700 hover:bg-emerald-800 transition w-full">Ativar acesso</button>
+    <x-btn-submit icon="key" class="w-full">Ativar acesso</x-btn-submit>
 </form>
 
 @push('scripts')

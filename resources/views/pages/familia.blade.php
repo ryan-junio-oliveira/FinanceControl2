@@ -12,14 +12,8 @@
     </div>
     @if($isGestor)
     <div class="flex gap-2">
-        <a href="{{ route('familia.mesadas.create') }}" class="btn-ghost">
-            <span class="material-symbols-outlined text-[17px] text-amber-500">tune</span>
-            Regras de Mesada
-        </a>
-        <a href="{{ route('familia.convites.create') }}" class="btn-primary">
-            <span class="material-symbols-outlined text-[17px]">person_add</span>
-            Convidar Pessoa
-        </a>
+        <x-btn-link :href="route('familia.mesadas.create')" color="ghost" icon="tune">Regras de Mesada</x-btn-link>
+        <x-btn-link :href="route('familia.convites.create')" icon="person_add">Convidar Pessoa</x-btn-link>
     </div>
     @endif
 </div>
@@ -65,12 +59,12 @@
                     <option value="{{ $v }}" {{ $u->role===$v?'selected':'' }}>{{ $l }}</option>
                 @endforeach
             </select>
-            <button class="h-9 px-4 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-[12px] font-bold transition">OK</button>
+            <x-btn-submit color="dark" size="sm">OK</x-btn-submit>
         </form>
         <form method="POST" action="{{ route('familia.membros.destroy', $u) }}"
             onsubmit="return confirm('Remover {{ $u->name }}? Só é possível sem lançamentos.')" class="mt-2">
             @csrf @method('DELETE')
-            <button class="text-[12px] font-bold text-gray-300 hover:text-red-500 transition px-1 py-0.5 rounded-lg hover:bg-red-50">Remover pessoa</button>
+            <x-btn-submit color="soft-red" size="sm">Remover pessoa</x-btn-submit>
         </form>
         @endif
     </div>
@@ -88,14 +82,12 @@
                 </p>
                 <p class="text-[11px] text-gray-400 font-mono break-all mt-0.5">{{ url('/primeiro-acesso/'.$cv->token) }}</p>
             </div>
-            <button onclick="navigator.clipboard.writeText('{{ url('/primeiro-acesso/'.$cv->token) }}');this.textContent='✓ Copiado!';setTimeout(()=>this.textContent='Copiar link',2000)"
-                class="h-9 px-3 rounded-lg bg-white border border-gray-500 hover:border-emerald-400 hover:text-emerald-700 text-[12px] font-bold transition-all">
-                Copiar link
-            </button>
+            <x-btn-action color="ghost" size="sm"
+                onclick="navigator.clipboard.writeText('{{ url('/primeiro-acesso/'.$cv->token) }}');this.textContent='✓ Copiado!';setTimeout(()=>this.textContent='Copiar link',2000)">Copiar link</x-btn-action>
             @if($isGestor)
             <form method="POST" action="{{ route('familia.convites.destroy', $cv) }}" class="inline">
                 @csrf @method('DELETE')
-                <button class="h-9 px-3 rounded-lg border border-red-100 text-red-400 hover:text-red-600 hover:bg-red-50 text-[12px] font-bold transition-all">Revogar</button>
+                <x-btn-submit color="soft-red" size="sm">Revogar</x-btn-submit>
             </form>
             @endif
         </div>
@@ -121,6 +113,12 @@
                 <p class="text-[11px] text-gray-400">{{ ucfirst($md->frequency) }} · próximo {{ $md->nextPayday()->format('d/m/Y') }}</p>
             </div>
             <strong class="num text-[13px] text-gray-800">{{ Fin::money($md->amount) }}</strong>
+            @if($isGestor)
+            <form method="POST" action="{{ route('familia.mesadas.destroy', $md) }}" onsubmit="return confirm('Remover mesada de {{ $md->member->name }}?')" class="shrink-0">
+                @csrf @method('DELETE')
+                <x-btn-submit color="danger" iconOnly icon="close" title="Remover mesada" />
+            </form>
+            @endif
         </div>
         @empty
         <div class="text-center py-10 text-gray-400">

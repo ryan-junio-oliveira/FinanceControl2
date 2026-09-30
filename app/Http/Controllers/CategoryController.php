@@ -14,11 +14,14 @@ class CategoryController extends Controller
     public function index(Request $request): View
     {
         $family = Fin::family();
-        $mes = Fin::month();
 
-        $q = $family->categories()->with(['subcategories', 'transactions'])->withCount('subcategories');
+        // Listagem leve: apenas cadastro, sem cálculos.
+        $q = $family->categories();
         if ($request->filled('tipo') && in_array($request->tipo, ['despesa', 'receita'], true)) {
             $q->where('type', $request->tipo);
+        }
+        if ($request->filled('q')) {
+            $q->where('name', 'like', '%'.$request->q.'%');
         }
         if ($request->boolean('arquivadas')) {
             $q->where('archived', true);
@@ -26,17 +29,9 @@ class CategoryController extends Controller
             $q->where('archived', false);
         }
 
-        $categorias = $q->orderBy('sort')->orderBy('name')->get()->map(function ($c) use ($mes) {
-            $c->gasto_mes = $c->type === 'despesa' ? $c->spentInMonth($mes) : 0;
-            $c->pct = $c->monthly_cap > 0 ? round($c->gasto_mes / (float) $c->monthly_cap * 100, 1) : 0;
+        $categorias = $q->orderBy('sort')->orderBy('name')->paginate(20)->withQueryString();
 
-            return $c;
-        });
-
-        $totalTetos = (float) $family->categories()->where('type', 'despesa')->where('archived', false)->sum('monthly_cap');
-        $alertas = $categorias->filter(fn ($c) => $c->type === 'despesa' && $c->monthly_cap > 0 && $c->pct >= 90)->count();
-
-        return view('pages.categorias', compact('mes', 'categorias', 'totalTetos', 'alertas'));
+        return view('pages.categorias', compact('categorias'));
     }
 
     public function create(): View
@@ -47,8 +42,9 @@ class CategoryController extends Controller
     public function edit(Category $categoria): View
     {
         abort_if($categoria->family_id !== Fin::familyId(), 404);
+        $this->authorize('manage', $categoria);
 
-        return view('pages.categories.form', ['categoria' => $categoria->load('subcategories')]);
+        return view('pages.categories.form', ['categoria' => $categoria]);
     }
 
     public function store(CategoryRequest $request): RedirectResponse
@@ -56,17 +52,12 @@ class CategoryController extends Controller
         $family = Fin::family();
         $data = $request->validated();
 
-        $cat = $family->categories()->create([
+        $family->categories()->create([
             'name' => $data['name'],
             'type' => $data['type'],
             'icon' => $data['icon'] ?? 'tag',
-            'monthly_cap' => $data['monthly_cap'] ?? null,
             'sort' => ($family->categories()->max('sort') ?? 0) + 1,
         ]);
-
-        foreach ($this->parseSubs($data['subcategories'] ?? '') as $nome) {
-            $cat->subcategories()->create(['name' => $nome]);
-        }
 
         return redirect()->route('categorias')->with('status', 'Categoria criada.');
     }
@@ -75,6 +66,7 @@ class CategoryController extends Controller
     {
         $family = Fin::family();
         abort_if($categoria->family_id !== $family->id, 404);
+        $this->authorize('manage', $categoria);
 
         $data = $request->validated();
         $data['archived'] = $request->boolean('archived');
@@ -87,15 +79,10 @@ class CategoryController extends Controller
     {
         $family = Fin::family();
         abort_if($categoria->family_id !== $family->id, 404);
+        $this->authorize('manage', $categoria);
         abort_if($categoria->transactions()->exists(), 422, 'Categoria com lançamentos não pode ser excluída. Arquive-a.');
         $categoria->delete();
 
         return redirect()->route('categorias')->with('status', 'Categoria excluída.');
-    }
-
-    /** @return string[] */
-    private function parseSubs(string $raw): array
-    {
-        return collect(preg_split('/[\r\n,;]+/', $raw))->map(fn ($s) => trim($s))->filter()->take(20)->values()->all();
     }
 }

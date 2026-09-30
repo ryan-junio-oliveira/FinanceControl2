@@ -43,7 +43,7 @@
         <span>Lembrar deste dispositivo por 30 dias</span>
     </label>
 
-    <button class="flex items-center justify-center gap-2 h-11 px-5 rounded-lg bg-emerald-700 text-white text-sm font-semibold border border-emerald-700 hover:bg-emerald-800 transition w-full">Entrar no sistema</button>
+    <x-btn-submit icon="login" class="w-full">Entrar no sistema</x-btn-submit>
 </form>
 
 <p class="text-center text-[13px] text-gray-500 mt-5">

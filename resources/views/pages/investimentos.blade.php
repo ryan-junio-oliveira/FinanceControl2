@@ -11,33 +11,69 @@
         <p class="text-[13px] text-gray-400 mt-0.5 font-medium">Carteiras e ativos em {{ $mes }}.</p>
     </div>
     <div class="flex gap-2 flex-wrap">
-        <a href="{{ route('investimentos.carteiras.create') }}" class="btn-ghost">
-            <span class="material-symbols-outlined text-[17px] text-blue-500">add</span>
-            Nova Carteira
-        </a>
-        <a href="{{ route('investimentos.aportes.create') }}" class="btn-secondary">
-            <span class="material-symbols-outlined text-[17px]">add_circle</span>
-            Novo Aporte
-        </a>
+        <x-btn-link :href="route('investimentos.carteiras.create')" icon="add">Nova Carteira</x-btn-link>
+        <x-btn-link :href="route('investimentos.aportes.create')" icon="add_circle">Novo Aporte</x-btn-link>
     </div>
 </div>
 
-{{-- KPIs --}}
-<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-    <x-kpi-card label="Patrimônio Total"      :value="Fin::money($patrimonio)"   icon="account_balance"  accent="blue" />
-    <x-kpi-card label="Aportes no Mês"        :value="Fin::money($aportesMes)"   icon="payments"         accent="green" />
-    <x-kpi-card label="Rendimentos no Mês"    :value="Fin::money($rendimentos)"  icon="paid"             accent="emerald" />
-    <x-kpi-card label="Reserva de Emergência" :value="Fin::money($reservaTotal)" icon="shield_with_heart" accent="amber">
-        <x-slot:bottom>
-            @if($reservaMeta > 0)
-                <span class="text-[12px] text-gray-400 num">Meta {{ Fin::money($reservaMeta) }}</span>
+{{-- Mercado hoje (fontes públicas, cache de 30 min) --}}
+<x-section-card title="Mercado Hoje" subtitle="Selic, CDI, Ibovespa, dólar e Bitcoin · fontes: BCB, Yahoo, AwesomeAPI, Binance">
+    <x-slot:action>
+        @if($market['fetched_at'])
+        <span class="text-[11px] font-semibold text-gray-400 num">Atualizado em {{ $market['fetched_at'] }}</span>
+        @endif
+    </x-slot:action>
+    @php
+        $indicadores = [
+            ['key' => 'selic', 'label' => 'Selic', 'icon' => 'percent', 'accent' => 'text-emerald-600 bg-emerald-50',
+                'fmt' => fn($v) => number_format($v, 2, ',', '.').'% a.a.', 'changeSuffix' => ' p.p.'],
+            ['key' => 'cdi', 'label' => 'CDI', 'icon' => 'show_chart', 'accent' => 'text-blue-600 bg-blue-50',
+                'fmt' => fn($v) => number_format($v, 2, ',', '.').'% a.a.', 'changeSuffix' => '', 'nota' => 'anualizado (est.)'],
+            ['key' => 'ibovespa', 'label' => 'Ibovespa', 'icon' => 'trending_up', 'accent' => 'text-indigo-600 bg-indigo-50',
+                'fmt' => fn($v) => number_format($v, 0, ',', '.').' pts', 'changeSuffix' => '%'],
+            ['key' => 'dolar', 'label' => 'Dólar', 'icon' => 'attach_money', 'accent' => 'text-amber-600 bg-amber-50',
+                'fmt' => fn($v) => 'R$ '.number_format($v, 2, ',', '.'), 'changeSuffix' => '%'],
+            ['key' => 'btc_usd', 'label' => 'Bitcoin (USD)', 'icon' => 'currency_bitcoin', 'accent' => 'text-orange-600 bg-orange-50',
+                'fmt' => fn($v) => 'US$ '.number_format($v, 0, ',', '.'), 'changeSuffix' => '%'],
+            ['key' => 'btc_brl', 'label' => 'Bitcoin (BRL)', 'icon' => 'currency_bitcoin', 'accent' => 'text-orange-600 bg-orange-50',
+                'fmt' => fn($v) => 'R$ '.number_format($v, 0, ',', '.'), 'changeSuffix' => '%'],
+        ];
+    @endphp
+    <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
+        @foreach($indicadores as $ind)
+        @php $d = $market[$ind['key']] ?? null; @endphp
+        <div class="rounded-xl border border-slate-200 bg-white p-3.5">
+            <div class="flex items-center gap-1.5">
+                <span class="w-7 h-7 rounded-lg grid place-items-center shrink-0 {{ $ind['accent'] }}">
+                    <span class="material-symbols-outlined text-[16px]" style="font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 20">{{ $ind['icon'] }}</span>
+                </span>
+                <p class="text-[11px] font-bold text-gray-500 truncate">{{ $ind['label'] }}</p>
+            </div>
+            @if($d)
+                <p class="num font-extrabold text-[16px] text-gray-900 mt-2 truncate" title="{{ ($ind['fmt'])($d['value']) }}">{{ ($ind['fmt'])($d['value']) }}</p>
+                <div class="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                    @if($d['change'] !== null)
+                        @php $up = $d['change'] >= 0; @endphp
+                        <span class="inline-flex items-center gap-0.5 text-[11px] font-extrabold num {{ $up ? 'text-emerald-600' : 'text-red-500' }}">
+                            <span class="material-symbols-outlined text-[14px]" style="font-variation-settings:'FILL' 1,'wght' 600,'GRAD' 0,'opsz' 20">{{ $up ? 'trending_up' : 'trending_down' }}</span>
+                            {{ ($up ? '+' : '').str_replace('.', ',', (string) $d['change']).$ind['changeSuffix'] }}
+                        </span>
+                    @endif
+                    @if(!empty($d['date']))
+                        <span class="text-[10px] text-gray-400 num">{{ $d['date'] }}</span>
+                    @endif
+                </div>
+                @if(!empty($ind['nota']))
+                    <p class="text-[10px] text-gray-300 mt-1">{{ $ind['nota'] }}</p>
+                @endif
             @else
-                <span class="text-[12px] text-gray-400">Sem meta definida</span>
+                <p class="font-bold text-[13px] text-gray-300 mt-2">Indisponível</p>
+                <p class="text-[10px] text-gray-300 mt-1">Sem conexão com a fonte</p>
             @endif
-        </x-slot:bottom>
-        @if($reservaMeta > 0)<div class="mt-3"><x-progress :value="min(100, $reservaTotal / $reservaMeta * 100)" /></div>@endif
-    </x-kpi-card>
-</div>
+        </div>
+        @endforeach
+    </div>
+</x-section-card>
 
 {{-- Carteiras --}}
 <div class="grid sm:grid-cols-2 xl:grid-cols-4 gap-4">
@@ -64,10 +100,7 @@
         <span class="material-symbols-outlined text-[52px] text-gray-300">savings</span>
         <p class="text-[15px] font-extrabold mt-4 text-gray-500">Nenhuma carteira ainda</p>
         <p class="text-[13px] mt-1">Crie a primeira carteira (ex.: Reserva de Emergência).</p>
-        <a href="{{ route('investimentos.carteiras.create') }}" class="btn-ghost inline-flex mt-5">
-            <span class="material-symbols-outlined text-[17px] text-blue-500">add</span>
-            Nova Carteira
-        </a>
+        <x-btn-link :href="route('investimentos.carteiras.create')" icon="add" class="mt-5">Nova Carteira</x-btn-link>
     </div>
     @endforelse
 </div>
@@ -118,10 +151,7 @@
 
     <div class="lg:col-span-7">
         <x-section-card title="Adicionar Ativo" subtitle="Registre ativos nas suas carteiras">
-            <a href="{{ route('investimentos.ativos.create') }}" class="btn-primary w-full justify-center h-12">
-                <span class="material-symbols-outlined text-[18px]">add_circle</span>
-                Adicionar ativo
-            </a>
+            <x-btn-link :href="route('investimentos.ativos.create')" color="blue" icon="add_circle" class="w-full">Adicionar ativo</x-btn-link>
             <p class="text-[12px] text-gray-400 mt-3 text-center">Escolha a carteira e preencha os dados na próxima tela.</p>
         </x-section-card>
     </div>
@@ -154,9 +184,7 @@
                         <form method="POST" action="{{ route('investimentos.ativos.destroy', $a) }}"
                             onsubmit="return confirm('Remover ativo?')" class="inline">
                             @csrf @method('DELETE')
-                            <button class="w-8 h-8 rounded-lg hover:bg-red-50 text-gray-300 hover:text-red-500 transition inline-grid place-items-center">
-                                <span class="material-symbols-outlined text-[19px]">delete</span>
-                            </button>
+                            <x-btn-submit color="danger" iconOnly icon="delete" title="Remover ativo" />
                         </form>
                     </td>
                 </tr>

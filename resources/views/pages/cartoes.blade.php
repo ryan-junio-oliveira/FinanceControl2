@@ -12,28 +12,11 @@
         <p class="text-[13px] text-gray-400 mt-0.5 font-medium">Limite, fechamento, vencimento e titular de cada cartão.</p>
     </div>
     <div class="flex gap-2">
-        <a href="{{ route('cartoes.itens.create') }}" class="btn-ghost">
-            <span class="material-symbols-outlined text-[17px] text-emerald-600">add_shopping_cart</span>
-            Nova Compra
-        </a>
+        <x-btn-link :href="route('cartoes.itens.create')" icon="add_shopping_cart">Nova Compra</x-btn-link>
         @if($isGestor)
-        <a href="{{ route('cartoes.create') }}" class="btn-secondary">
-            <span class="material-symbols-outlined text-[17px]">add_card</span>
-            Novo Cartão
-        </a>
+        <x-btn-link :href="route('cartoes.create')" icon="add_card">Novo Cartão</x-btn-link>
         @endif
     </div>
-</div>
-
-{{-- KPIs --}}
-<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-    <x-kpi-card label="Faturas em Aberto" :value="Fin::money($totalFaturas)" icon="receipt_long" accent="slate" />
-    <x-kpi-card label="Limite Total" :value="Fin::money($limiteTotal)" icon="credit_score" accent="emerald">
-        <div class="mt-3"><x-progress :value="$usoGlobal" /></div>
-    </x-kpi-card>
-    <x-kpi-card label="Uso Global" :value="$usoGlobal.'%'" icon="pie_chart" accent="blue">
-        <x-slot:bottom><span class="text-[12px] text-gray-400">Recomendado: até 30%</span></x-slot:bottom>
-    </x-kpi-card>
 </div>
 
 {{-- Cards --}}
@@ -46,9 +29,14 @@
             <div class="absolute -right-8 -bottom-8 w-32 h-32 rounded-lg opacity-20" style="background: rgba(255,255,255,0.4); filter: blur(20px);"></div>
             <div class="flex items-center justify-between gap-2 relative z-10">
                 <p class="text-[11px] font-extrabold tracking-[.15em] opacity-90">{{ mb_strtoupper($c->name) }}</p>
-                @if(!$c->active)
-                <span class="text-[10px] font-bold rounded-lg px-2.5 py-1" style="background: rgba(0,0,0,0.2);">INATIVO</span>
-                @endif
+                <div class="flex items-center gap-1.5">
+                    @if($c->brand_label)
+                    <span class="text-[10px] font-bold rounded-lg px-2.5 py-1 uppercase tracking-wider" style="background: rgba(0,0,0,0.2);">{{ $c->brand_label }}</span>
+                    @endif
+                    @if(!$c->active)
+                    <span class="text-[10px] font-bold rounded-lg px-2.5 py-1" style="background: rgba(0,0,0,0.2);">INATIVO</span>
+                    @endif
+                </div>
             </div>
             <div class="relative z-10">
                 <p class="text-[11px] opacity-70 flex items-center gap-1.5 mb-1">
@@ -74,20 +62,14 @@
                 <span class="font-bold num text-gray-800">{{ Fin::money($c->open_invoice) }} em aberto</span>
             </div>
             <x-progress :value="$c->credit_limit > 0 ? min(100, $c->open_invoice / (float) $c->credit_limit * 100) : 0" />
-            <div class="mt-4 flex items-center gap-2">
-                <a href="{{ route('cartoes.itens.create') }}" class="btn-ghost h-9 px-3 text-[12px] rounded-lg">
-                    <span class="material-symbols-outlined text-[15px] text-emerald-600">add</span>
-                    Comprar
-                </a>
+            <div class="mt-4 flex items-center gap-1.5">
+                <x-btn-link :href="route('cartoes.itens.create')" color="ghost" size="sm" icon="add">Comprar</x-btn-link>
                 @if($isGestor)
-                <a href="{{ route('cartoes.edit', $c) }}" class="btn-ghost h-9 px-3 text-[12px] rounded-lg">
-                    <span class="material-symbols-outlined text-[15px]">edit</span>
-                    Editar
-                </a>
+                <x-btn-link :href="route('cartoes.edit', $c)" iconOnly icon="edit" title="Editar cartão" />
                 <form method="POST" action="{{ route('cartoes.destroy', $c) }}" class="inline"
                     onsubmit="return confirm('Excluir este cartão? Só é possível sem lançamentos.')">
                     @csrf @method('DELETE')
-                    <button class="h-9 px-3 rounded-lg border border-red-100 text-red-400 hover:text-red-600 hover:bg-red-50 hover:border-red-200 text-[12px] font-bold transition-all">Excluir</button>
+                    <x-btn-submit color="danger" iconOnly icon="delete" title="Excluir cartão" />
                 </form>
                 @endif
             </div>
@@ -99,10 +81,7 @@
         <p class="text-[15px] font-extrabold mt-4 text-gray-500">Nenhum cartão cadastrado</p>
         <p class="text-[13px] mt-1">Adicione o primeiro cartão.</p>
         @if($isGestor)
-        <a href="{{ route('cartoes.create') }}" class="btn-secondary inline-flex mt-5">
-            <span class="material-symbols-outlined text-[17px]">add_card</span>
-            Novo Cartão
-        </a>
+        <x-btn-link :href="route('cartoes.create')" icon="add_card" class="mt-5">Novo Cartão</x-btn-link>
         @endif
     </div>
     @endforelse
@@ -112,10 +91,7 @@
     {{-- Itens da fatura --}}
     <x-section-card class="lg:col-span-7" title="Itens da Fatura" :subtitle="$fatura->total().' item(ns)'">
         <x-slot:action>
-            <a href="{{ route('cartoes.itens.create') }}" class="btn-secondary h-9 px-3 text-[12px] rounded-lg">
-                <span class="material-symbols-outlined text-[15px]">add</span>
-                Lançar compra
-            </a>
+            <x-btn-link :href="route('cartoes.itens.create')" size="sm" icon="add">Lançar compra</x-btn-link>
         </x-slot:action>
         <div class="overflow-x-auto -mx-5 lg:-mx-6 px-5 lg:px-6">
             <table class="w-full text-left min-w-[760px] table-modern">
@@ -147,9 +123,8 @@
                             @if($f->status !== 'pago')
                             <form method="POST" action="{{ route('cartoes.itens.settle', $f) }}" class="inline">
                                 @csrf
-                                <button title="Liquidar" class="w-8 h-8 rounded-lg hover:bg-emerald-50 text-emerald-500 hover:text-emerald-700 transition inline-grid place-items-center">
-                                    <span class="material-symbols-outlined text-[19px]">check_circle</span>
-                                </button>
+                                <x-btn-submit color="success" iconOnly icon="check_circle" title="Liquidar" />
+                            </form>
                             </form>
                             @endif
                         </td>

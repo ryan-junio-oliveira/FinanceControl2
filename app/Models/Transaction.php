@@ -10,12 +10,14 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Transaction extends Model
 {
     public const TYPES = ['receita', 'despesa', 'transferencia', 'aporte'];
+
     public const STATUSES = ['pago', 'pendente', 'agendado'];
 
     protected $fillable = [
-        'family_id', 'user_id', 'account_id', 'category_id', 'subcategory_id',
+        'family_id', 'user_id', 'account_id', 'category_id',
         'type', 'is_fixed', 'description', 'amount', 'occurred_on', 'due_on', 'status',
         'transfer_to_account_id', 'portfolio_id', 'notes',
+        'installment_group_id', 'installment_number', 'installments_total',
     ];
 
     protected function casts(): array
@@ -46,11 +48,6 @@ class Transaction extends Model
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
-    }
-
-    public function subcategory(): BelongsTo
-    {
-        return $this->belongsTo(Subcategory::class);
     }
 
     public function scopeOfFamily(Builder $q, int $familyId): Builder
