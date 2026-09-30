@@ -21,7 +21,7 @@
     @foreach($tabs as $i=>$t)
     <button data-tab="{{ $t['id'] }}"
         class="cfg-tab shrink-0 h-10 px-4 rounded-lg text-[13px] font-bold flex items-center gap-2 border transition-all duration-200
-        {{ $i===0 ? 'bg-slate-900 text-white border-gray-900 shadow-sm' : 'bg-white border-gray-500 text-gray-500 hover:border-gray-500 hover:text-gray-700' }}">
+        {{ $i===0 ? 'bg-slate-900 text-white border-gray-900 shadow-sm' : 'bg-white border-slate-200 text-gray-500 hover:border-slate-300 hover:text-gray-700' }}">">
         <span class="material-symbols-outlined text-[17px]">{{ $t['icon'] }}</span>
         {{ $t['label'] }}
     </button>
@@ -131,7 +131,7 @@
 <div data-panel="bancos" class="cfg-panel hidden space-y-4">
     <x-section-card title="Bancos" subtitle="Referência manual — sem sincronização automática com bancos">
         @forelse($bancos as $b)
-        <div class="flex items-center gap-3 p-4 rounded-lg border border-gray-500 hover:border-gray-500 mb-3 transition-all">
+        <div class="flex items-center gap-3 p-4 rounded-xl border border-slate-200 hover:border-slate-300 mb-3 transition-all">
             <span class="w-11 h-11 rounded-lg grid place-items-center text-[13px] font-extrabold text-white shadow-sm shrink-0"
                 style="background: linear-gradient(135deg, #1E293B, #0F172A);">
                 {{ mb_strtoupper(mb_substr($b->bank, 0, 2)) }}
@@ -154,7 +154,7 @@
         </div>
         @endforelse
         <a href="{{ route('configuracoes.bancos.create') }}"
-            class="mt-3 h-12 rounded-lg border-2 border-dashed border-gray-500 text-[13px] font-bold text-gray-400
+            class="mt-3 h-12 rounded-lg border-2 border-dashed border-slate-200 text-[13px] font-bold text-gray-400
             hover:border-emerald-400 hover:text-emerald-600 hover:bg-emerald-50/50 flex items-center justify-center gap-2 transition-all duration-200">
             <span class="material-symbols-outlined text-[18px]">add_circle</span>
             Anotar banco
@@ -166,7 +166,7 @@
 <script>
 document.querySelectorAll('.cfg-tab').forEach(btn => btn.addEventListener('click', () => {
     document.querySelectorAll('.cfg-tab').forEach(x => {
-        x.className = 'cfg-tab shrink-0 h-10 px-4 rounded-lg text-[13px] font-bold flex items-center gap-2 border transition-all duration-200 bg-white border-gray-500 text-gray-500 hover:border-gray-500 hover:text-gray-700';
+        x.className = 'cfg-tab shrink-0 h-10 px-4 rounded-lg text-[13px] font-bold flex items-center gap-2 border transition-all duration-200 bg-white border-slate-200 text-gray-500 hover:border-slate-300 hover:text-gray-700';
     });
     btn.className = 'cfg-tab shrink-0 h-10 px-4 rounded-lg text-[13px] font-bold flex items-center gap-2 border transition-all duration-200 bg-slate-900 text-white border-gray-900 shadow-sm';
     document.querySelectorAll('.cfg-panel').forEach(p => p.classList.toggle('hidden', p.dataset.panel !== btn.dataset.tab));

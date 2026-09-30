@@ -11,10 +11,10 @@
         :backUrl="route('familia')"
         backLabel="Voltar para a família"
         icon="calendar_clock"
-        iconBg="linear-gradient(135deg,#FFFBEB,#FEF3C7)"
-        iconColor="#D97706" />
+        iconBg="linear-gradient(135deg,#FFF1F2,#FFE4E6)"
+        iconColor="#E11D48" />
 
-    <form method="POST" action="{{ route('familia.mesadas.store') }}" class="form-card">
+    <form method="POST" action="{{ route('familia.mesadas.store') }}" class="form-card tint-rose">
         @csrf
         <div class="form-grid">
             <x-form.field label="Pessoa" for="f-membro" :required="true" :error="$errors->first('user_id')">
@@ -38,7 +38,7 @@
                 </x-form.field>
             </div>
         </div>
-        <x-form.actions :cancelUrl="route('familia')" submitLabel="Salvar mesada" submitIcon="save" />
+        <x-form.actions :cancelUrl="route('familia')" submitLabel="Salvar mesada" submitIcon="save" color="rose" />
     </form>
 </div>
 @endsection

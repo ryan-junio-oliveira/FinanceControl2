@@ -11,10 +11,10 @@
         :backUrl="route('familia')"
         backLabel="Voltar para a família"
         icon="person_add"
-        iconBg="linear-gradient(135deg,#ECFDF5,#D1FAE5)"
-        iconColor="#059669" />
+        iconBg="linear-gradient(135deg,#FFF1F2,#FFE4E6)"
+        iconColor="#E11D48" />
 
-    <form method="POST" action="{{ route('familia.convites.store') }}" class="form-card">
+    <form method="POST" action="{{ route('familia.convites.store') }}" class="form-card tint-rose">
         @csrf
         <div class="form-grid">
             <x-form.field label="Nome" for="f-nome" :required="true" :error="$errors->first('name')">
@@ -32,7 +32,7 @@
                 </x-form.select>
             </x-form.field>
         </div>
-        <x-form.actions :cancelUrl="route('familia')" submitLabel="Criar convite" submitIcon="person_add" />
+        <x-form.actions :cancelUrl="route('familia')" submitLabel="Criar convite" submitIcon="person_add" color="rose" />
     </form>
 </div>
 @endsection

@@ -3,14 +3,17 @@
 namespace App\Providers;
 
 use App\Models\Account;
+use App\Models\Attachment;
 use App\Models\Category;
 use App\Models\CreditCard;
 use App\Models\Transaction;
+use App\Observers\TransactionObserver;
 use App\Policies\AccountPolicy;
 use App\Policies\CategoryPolicy;
 use App\Policies\CreditCardPolicy;
 use App\Policies\TransactionPolicy;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -32,5 +35,11 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Account::class, AccountPolicy::class);
         Gate::policy(CreditCard::class, CreditCardPolicy::class);
         Gate::policy(Category::class, CategoryPolicy::class);
+
+        Transaction::observe(TransactionObserver::class);
+
+        Attachment::deleting(function (Attachment $attachment) {
+            Storage::disk('local')->delete($attachment->path);
+        });
     }
 }

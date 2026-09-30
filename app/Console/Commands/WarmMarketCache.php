@@ -10,15 +10,19 @@ class WarmMarketCache extends Command
 {
     protected $signature = 'market:warm';
 
-    protected $description = 'Atualiza o cache de indicadores de mercado (Selic, Ibovespa, dólar, Bitcoin)';
+    protected $description = 'Atualiza o cache da página Mercado (indicadores, ações, FIIs)';
 
     public function handle(): int
     {
         Cache::forget('market:snapshot');
-        $snap = MarketData::snapshot();
-        $ok = collect([$snap['selic'], $snap['ibovespa'], $snap['dolar'], $snap['btc_usd']])->filter()->count();
+        Cache::forget('market:snapshot:v2');
+        Cache::forget('market:stocks:v1');
+        Cache::forget('market:mercado:v1');
+        $data = MarketData::mercado();
+        $ind = $data['indicators'];
+        $ok = collect([$ind['selic'], $ind['ibovespa'], $ind['dolar'], $ind['btc_usd']])->filter()->count();
 
-        $this->info("Cache de mercado atualizado: {$ok}/6 indicadores disponíveis.");
+        $this->info("Cache de mercado atualizado: {$ok}/6 indicadores + ".count($data['acoes']).' ações + '.count($data['fiis']).' FIIs.');
 
         return self::SUCCESS;
     }

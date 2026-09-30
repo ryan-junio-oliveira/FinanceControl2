@@ -11,10 +11,11 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FamilyController;
 use App\Http\Controllers\InvestmentController;
+use App\Http\Controllers\MercadoController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\TransactionController;
-use App\Support\Fin;
 use Illuminate\Support\Facades\Route;
 
 // ---------- Visitantes ----------
@@ -39,6 +40,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 
     Route::middleware('family.role')->group(function () {
+        Route::post('/notificacoes/lidas', [NotificationController::class, 'readAll'])->name('notificacoes.lidas');
         Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard.index');
 
@@ -59,6 +61,8 @@ Route::middleware('auth')->group(function () {
         Route::post('/receitas', [TransactionController::class, 'store'])->defaults('type', 'receita')->name('receitas.store');
         Route::patch('/lancamentos/{transaction}', [TransactionController::class, 'update'])->name('lancamentos.update');
         Route::post('/lancamentos/{transaction}/liquidar', [TransactionController::class, 'settle'])->name('lancamentos.settle');
+        Route::get('/anexos/{anexo}', [TransactionController::class, 'downloadAttachment'])->name('anexos.download');
+        Route::delete('/anexos/{anexo}', [TransactionController::class, 'destroyAttachment'])->name('anexos.destroy');
 
         // Contas
         Route::get('/contas', [AccountController::class, 'index'])->name('contas');
@@ -100,10 +104,16 @@ Route::middleware('auth')->group(function () {
             Route::delete('/categorias/{categoria}', [CategoryController::class, 'destroy'])->name('categorias.destroy');
 
             Route::get('/investimentos', [InvestmentController::class, 'index'])->name('investimentos');
+            Route::get('/investimentos/mercado', [InvestmentController::class, 'market'])->name('investimentos.mercado');
+
+            Route::get('/mercado', [MercadoController::class, 'index'])->name('mercado');
+            Route::get('/mercado/dados', [MercadoController::class, 'dados'])->name('mercado.dados');
             Route::get('/investimentos/carteiras/criar', [InvestmentController::class, 'createPortfolio'])->name('investimentos.carteiras.create');
             Route::post('/investimentos/carteiras', [InvestmentController::class, 'storePortfolio'])->name('investimentos.carteiras.store');
             Route::get('/investimentos/ativos/criar', [InvestmentController::class, 'createAsset'])->name('investimentos.ativos.create');
             Route::post('/investimentos/ativos', [InvestmentController::class, 'storeAsset'])->name('investimentos.ativos.store');
+            Route::get('/investimentos/ativos/{ativo}/editar', [InvestmentController::class, 'editAsset'])->name('investimentos.ativos.edit');
+            Route::patch('/investimentos/ativos/{ativo}', [InvestmentController::class, 'updateAsset'])->name('investimentos.ativos.update');
             Route::get('/investimentos/aportes/criar', [InvestmentController::class, 'createContribution'])->name('investimentos.aportes.create');
             Route::post('/investimentos/aportes', [InvestmentController::class, 'storeContribution'])->name('investimentos.aportes.store');
             Route::delete('/investimentos/ativos/{ativo}', [InvestmentController::class, 'destroyAsset'])->name('investimentos.ativos.destroy');

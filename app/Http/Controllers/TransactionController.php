@@ -3,14 +3,20 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\TransactionRequest;
+use App\Models\Attachment;
 use App\Models\Transaction;
+use App\Notifications\CompraDependente;
 use App\Support\Fin;
+use App\Support\Notify;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class TransactionController extends Controller
 {
@@ -78,6 +84,7 @@ class TransactionController extends Controller
         abort_if($transaction->family_id !== $family->id, 404);
         abort_if(! in_array($transaction->type, ['despesa', 'receita'], true), 404);
         $this->authorize('update', $transaction);
+        $transaction->load(['attachments', 'auditLogs.member']);
 
         return view('pages.transactions.form', [
             'type' => $transaction->type,
@@ -114,13 +121,14 @@ class TransactionController extends Controller
         $parcelas = max(1, min(48, (int) ($data['installments_total'] ?? 1)));
         unset($data['installments_total']);
 
-        DB::transaction(function () use ($family, $data, $type, $parcelas, $request) {
+        $criados = collect();
+        DB::transaction(function () use ($family, $data, $type, $parcelas, $request, $criados) {
             if ($parcelas === 1) {
-                Transaction::create($data + [
+                $criados->push(Transaction::create($data + [
                     'family_id' => $family->id,
                     'type' => $type,
                     'is_fixed' => $request->boolean('is_fixed'),
-                ]);
+                ]));
 
                 return;
             }
@@ -136,7 +144,7 @@ class TransactionController extends Controller
             for ($i = 1; $i <= $parcelas; $i++) {
                 $cents = $base + ($i <= $resto ? 1 : 0);
                 $occ = $baseDate->copy()->addMonthsNoOverflow($i - 1)->toDateString();
-                Transaction::create($data + [
+                $criados->push(Transaction::create($data + [
                     'family_id' => $family->id,
                     'type' => $type,
                     'is_fixed' => false,
@@ -148,11 +156,24 @@ class TransactionController extends Controller
                     'installment_group_id' => $group,
                     'installment_number' => $i,
                     'installments_total' => $parcelas,
-                ]);
+                ]));
             }
         });
 
+        if ($request->hasFile('anexo') && $criados->isNotEmpty()) {
+            $this->guardarAnexo($request, $family->id, $criados->first());
+        }
+
         $rota = $type === 'despesa' ? 'despesas' : 'receitas';
+
+        if (! $member->isAdmin() && $type === 'despesa') {
+            Notify::gestoresIf($family, 'compra_dependente', new CompraDependente(
+                $member->name,
+                $parcelas > 1 ? "{$data['description']} ({$parcelas}x)" : $data['description'],
+                (float) $data['amount'],
+                'Lançamento avulso',
+            ));
+        }
 
         return redirect()->route($rota, ['mes' => Fin::month()])->with('status', $parcelas > 1 ? "Lançamento parcelado em {$parcelas}x." : 'Lançamento registrado.');
     }
@@ -184,6 +205,10 @@ class TransactionController extends Controller
 
         $transaction->update($data);
 
+        if ($request->hasFile('anexo')) {
+            $this->guardarAnexo($request, $family->id, $transaction);
+        }
+
         $rota = $transaction->type === 'despesa' ? 'despesas' : 'receitas';
 
         return redirect()->route($rota, ['mes' => Fin::month()])->with('status', 'Lançamento atualizado.');
@@ -195,6 +220,7 @@ class TransactionController extends Controller
         abort_if($transaction->family_id !== $family->id, 404);
         $this->authorize('delete', $transaction);
         $rota = in_array($transaction->type, ['despesa', 'receita'], true) ? $transaction->type.'s' : 'dashboard';
+        $transaction->attachments()->each(fn ($a) => $a->delete());
         $transaction->delete();
 
         return redirect()->route($rota === 'dashboard' ? 'dashboard' : $rota)->with('status', 'Lançamento excluído.');
@@ -209,5 +235,39 @@ class TransactionController extends Controller
         $transaction->update(['status' => 'pago', 'due_on' => $transaction->due_on ?? $transaction->occurred_on]);
 
         return back()->with('status', 'Lançamento liquidado.');
+    }
+
+    /** Baixa o anexo (PDF/imagem do comprovante). */
+    public function downloadAttachment(Attachment $anexo): BinaryFileResponse|StreamedResponse
+    {
+        abort_if($anexo->family_id !== Fin::familyId(), 404);
+        abort_if(! Storage::disk('local')->exists($anexo->path), 404);
+
+        return Storage::disk('local')->download($anexo->path, $anexo->original_name);
+    }
+
+    /** Remove o anexo (dono do envio ou gestor). */
+    public function destroyAttachment(Attachment $anexo): RedirectResponse
+    {
+        $user = request()->user();
+        abort_if($anexo->family_id !== Fin::familyId(), 404);
+        abort_if($anexo->user_id !== $user->id && ! $user->isAdmin(), 403);
+        $anexo->delete();
+
+        return back()->with('status', 'Anexo removido.');
+    }
+
+    private function guardarAnexo(Request $request, int $familyId, Transaction $transaction): void
+    {
+        $file = $request->file('anexo');
+        $path = $file->store("anexos/{$familyId}", 'local');
+        $transaction->attachments()->create([
+            'family_id' => $familyId,
+            'user_id' => $request->user()->id,
+            'path' => $path,
+            'original_name' => $file->getClientOriginalName(),
+            'mime' => $file->getClientMimeType(),
+            'size' => $file->getSize(),
+        ]);
     }
 }

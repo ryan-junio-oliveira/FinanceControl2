@@ -13,7 +13,7 @@
     @if($isGestor)
     <div class="flex gap-2 flex-wrap">
         <x-btn-link :href="route('contas.transfer.create')" color="ghost" icon="swap_horiz">Transferência Interna</x-btn-link>
-        <x-btn-link :href="route('contas.create')" icon="add_circle">Nova Conta</x-btn-link>
+        <x-btn-link :href="route('contas.create')" color="blue" icon="add_circle">Nova Conta</x-btn-link>
     </div>
     @endif
 </div>
@@ -34,7 +34,7 @@
         <p class="num text-[24px] font-extrabold text-gray-900">{{ Fin::money($c->balance) }}</p>
         <p class="text-[12px] text-gray-400 num mt-0.5">Inicial: {{ Fin::money($c->initial_balance) }}</p>
         @if($isGestor)
-        <div class="mt-4 pt-3 border-t border-gray-500 flex items-center gap-1.5">
+        <div class="mt-4 pt-3 border-t border-slate-200 flex items-center gap-1.5">
             <x-btn-link :href="route('contas.edit', $c)" iconOnly icon="edit" title="Editar conta" />
             <form method="POST" action="{{ route('contas.destroy', $c) }}"
                 onsubmit="return confirm('Excluir esta conta? Só é possível sem movimentações.')" class="inline">
@@ -45,13 +45,9 @@
         @endif
     </div>
     @empty
-    <div class="col-span-full text-center py-16 text-gray-400 bg-white rounded-lg border border-dashed border-gray-500">
-        <span class="material-symbols-outlined text-[52px] text-gray-300">account_balance</span>
-        <p class="text-[15px] font-extrabold mt-4 text-gray-500">Nenhuma conta cadastrada</p>
-        <p class="text-[13px] mt-1">Conecte a primeira conta para começar o controle.</p>
-        @if($isGestor)
-        <x-btn-link :href="route('contas.create')" icon="add_circle" class="mt-5">Nova Conta</x-btn-link>
-        @endif
+    <div class="col-span-full bg-white rounded-2xl border border-dashed border-slate-200">
+        <x-empty-state icon="account_balance" title="Nenhuma conta cadastrada" hint="Conecte a primeira conta para começar o controle."
+            :actionUrl="$isGestor ? route('contas.create') : null" actionLabel="Nova Conta" />
     </div>
     @endforelse
 </div>
@@ -86,9 +82,8 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="7" class="text-center py-12 text-gray-400">
-                        <span class="material-symbols-outlined text-[44px] text-gray-300">receipt_long</span>
-                        <p class="text-[13px] font-bold mt-3 text-gray-500">Nenhuma movimentação registrada.</p>
+                    <td colspan="7" class="text-center text-gray-400">
+                        <x-empty-state icon="receipt_long" title="Nenhuma movimentação registrada" />
                     </td>
                 </tr>
                 @endforelse

@@ -9,7 +9,7 @@ class CardTransaction extends Model
 {
     protected $fillable = [
         'family_id', 'credit_card_id', 'user_id', 'category_id',
-        'description', 'amount', 'occurred_on', 'status',
+        'description', 'amount', 'occurred_on', 'status', 'kind',
         'installment_group_id', 'installment_number', 'installments_total',
     ];
 

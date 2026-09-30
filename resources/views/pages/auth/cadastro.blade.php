@@ -19,7 +19,7 @@
     <div class="flex flex-col gap-1.5">
         <label for="manager_name" class="text-xs font-bold text-gray-600">Seu nome *</label>
         <input id="manager_name" name="manager_name" required value="{{ old('manager_name') }}" placeholder="Digite seu nome completo"
-            class="h-12 rounded-lg border px-4 text-sm w-full bg-white text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-emerald-700 focus:ring-[3px] focus:ring-emerald-700/10 {{ $errors->has('manager_name') ? 'border-red-400 focus:border-red-500 focus:ring-red-500/10' : 'border-gray-500' }}">
+            class="h-12 rounded-lg border px-4 text-sm w-full bg-white text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-emerald-700 focus:ring-[3px] focus:ring-emerald-700/10 {{ $errors->has('manager_name') ? 'border-red-400 focus:border-red-500 focus:ring-red-500/10' : 'border-slate-300' }}">
         @error('manager_name')<p class="flex items-center gap-1 text-xs font-semibold text-red-600"><span class="material-symbols-outlined text-[14px]">error</span>{{ $message }}</p>@enderror
     </div>
 
@@ -27,13 +27,13 @@
         <div class="flex flex-col gap-1.5">
             <label for="email" class="text-xs font-bold text-gray-600">E-mail *</label>
             <input id="email" name="email" required type="email" value="{{ old('email') }}" placeholder="Digite seu e-mail"
-                class="h-12 rounded-lg border px-4 text-sm w-full bg-white text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-emerald-700 focus:ring-[3px] focus:ring-emerald-700/10 {{ $errors->has('email') ? 'border-red-400 focus:border-red-500 focus:ring-red-500/10' : 'border-gray-500' }}">
+                class="h-12 rounded-lg border px-4 text-sm w-full bg-white text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-emerald-700 focus:ring-[3px] focus:ring-emerald-700/10 {{ $errors->has('email') ? 'border-red-400 focus:border-red-500 focus:ring-red-500/10' : 'border-slate-300' }}">
             @error('email')<p class="flex items-center gap-1 text-xs font-semibold text-red-600"><span class="material-symbols-outlined text-[14px]">error</span>{{ $message }}</p>@enderror
         </div>
         <div class="flex flex-col gap-1.5">
             <label for="family_name" class="text-xs font-bold text-gray-600">Nome da conta *</label>
             <input id="family_name" name="family_name" required value="{{ old('family_name') }}" placeholder="Digite um nome (ex.: Carlos ou Família Silva)"
-                class="h-12 rounded-lg border px-4 text-sm w-full bg-white text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-emerald-700 focus:ring-[3px] focus:ring-emerald-700/10 {{ $errors->has('family_name') ? 'border-red-400 focus:border-red-500 focus:ring-red-500/10' : 'border-gray-500' }}">
+                class="h-12 rounded-lg border px-4 text-sm w-full bg-white text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-emerald-700 focus:ring-[3px] focus:ring-emerald-700/10 {{ $errors->has('family_name') ? 'border-red-400 focus:border-red-500 focus:ring-red-500/10' : 'border-slate-300' }}">
             @error('family_name')<p class="flex items-center gap-1 text-xs font-semibold text-red-600"><span class="material-symbols-outlined text-[14px]">error</span>{{ $message }}</p>@enderror
         </div>
     </div>
@@ -42,13 +42,13 @@
         <div class="flex flex-col gap-1.5">
             <label for="cad-senha" class="text-xs font-bold text-gray-600">Senha *</label>
             <input id="cad-senha" name="password" required type="password" minlength="8" placeholder="Mínimo 8 caracteres" oninput="forcaSenha(this.value)"
-                class="h-12 rounded-lg border px-4 text-sm w-full bg-white text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-emerald-700 focus:ring-[3px] focus:ring-emerald-700/10 {{ $errors->has('password') ? 'border-red-400 focus:border-red-500 focus:ring-red-500/10' : 'border-gray-500' }}">
+                class="h-12 rounded-lg border px-4 text-sm w-full bg-white text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-emerald-700 focus:ring-[3px] focus:ring-emerald-700/10 {{ $errors->has('password') ? 'border-red-400 focus:border-red-500 focus:ring-red-500/10' : 'border-slate-300' }}">
             @error('password')<p class="flex items-center gap-1 text-xs font-semibold text-red-600"><span class="material-symbols-outlined text-[14px]">error</span>{{ $message }}</p>@enderror
         </div>
         <div class="flex flex-col gap-1.5">
             <label for="cad-conf" class="text-xs font-bold text-gray-600">Confirmar senha *</label>
             <input id="cad-conf" name="password_confirmation" required type="password" minlength="8" placeholder="Repita a senha"
-                class="h-12 rounded-lg border border-gray-500 px-4 text-sm w-full bg-white text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-emerald-700 focus:ring-[3px] focus:ring-emerald-700/10">
+                class="h-12 rounded-lg border border-slate-300 px-4 text-sm w-full bg-white text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-emerald-700 focus:ring-[3px] focus:ring-emerald-700/10">
         </div>
     </div>
 

@@ -11,16 +11,16 @@
         :backUrl="route('investimentos')"
         backLabel="Voltar para investimentos"
         icon="query_stats"
-        iconBg="linear-gradient(135deg,#EFF6FF,#DBEAFE)"
-        iconColor="#2563EB" />
+        iconBg="linear-gradient(135deg,#ECFEFF,#CFFAFE)"
+        iconColor="#0891B2" />
 
-    <form method="POST" action="{{ route('investimentos.aportes.store') }}" class="form-card tint-blue">
+    <form method="POST" action="{{ route('investimentos.aportes.store') }}" class="form-card tint-cyan">
         @csrf
         <div class="form-grid">
             <div class="form-grid form-grid-2">
-                <x-form.field label="Carteira" for="f-cart" :required="true" :error="$errors->first('portfolio_id')">
+                <x-form.field label="Carteira" for="f-cart" hint="Opcional: usa a do ativo ou a geral." :error="$errors->first('portfolio_id')">
                     <x-form.select id="f-cart" name="portfolio_id">
-                        <option value="">Selecione a carteira</option>
+                        <option value="">Automática</option>
                         @foreach($portfolios as $p)<option value="{{ $p->id }}" {{ (string)old('portfolio_id', $selected) === (string)$p->id ? 'selected' : '' }}>{{ $p->name }}</option>@endforeach
                     </x-form.select>
                 </x-form.field>
@@ -57,7 +57,7 @@
                 <x-form.input id="f-nota" name="note" value="{{ old('note') }}" placeholder="Opcional" />
             </x-form.field>
         </div>
-        <x-form.actions :cancelUrl="route('investimentos')" submitLabel="Registrar" submitIcon="add_circle" color="blue" />
+        <x-form.actions :cancelUrl="route('investimentos')" submitLabel="Registrar" submitIcon="add_circle" color="cyan" />
     </form>
 </div>
 @endsection

@@ -9,6 +9,8 @@ $accents = [
   'red'     => ['icon_bg'=>'bg-red-50','icon_text'=>'text-red-500','value'=>'text-gray-900','bar'=>'bg-red-500'],
   'cyan'    => ['icon_bg'=>'bg-cyan-50','icon_text'=>'text-cyan-600','value'=>'text-gray-900','bar'=>'bg-cyan-500'],
   'orange'  => ['icon_bg'=>'bg-orange-50','icon_text'=>'text-orange-500','value'=>'text-gray-900','bar'=>'bg-orange-500'],
+  'violet'  => ['icon_bg'=>'bg-violet-50','icon_text'=>'text-violet-600','value'=>'text-gray-900','bar'=>'bg-violet-500'],
+  'rose'    => ['icon_bg'=>'bg-rose-50','icon_text'=>'text-rose-500','value'=>'text-gray-900','bar'=>'bg-rose-500'],
 ];
 $a = $accents[$accent] ?? $accents['emerald'];
 @endphp
@@ -27,7 +29,7 @@ $a = $accents[$accent] ?? $accents['emerald'];
         </div>
     </div>
     @if($bottom)
-    <div class="mt-4 pt-3 border-t border-gray-500 flex items-center justify-between gap-2 relative">
+    <div class="mt-4 pt-3 border-t border-slate-200 flex items-center justify-between gap-2 relative">
         {{ $bottom }}
     </div>
     @endif

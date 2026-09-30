@@ -23,7 +23,7 @@
     <div class="flex flex-col gap-1.5">
         <label for="pa-senha" class="text-xs font-bold text-gray-600">Nova senha</label>
         <input id="pa-senha" name="password" required type="password" minlength="8" placeholder="Mínimo 8 caracteres" oninput="checarPA(this.value)"
-            class="h-12 rounded-lg border px-4 text-sm w-full bg-white text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-emerald-700 focus:ring-[3px] focus:ring-emerald-700/10 {{ $errors->has('password') ? 'border-red-400 focus:border-red-500 focus:ring-red-500/10' : 'border-gray-500' }}">
+            class="h-12 rounded-lg border px-4 text-sm w-full bg-white text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-emerald-700 focus:ring-[3px] focus:ring-emerald-700/10 {{ $errors->has('password') ? 'border-red-400 focus:border-red-500 focus:ring-red-500/10' : 'border-slate-300' }}">
         @error('password')<p class="flex items-center gap-1 text-xs font-semibold text-red-600"><span class="material-symbols-outlined text-[14px]">error</span>{{ $message }}</p>@enderror
         <ul class="mt-2 space-y-1.5 text-xs text-gray-400">
             <li id="pa-8" class="flex items-center gap-1.5"><span class="material-symbols-outlined text-[15px]">cancel</span> Mínimo de 8 caracteres</li>
@@ -35,7 +35,7 @@
     <div class="flex flex-col gap-1.5">
         <label for="pa-conf" class="text-xs font-bold text-gray-600">Confirmar senha</label>
         <input id="pa-conf" name="password_confirmation" required type="password" placeholder="Repita a senha" oninput="checarPA(document.getElementById('pa-senha').value)"
-            class="h-12 rounded-lg border border-gray-500 px-4 text-sm w-full bg-white text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-emerald-700 focus:ring-[3px] focus:ring-emerald-700/10">
+            class="h-12 rounded-lg border border-slate-300 px-4 text-sm w-full bg-white text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-emerald-700 focus:ring-[3px] focus:ring-emerald-700/10">
         <p id="pa-match" class="text-xs mt-1 text-gray-400">As senhas devem coincidir.</p>
     </div>
     <x-btn-submit icon="key" class="w-full">Ativar acesso</x-btn-submit>

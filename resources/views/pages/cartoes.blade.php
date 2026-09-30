@@ -12,9 +12,9 @@
         <p class="text-[13px] text-gray-400 mt-0.5 font-medium">Limite, fechamento, vencimento e titular de cada cartão.</p>
     </div>
     <div class="flex gap-2">
-        <x-btn-link :href="route('cartoes.itens.create')" icon="add_shopping_cart">Nova Compra</x-btn-link>
+        <x-btn-link :href="route('cartoes.itens.create')" color="orange" icon="add_shopping_cart">Nova Compra</x-btn-link>
         @if($isGestor)
-        <x-btn-link :href="route('cartoes.create')" icon="add_card">Novo Cartão</x-btn-link>
+        <x-btn-link :href="route('cartoes.create')" color="orange" icon="add_card">Novo Cartão</x-btn-link>
         @endif
     </div>
 </div>
@@ -22,7 +22,7 @@
 {{-- Cards --}}
 <div class="grid sm:grid-cols-2 xl:grid-cols-3 gap-4">
     @forelse($cartoes as $c)
-    <div class="rounded-lg border border-gray-500 overflow-hidden bg-white shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-pop)] transition-all duration-200 group">
+    <div class="rounded-lg border border-slate-200 overflow-hidden bg-white shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-pop)] transition-all duration-200 group">
         {{-- Face do cartão --}}
         <div class="cc-sheen text-white p-5 min-h-[160px] flex flex-col justify-between relative overflow-hidden" style="background:{{ $c->display_color }}">
             {{-- Orb decorativo --}}
@@ -50,6 +50,18 @@
 
         {{-- Corpo do card --}}
         <div class="p-4">
+            <div class="grid grid-cols-2 gap-2.5 text-[12px] mb-2.5">
+                <div class="rounded-xl bg-slate-50 border border-slate-100 p-2.5">
+                    <p class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Fatura atual</p>
+                    <p class="num font-extrabold text-[15px] text-gray-900 mt-0.5">{{ Fin::money($c->fatura_atual) }}</p>
+                    <p class="text-[10px] text-gray-400 num">fecha {{ $c->prox_fechamento->format('d/m') }}</p>
+                </div>
+                <div class="rounded-xl bg-slate-50 border border-slate-100 p-2.5">
+                    <p class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Próxima fatura</p>
+                    <p class="num font-extrabold text-[15px] text-gray-900 mt-0.5">{{ Fin::money($c->proxima_fatura) }}</p>
+                    <p class="text-[10px] text-gray-400 num">vence {{ $c->prox_vencimento->format('d/m') }}</p>
+                </div>
+            </div>
             <div class="flex items-center justify-between text-[12px] mb-2.5">
                 <span class="text-gray-400 flex items-center gap-1.5">
                     @if($c->account)
@@ -59,7 +71,7 @@
                     <span class="text-gray-300">Sem conta vinculada</span>
                     @endif
                 </span>
-                <span class="font-bold num text-gray-800">{{ Fin::money($c->open_invoice) }} em aberto</span>
+                <span class="font-bold num text-gray-800">{{ Fin::money($c->available_limit) }} livres</span>
             </div>
             <x-progress :value="$c->credit_limit > 0 ? min(100, $c->open_invoice / (float) $c->credit_limit * 100) : 0" />
             <div class="mt-4 flex items-center gap-1.5">
@@ -76,13 +88,9 @@
         </div>
     </div>
     @empty
-    <div class="col-span-full text-center py-16 text-gray-400 bg-white rounded-lg border border-dashed border-gray-500">
-        <span class="material-symbols-outlined text-[52px] text-gray-300">credit_card</span>
-        <p class="text-[15px] font-extrabold mt-4 text-gray-500">Nenhum cartão cadastrado</p>
-        <p class="text-[13px] mt-1">Adicione o primeiro cartão.</p>
-        @if($isGestor)
-        <x-btn-link :href="route('cartoes.create')" icon="add_card" class="mt-5">Novo Cartão</x-btn-link>
-        @endif
+    <div class="col-span-full bg-white rounded-2xl border border-dashed border-slate-200">
+        <x-empty-state icon="credit_card" title="Nenhum cartão cadastrado" hint="Adicione o primeiro cartão."
+            :actionUrl="$isGestor ? route('cartoes.create') : null" actionLabel="Novo Cartão" actionIcon="add_card" actionColor="orange" />
     </div>
     @endforelse
 </div>
@@ -91,7 +99,7 @@
     {{-- Itens da fatura --}}
     <x-section-card class="lg:col-span-7" title="Itens da Fatura" :subtitle="$fatura->total().' item(ns)'">
         <x-slot:action>
-            <x-btn-link :href="route('cartoes.itens.create')" size="sm" icon="add">Lançar compra</x-btn-link>
+            <x-btn-link :href="route('cartoes.itens.create')" color="orange" size="sm" icon="add">Lançar compra</x-btn-link>
         </x-slot:action>
         <div class="overflow-x-auto -mx-5 lg:-mx-6 px-5 lg:px-6">
             <table class="w-full text-left min-w-[760px] table-modern">
@@ -110,7 +118,11 @@
                     @forelse($fatura as $f)
                     <tr data-ledger-row>
                         <td class="num text-gray-400 text-[12px]">{{ $f->occurred_on->format('d/m') }}</td>
-                        <td class="font-bold text-gray-800">{{ $f->description }}</td>
+                        <td class="font-bold text-gray-800">{{ $f->description }}
+                            @if(($f->kind ?? 'compra') === 'estorno')
+                            <span class="ml-1 text-[10px] font-extrabold text-blue-600 bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded">ESTORNO</span>
+                            @endif
+                        </td>
                         <td class="text-gray-500">{{ $f->card->name ?? '—' }}</td>
                         <td class="text-gray-500">{{ $f->member->name ?? '—' }}</td>
                         <td class="text-right font-extrabold num text-gray-800">{{ Fin::money($f->amount) }}</td>
@@ -125,15 +137,14 @@
                                 @csrf
                                 <x-btn-submit color="success" iconOnly icon="check_circle" title="Liquidar" />
                             </form>
-                            </form>
                             @endif
                         </td>
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="7" class="text-center py-12 text-gray-400">
-                            Nenhum item de fatura.
-                            <a href="{{ route('cartoes.itens.create') }}" class="font-bold text-emerald-600 hover:text-emerald-700">Lançar a primeira compra →</a>
+                        <td colspan="7" class="text-center text-gray-400">
+                            <x-empty-state icon="add_shopping_cart" title="Nenhum item de fatura" hint="Lance a primeira compra no cartão."
+                                :actionUrl="route('cartoes.itens.create')" actionLabel="Lançar compra" actionColor="orange" />
                         </td>
                     </tr>
                     @endforelse
@@ -147,7 +158,7 @@
     <x-section-card class="lg:col-span-5" title="Gastos por Pessoa" subtitle="Somente valores pendentes">
         @forelse($porMembro as $r)
         <div class="flex items-center gap-3 mb-3.5">
-            <span class="w-9 h-9 rounded-full grid place-items-center text-white text-[11px] font-extrabold ring-2 ring-offset-1 ring-gray-500"
+            <span class="w-9 h-9 rounded-full grid place-items-center text-white text-[11px] font-extrabold ring-2 ring-offset-1 ring-slate-200"
                 style="background:{{ $r->member->avatarColor() }}">{{ $r->member->initials() }}</span>
             <span class="flex-1 text-[13px] font-semibold text-gray-700">{{ $r->member->name }}</span>
             <strong class="num text-[13px] text-gray-800">{{ Fin::money($r->total) }}</strong>

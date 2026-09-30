@@ -16,6 +16,7 @@ class PortfolioRequest extends FormRequest
             'objective' => ['nullable', 'string', 'max:255'],
             'kind' => ['required', 'in:reserva,estudos,futuro,livre'],
             'target_amount' => ['nullable', 'numeric', 'min:0'],
+            'deadline' => ['nullable', 'date', 'after:today'],
         ];
     }
 
@@ -26,6 +27,7 @@ class PortfolioRequest extends FormRequest
             'kind.required' => 'Escolha o tipo da carteira.',
             'kind.in' => 'Tipo de carteira inválido.',
             'target_amount.min' => 'A meta não pode ser negativa.',
+            'deadline.after' => 'O prazo deve ser uma data futura.',
         ];
     }
 }

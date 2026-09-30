@@ -11,10 +11,10 @@
         :backUrl="route('investimentos')"
         backLabel="Voltar para investimentos"
         icon="savings"
-        iconBg="linear-gradient(135deg,#EFF6FF,#DBEAFE)"
-        iconColor="#2563EB" />
+        iconBg="linear-gradient(135deg,#ECFEFF,#CFFAFE)"
+        iconColor="#0891B2" />
 
-    <form method="POST" action="{{ route('investimentos.carteiras.store') }}" class="form-card tint-blue">
+    <form method="POST" action="{{ route('investimentos.carteiras.store') }}" class="form-card tint-cyan">
         @csrf
         <div class="form-grid">
             <x-form.field label="Nome" for="f-nome" :required="true" :error="$errors->first('name')">
@@ -27,15 +27,20 @@
                         @foreach(['reserva' => 'Reserva', 'estudos' => 'Educação', 'futuro' => 'Futuro', 'livre' => 'Livre'] as $v => $l)<option value="{{ $v }}" {{ old('kind') === $v ? 'selected' : '' }}>{{ $l }}</option>@endforeach
                     </x-form.select>
                 </x-form.field>
+            <div class="form-grid form-grid-2">
                 <x-form.field label="Meta" for="f-meta" :error="$errors->first('target_amount')">
                     <x-form.money id="f-meta" name="target_amount" value="{{ old('target_amount') }}" placeholder="0,00" />
                 </x-form.field>
+                <x-form.field label="Prazo" for="f-prazo" hint="Opcional: calcula o aporte mensal." :error="$errors->first('deadline')">
+                    <x-form.input id="f-prazo" name="deadline" type="date" value="{{ old('deadline') }}" />
+                </x-form.field>
+            </div>
             </div>
             <x-form.field label="Objetivo" for="f-obj">
                 <x-form.input id="f-obj" name="objective" value="{{ old('objective') }}" placeholder="Ex.: 6 meses de despesas" />
             </x-form.field>
         </div>
-        <x-form.actions :cancelUrl="route('investimentos')" submitLabel="Salvar carteira" submitIcon="add_circle" color="blue" />
+        <x-form.actions :cancelUrl="route('investimentos')" submitLabel="Salvar carteira" submitIcon="add_circle" color="cyan" />
     </form>
 </div>
 @endsection

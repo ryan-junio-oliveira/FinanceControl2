@@ -10,11 +10,11 @@ class Portfolio extends Model
 {
     public const KINDS = ['reserva' => 'Reserva de Emergência', 'estudos' => 'Educação', 'futuro' => 'Futuro', 'livre' => 'Livre'];
 
-    protected $fillable = ['family_id', 'name', 'objective', 'kind', 'target_amount'];
+    protected $fillable = ['family_id', 'name', 'objective', 'kind', 'target_amount', 'deadline'];
 
     protected function casts(): array
     {
-        return ['target_amount' => 'decimal:2'];
+        return ['target_amount' => 'decimal:2', 'deadline' => 'date'];
     }
 
     public function family(): BelongsTo
@@ -48,5 +48,37 @@ class Portfolio extends Model
         }
 
         return round($this->total / (float) $this->target_amount * 100, 1);
+    }
+
+    /** Quanto falta para a meta (nunca negativo). */
+    public function getRemainingAttribute(): ?float
+    {
+        if (! $this->target_amount || $this->target_amount <= 0) {
+            return null;
+        }
+
+        return max(0, (float) $this->target_amount - $this->total);
+    }
+
+    /** Meses restantes até o prazo (null sem prazo; 0 se vencido). */
+    public function getMonthsLeftAttribute(): ?int
+    {
+        if (! $this->deadline) {
+            return null;
+        }
+        $now = today()->startOfMonth();
+        $end = $this->deadline->copy()->startOfMonth();
+
+        return max(0, $now->diffInMonths($end, false));
+    }
+
+    /** Aporte mensal necessário para bater a meta no prazo. */
+    public function getMonthlyNeededAttribute(): ?float
+    {
+        if ($this->remaining === null || $this->months_left === null || $this->months_left <= 0) {
+            return null;
+        }
+
+        return round($this->remaining / $this->months_left, 2);
     }
 }

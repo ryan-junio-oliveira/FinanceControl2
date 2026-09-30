@@ -15,10 +15,10 @@
         :backUrl="route('categorias')"
         backLabel="Voltar para categorias"
         icon="category"
-        iconBg="linear-gradient(135deg,#F1F5F9,#E2E8F0)"
-        iconColor="#0F172A" />
+        iconBg="linear-gradient(135deg,#F5F3FF,#EDE9FE)"
+        iconColor="#7C3AED" />
 
-    <form method="POST" action="{{ $action }}" class="form-card">
+    <form method="POST" action="{{ $action }}" class="form-card tint-violet">
         @csrf
         @if($categoria) @method('PATCH') @endif
 
@@ -49,7 +49,7 @@
             @endif
         </div>
 
-        <x-form.actions :cancelUrl="route('categorias')" :submitLabel="$categoria ? 'Salvar alterações' : 'Salvar categoria'" :submitIcon="$categoria ? 'save' : 'add_circle'" />
+        <x-form.actions :cancelUrl="route('categorias')" :submitLabel="$categoria ? 'Salvar alterações' : 'Salvar categoria'" :submitIcon="$categoria ? 'save' : 'add_circle'" color="violet" />
     </form>
 </div>
 @endsection

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\CardBrand;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -37,6 +38,47 @@ class CreditCard extends Model
     public function items(): HasMany
     {
         return $this->hasMany(CardTransaction::class);
+    }
+
+    /**
+     * Período da fatura corrente a partir de uma referência:
+     * se dia <= fechamento, (mês ant. C+1 .. mês atual C);
+     * senão, (mês atual C+1 .. próx. mês C). Retorna [início, fim].
+     *
+     * @return array{0: Carbon, 1: Carbon}
+     */
+    public function currentInvoiceRange(?Carbon $ref = null): array
+    {
+        $ref = ($ref ?? Carbon::today())->copy()->startOfDay();
+        $c = min(max((int) $this->closing_day, 1), 28);
+
+        if ($ref->day <= $c) {
+            $start = $ref->copy()->subMonthNoOverflow()->day(min($c + 1, $ref->copy()->subMonthNoOverflow()->daysInMonth));
+            $end = $ref->copy()->day($c);
+        } else {
+            $start = $ref->copy()->day(min($c + 1, $ref->daysInMonth));
+            $end = $ref->copy()->addMonthNoOverflow()->day($c);
+        }
+
+        return [$start->startOfDay(), $end->endOfDay()];
+    }
+
+    /** Próxima data de fechamento e de vencimento a partir de hoje. */
+    public function nextClosingDate(?Carbon $ref = null): Carbon
+    {
+        $ref = ($ref ?? Carbon::today())->copy()->startOfDay();
+        $c = min(max((int) $this->closing_day, 1), 28);
+
+        return $ref->day <= $c ? $ref->copy()->day($c) : $ref->copy()->addMonthNoOverflow()->day($c);
+    }
+
+    public function nextDueDate(?Carbon $ref = null): Carbon
+    {
+        $closing = $this->nextClosingDate($ref);
+        $d = min(max((int) $this->due_day, 1), 28);
+        $month = $d >= (int) $this->closing_day ? $closing->copy() : $closing->copy()->addMonthNoOverflow();
+
+        return $month->day(min($d, $month->daysInMonth));
     }
 
     /** Fatura em aberto = itens pendentes. */

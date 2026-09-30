@@ -18,7 +18,7 @@
     <div class="flex flex-col gap-1.5">
         <label for="email" class="text-xs font-bold text-gray-600">E-mail</label>
         <input id="email" name="email" type="email" required value="{{ old('email') }}" placeholder="Digite seu e-mail"
-            class="h-12 rounded-lg border px-4 text-sm w-full bg-white text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-emerald-700 focus:ring-[3px] focus:ring-emerald-700/10 {{ $errors->has('email') ? 'border-red-400 focus:border-red-500 focus:ring-red-500/10' : 'border-gray-500' }}">
+            class="h-12 rounded-lg border px-4 text-sm w-full bg-white text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-emerald-700 focus:ring-[3px] focus:ring-emerald-700/10 {{ $errors->has('email') ? 'border-red-400 focus:border-red-500 focus:ring-red-500/10' : 'border-slate-300' }}">
         @error('email')<p class="flex items-center gap-1 text-xs font-semibold text-red-600"><span class="material-symbols-outlined text-[14px]">error</span>{{ $message }}</p>@enderror
     </div>
 
@@ -26,7 +26,7 @@
         <label for="senha" class="text-xs font-bold text-gray-600">Senha</label>
         <div class="relative">
             <input id="senha" name="password" type="password" required placeholder="Digite sua senha"
-                class="h-12 rounded-lg border px-4 text-sm w-full bg-white text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-emerald-700 focus:ring-[3px] focus:ring-emerald-700/10 {{ $errors->has('password') ? 'border-red-400 focus:border-red-500 focus:ring-red-500/10' : 'border-gray-500' }}" style="padding-right:2.75rem">
+                class="h-12 rounded-lg border px-4 text-sm w-full bg-white text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-emerald-700 focus:ring-[3px] focus:ring-emerald-700/10 {{ $errors->has('password') ? 'border-red-400 focus:border-red-500 focus:ring-red-500/10' : 'border-slate-300' }}" style="padding-right:2.75rem">
             <button type="button" tabindex="-1" onclick="const i=document.getElementById('senha');i.type=i.type==='password'?'text':'password';this.querySelector('span').textContent=i.type==='password'?'visibility':'visibility_off'"
                 class="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 grid place-items-center rounded-lg text-gray-400 hover:text-gray-700 hover:bg-slate-100 transition" title="Mostrar senha">
                 <span class="material-symbols-outlined text-[19px]">visibility</span>

@@ -27,6 +27,7 @@ class TransactionRequest extends FormRequest
             'category_id' => ['nullable', Rule::exists('categories', 'id')->where('family_id', $fid)],
             'is_fixed' => ['sometimes', 'boolean'],
             'installments_total' => ['sometimes', 'nullable', 'integer', 'min:1', 'max:48'],
+            'anexo' => ['sometimes', 'nullable', 'file', 'max:5120', 'mimes:pdf,jpg,jpeg,png,webp'],
             'notes' => ['nullable', 'string'],
         ];
     }
@@ -46,6 +47,8 @@ class TransactionRequest extends FormRequest
             'status.in' => 'Situação inválida. Escolha entre pago, pendente ou agendado.',
             'user_id.required' => 'Escolha o membro responsável.',
             'user_id.exists' => 'O membro selecionado não pertence à família.',
+            'anexo.max' => 'O anexo deve ter no máximo 5 MB.',
+            'anexo.mimes' => 'Anexe PDF ou imagem (JPG, PNG, WebP).',
             'account_id.exists' => 'A conta selecionada não pertence à família.',
             'category_id.exists' => 'A categoria selecionada não pertence à família.',
         ];

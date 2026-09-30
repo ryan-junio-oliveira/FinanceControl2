@@ -52,17 +52,25 @@
                 </x-form.field>
             </div>
 
-            <x-form.field label="Parcelas" for="f-parc" hint="À vista = 1. Parcelado gera uma parcela por mês na fatura.">
-                <x-form.select id="f-parc" name="installments_total">
-                    <option value="1" {{ old('installments_total', '1') === '1' ? 'selected' : '' }}>À vista</option>
-                    @for($i = 2; $i <= 12; $i++)
-                        <option value="{{ $i }}" {{ (string)old('installments_total') === (string)$i ? 'selected' : '' }}>{{ $i }}x</option>
-                    @endfor
-                    @foreach([18, 24, 36, 48] as $i)
-                        <option value="{{ $i }}" {{ (string)old('installments_total') === (string)$i ? 'selected' : '' }}>{{ $i }}x</option>
-                    @endforeach
-                </x-form.select>
-            </x-form.field>
+            <div class="form-grid form-grid-2">
+                <x-form.field label="Tipo" for="f-kind" :required="true" :error="$errors->first('kind')">
+                    <x-form.select id="f-kind" name="kind">
+                        <option value="compra" {{ old('kind', 'compra') === 'compra' ? 'selected' : '' }}>Compra</option>
+                        <option value="estorno" {{ old('kind') === 'estorno' ? 'selected' : '' }}>Estorno (devolução)</option>
+                    </x-form.select>
+                </x-form.field>
+                <x-form.field label="Parcelas" for="f-parc" hint="À vista = 1. Parcelado gera uma parcela por mês na fatura.">
+                    <x-form.select id="f-parc" name="installments_total">
+                        <option value="1" {{ old('installments_total', '1') === '1' ? 'selected' : '' }}>À vista</option>
+                        @for($i = 2; $i <= 12; $i++)
+                            <option value="{{ $i }}" {{ (string)old('installments_total') === (string)$i ? 'selected' : '' }}>{{ $i }}x</option>
+                        @endfor
+                        @foreach([18, 24, 36, 48] as $i)
+                            <option value="{{ $i }}" {{ (string)old('installments_total') === (string)$i ? 'selected' : '' }}>{{ $i }}x</option>
+                        @endforeach
+                    </x-form.select>
+                </x-form.field>
+            </div>
         </div>
 
         <x-form.actions :cancelUrl="route('cartoes')" submitLabel="Lançar compra" submitIcon="add_shopping_cart" color="orange" />

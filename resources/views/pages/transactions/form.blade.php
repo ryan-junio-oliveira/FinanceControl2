@@ -24,7 +24,7 @@
         :iconBg="$isDespesa ? 'linear-gradient(135deg,#FEE2E2,#FECACA)' : 'linear-gradient(135deg,#D1FAE5,#A7F3D0)'"
         :iconColor="$isDespesa ? '#DC2626' : '#059669'" />
 
-    <form method="POST" action="{{ $action }}" class="form-card {{ $isDespesa ? 'tint-danger' : 'tint-success' }}">
+    <form method="POST" action="{{ $action }}" class="form-card {{ $isDespesa ? 'tint-danger' : 'tint-success' }}" enctype="multipart/form-data">
         @csrf
         @if($transaction) @method('PATCH') @endif
 
@@ -104,6 +104,33 @@
                 <x-form.input id="f-obs" name="notes" value="{{ $val('notes') }}" placeholder="Opcional" />
             </x-form.field>
 
+            <x-form.field label="Comprovante" for="f-anexo" hint="PDF ou imagem de até 5 MB (nota fiscal, recibo)." :error="$errors->first('anexo')">
+                <x-form.input id="f-anexo" name="anexo" type="file" accept=".pdf,.jpg,.jpeg,.png,.webp" />
+            </x-form.field>
+
+            @if($transaction && $transaction->attachments->isNotEmpty())
+            <div class="rounded-xl border border-slate-200 divide-y divide-slate-100">
+                @foreach($transaction->attachments as $ax)
+                <div class="flex items-center gap-2.5 px-3.5 py-2.5">
+                    <span class="material-symbols-outlined text-[18px] text-slate-400">description</span>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-[13px] font-bold text-gray-800 truncate">{{ $ax->original_name }}</p>
+                        <p class="text-[11px] text-gray-400 num">{{ $ax->sizeForHumans() }} · {{ $ax->created_at->format('d/m/Y') }}</p>
+                    </div>
+                    <a title="Baixar" href="{{ route('anexos.download', $ax) }}"
+                        class="w-8 h-8 rounded-lg hover:bg-slate-100 text-blue-500 hover:text-blue-700 transition inline-grid place-items-center">
+                        <span class="material-symbols-outlined text-[19px]">download</span>
+                    </a>
+                    <form method="POST" action="{{ route('anexos.destroy', $ax) }}" class="inline"
+                        onsubmit="return confirm('Remover este anexo?')">
+                        @csrf @method('DELETE')
+                        <x-btn-submit color="danger" iconOnly icon="delete" title="Remover anexo" />
+                    </form>
+                </div>
+                @endforeach
+            </div>
+            @endif
+
             <x-form.field label="Lançamento fixo" hint="Fixas se repetem todo mês (ex.: aluguel, salário) e podem ser filtradas nas listagens.">
                 <label class="toggle-switch mt-1">
                     <input type="checkbox" name="is_fixed" value="1" {{ $val('is_fixed') ? 'checked' : '' }}>
@@ -117,5 +144,31 @@
 
         <x-form.actions :cancelUrl="$voltar" :submitLabel="$transaction ? 'Salvar alterações' : 'Salvar'" :submitIcon="$transaction ? 'save' : 'add_circle'" :color="$isDespesa ? 'danger' : 'success'" />
     </form>
+
+    @if($transaction && $transaction->auditLogs->isNotEmpty())
+    <x-section-card title="Histórico" subtitle="Quem criou e alterou este lançamento" class="mt-4">
+        <ol class="space-y-3">
+            @foreach($transaction->auditLogs->take(10) as $log)
+            <li class="flex items-start gap-2.5 text-[12px]">
+                <span class="w-7 h-7 rounded-lg bg-slate-100 grid place-items-center shrink-0 text-[11px] font-extrabold text-slate-500">
+                    {{ mb_substr($log->member->name ?? '?', 0, 1) }}
+                </span>
+                <div class="min-w-0">
+                    <p class="text-gray-700"><strong class="text-gray-900">{{ $log->member->name ?? 'Sistema' }}</strong> {{ $log->actionLabel() }}
+                        <span class="text-gray-400 num">· {{ $log->created_at->format('d/m/Y H:i') }}</span>
+                    </p>
+                    @if($log->action === 'updated' && is_array($log->changes))
+                    <ul class="mt-1 space-y-0.5 text-gray-500">
+                        @foreach($log->changes as $campo => $v)
+                        <li class="num"><span class="font-bold">{{ $campo }}</span>: {{ is_scalar($v['de'] ?? null) ? $v['de'] : '—' }} → {{ is_scalar($v['para'] ?? null) ? $v['para'] : '—' }}</li>
+                        @endforeach
+                    </ul>
+                    @endif
+                </div>
+            </li>
+            @endforeach
+        </ol>
+    </x-section-card>
+    @endif
 </div>
 @endsection

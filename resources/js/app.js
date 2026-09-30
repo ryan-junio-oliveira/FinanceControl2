@@ -80,7 +80,7 @@ if (!reducedMotion && document.querySelector('[data-reveal]')) {
 document.querySelectorAll('input[inputmode="decimal"]').forEach((el) => {
     if (el.dataset.masked) return;
     el.dataset.masked = '1';
-    IMask(el, {
+    const mask = IMask(el, {
         mask: Number,
         scale: 2,
         thousandsSeparator: '.',
@@ -90,6 +90,21 @@ document.querySelectorAll('input[inputmode="decimal"]').forEach((el) => {
         normalizeZeros: true,
         autofix: true,
     });
+    // Envia o valor canônico ("7000.5") em vez do texto exibido ("7.000,5"):
+    // o backend aceita ambos, mas o canônico elimina qualquer ambiguidade.
+    const form = el.closest('form');
+    if (form && !form.dataset.unmaskBound) {
+        form.dataset.unmaskBound = '1';
+        form.addEventListener('submit', () => {
+            form.querySelectorAll('input[inputmode="decimal"][data-masked]').forEach((input) => {
+                const m = input._moneyMask;
+                if (!m) return;
+                const v = m.typedValue;
+                input.value = (v === null || v === undefined || Number.isNaN(v)) ? '' : String(v);
+            });
+        });
+    }
+    el._moneyMask = mask;
 });
 
 document.querySelectorAll('input[name="phone"]').forEach((el) => {

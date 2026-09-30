@@ -14,7 +14,7 @@
         iconBg="linear-gradient(135deg,#EFF6FF,#DBEAFE)"
         iconColor="#2563EB" />
 
-    <form method="POST" action="{{ route('contas.transfer') }}" class="form-card">
+    <form method="POST" action="{{ route('contas.transfer') }}" class="form-card tint-blue">
         @csrf
 
         <div class="form-grid">
@@ -64,7 +64,7 @@
             </div>
         </div>
 
-        <x-form.actions :cancelUrl="route('contas')" submitLabel="Transferir" submitIcon="swap_horiz" />
+        <x-form.actions :cancelUrl="route('contas')" submitLabel="Transferir" submitIcon="swap_horiz" color="blue" />
     </form>
 </div>
 @endsection

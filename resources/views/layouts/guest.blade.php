@@ -48,7 +48,7 @@
                 </span>
                 <span class="text-base font-extrabold tracking-tight">Fin<span class="text-emerald-700">Família</span></span>
             </div>
-            <div class="w-full max-w-lg bg-white border border-gray-500 border-t-[3px] border-t-emerald-600 rounded-lg shadow-sm p-7" data-auth-card>
+            <div class="w-full max-w-lg bg-white border border-slate-200 border-t-[3px] border-t-emerald-600 rounded-lg shadow-sm p-7" data-auth-card>
                 @yield('content')
             </div>
             <p class="text-center text-[11px] text-gray-400 mt-5">FinFamília · Uso restrito aos membros da família</p>

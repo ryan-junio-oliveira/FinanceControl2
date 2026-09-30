@@ -23,6 +23,7 @@ class CardItemRequest extends FormRequest
             'occurred_on' => ['required', 'date'],
             'user_id' => ['required', Rule::exists('users', 'id')->where('family_id', $fid)],
             'category_id' => ['nullable', Rule::exists('categories', 'id')->where('family_id', $fid)],
+            'kind' => ['sometimes', 'in:compra,estorno'],
             'installments_total' => ['sometimes', 'nullable', 'integer', 'min:1', 'max:48'],
         ];
     }

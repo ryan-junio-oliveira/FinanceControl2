@@ -11,7 +11,7 @@
         <p class="text-[13px] text-gray-400 mt-0.5 font-medium">{{ $categorias->total() }} categoria(s) cadastrada(s).</p>
     </div>
     @if($isGestor)
-    <x-btn-link :href="route('categorias.create')" icon="add_circle">Nova Categoria</x-btn-link>
+    <x-btn-link :href="route('categorias.create')" color="violet" icon="add_circle">Nova Categoria</x-btn-link>
     @endif
 </div>
 
@@ -73,12 +73,9 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="{{ $isGestor ? 4 : 3 }}" class="text-center py-12 text-gray-400">
-                        <span class="material-symbols-outlined text-[44px] text-gray-300">category</span>
-                        <p class="text-[13px] font-bold mt-3 text-gray-500">Nenhuma categoria encontrada</p>
-                        @if($isGestor)
-                        <a href="{{ route('categorias.create') }}" class="mt-2 inline-block text-[12px] font-bold text-emerald-600 hover:text-emerald-700">Criar a primeira →</a>
-                        @endif
+                    <td colspan="{{ $isGestor ? 4 : 3 }}" class="text-center text-gray-400">
+                        <x-empty-state icon="category" title="Nenhuma categoria encontrada"
+                            :actionUrl="$isGestor ? route('categorias.create') : null" actionLabel="Criar a primeira" />
                     </td>
                 </tr>
                 @endforelse

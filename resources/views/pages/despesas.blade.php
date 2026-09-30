@@ -12,7 +12,7 @@
         <p class="text-[13px] text-gray-400 mt-0.5 font-medium">Todas as saídas em {{ $mes }}.</p>
     </div>
     <div class="flex gap-2">
-        <x-btn-link :href="route('despesas.create')" icon="add_circle">Nova Despesa</x-btn-link>
+        <x-btn-link :href="route('despesas.create')" color="danger" icon="add_circle">Nova Despesa</x-btn-link>
     </div>
 </div>
 
@@ -97,10 +97,9 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="8" class="text-center py-14 text-gray-400">
-                        <span class="material-symbols-outlined text-[48px] text-gray-300">search_off</span>
-                        <p class="text-[14px] font-bold mt-3 text-gray-500">Nenhuma despesa encontrada</p>
-                        <p class="text-[12px] mt-1">Ajuste os filtros ou registre a primeira despesa.</p>
+                    <td colspan="8" class="text-center text-gray-400">
+                        <x-empty-state icon="search_off" title="Nenhuma despesa encontrada" hint="Ajuste os filtros ou registre a primeira despesa."
+                            :actionUrl="route('despesas.create')" actionLabel="Nova Despesa" actionColor="danger" />
                     </td>
                 </tr>
                 @endforelse

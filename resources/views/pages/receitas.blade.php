@@ -11,7 +11,7 @@
         <p class="text-[13px] text-gray-400 mt-0.5 font-medium">Entradas em {{ $mes }}.</p>
     </div>
     <div class="flex gap-2">
-        <x-btn-link :href="route('receitas.create')" icon="add_circle">Nova Receita</x-btn-link>
+        <x-btn-link :href="route('receitas.create')" color="success" icon="add_circle">Nova Receita</x-btn-link>
     </div>
 </div>
 
@@ -85,10 +85,9 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="8" class="text-center py-14 text-gray-400">
-                        <span class="material-symbols-outlined text-[48px] text-gray-300">search_off</span>
-                        <p class="text-[14px] font-bold mt-3 text-gray-500">Nenhuma receita encontrada</p>
-                        <p class="text-[12px] mt-1">Ajuste os filtros ou registre a primeira receita.</p>
+                    <td colspan="8" class="text-center text-gray-400">
+                        <x-empty-state icon="search_off" title="Nenhuma receita encontrada" hint="Ajuste os filtros ou registre a primeira receita."
+                            :actionUrl="route('receitas.create')" actionLabel="Nova Receita" actionColor="success" />
                     </td>
                 </tr>
                 @endforelse

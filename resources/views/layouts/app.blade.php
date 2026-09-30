@@ -29,7 +29,7 @@
     {{-- ============ SIDEBAR (fixa, scroll interno) ============ --}}
     <aside id="sidebar"
         class="fixed z-40 inset-y-0 left-0 w-[268px] -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out flex flex-col h-screen overflow-hidden"
-        style="background: linear-gradient(180deg, #ffffff 0%, #fafcfb 100%); border-right: 1px solid #6b7280;">
+        style="background: linear-gradient(180deg, #ffffff 0%, #fafcfb 100%); border-right: 1px solid #e2e8f0;">
 
         {{-- Topo da sidebar: logo + fechar --}}
         <div class="px-5 pt-5 pb-4 flex items-center gap-3">
@@ -62,13 +62,13 @@
             @php
                 $nav = [
                     ['route'=>'dashboard','label'=>'Dashboard','icon'=>'dashboard'],
-                    ['route'=>'despesas','label'=>'Despesas','icon'=>'trending_down'],
-                    ['route'=>'receitas','label'=>'Receitas','icon'=>'trending_up'],
-                    ['route'=>'investimentos','label'=>'Investimentos','icon'=>'savings','gestor'=>true],
-                    ['route'=>'cartoes','label'=>'Cartões','icon'=>'credit_card'],
-                    ['route'=>'contas','label'=>'Contas','icon'=>'account_balance'],
-                    ['route'=>'categorias','label'=>'Categorias','icon'=>'category'],
-                    ['route'=>'familia','label'=>'Pessoas','icon'=>'group'],
+                    ['route'=>'despesas','label'=>'Despesas','icon'=>'trending_down','color'=>'danger'],
+                    ['route'=>'receitas','label'=>'Receitas','icon'=>'trending_up','color'=>'success'],
+                    ['route'=>'investimentos','label'=>'Investimentos','icon'=>'savings','gestor'=>true,'color'=>'cyan'],
+                    ['route'=>'cartoes','label'=>'Cartões','icon'=>'credit_card','color'=>'orange'],
+                    ['route'=>'contas','label'=>'Contas','icon'=>'account_balance','color'=>'blue'],
+                    ['route'=>'categorias','label'=>'Categorias','icon'=>'category','color'=>'violet'],
+                    ['route'=>'familia','label'=>'Pessoas','icon'=>'group','color'=>'rose'],
                     ['route'=>'perfil','label'=>'Meu Perfil','icon'=>'person'],
                 ];
             @endphp
@@ -76,7 +76,7 @@
                 @continue(!empty($item['gestor']) && !$isGestor)
                 @php $active = request()->routeIs($item['route'], $item['route'].'.*') || ($__env->hasSection('nav-active') && trim($__env->yieldContent('nav-active')) === $item['route']); @endphp
                 <a href="{{ route($item['route']) }}"
-                   class="nav-item mb-0.5 {{ $active ? 'active' : '' }}">
+                   class="nav-item mb-0.5 {{ $active ? 'active' : '' }}{{ $active && !empty($item['color']) ? ' nav-active-'.$item['color'] : '' }}">
                     <span class="material-symbols-outlined text-[20px]{{ $active ? ' material-symbols-filled' : '' }}">{{ $item['icon'] }}</span>
                     <span class="flex-1">{{ $item['label'] }}</span>
                     @if(!empty($item['dot']))
@@ -117,11 +117,11 @@
     <div class="flex flex-col h-screen min-w-0 w-full lg:ml-[268px] lg:w-[calc(100%-268px)]">
 
         {{-- Header fixo --}}
-        <header data-app-header class="shrink-0 z-20 glass border-b border-gray-500/70 shadow-[0_1px_0_0_rgba(226,232,240,0.7)]">
+        <header data-app-header class="shrink-0 z-20 glass border-b border-slate-200/70 shadow-[0_1px_0_0_rgba(226,232,240,0.7)]">
             <div class="w-full min-w-0 max-w-[1600px] mx-auto px-4 lg:px-8 py-3 flex items-center gap-3">
 
                 {{-- Hambúrguer mobile --}}
-                <button class="lg:hidden w-10 h-10 grid place-items-center rounded-lg border border-gray-500 bg-white shadow-sm hover:shadow-md transition"
+                <button class="lg:hidden w-10 h-10 grid place-items-center rounded-lg border border-slate-200 bg-white shadow-sm hover:shadow-md transition"
                     onclick="document.getElementById('sidebar').classList.remove('-translate-x-full');document.getElementById('backdrop').classList.remove('hidden')">
                     <span class="material-symbols-outlined text-gray-600">menu</span>
                 </button>
@@ -134,6 +134,47 @@
                 </nav>
 
                 <div class="flex-1"></div>
+
+                {{-- Sino de notificações --}}
+                @php $naoLidas = $user->unreadNotifications()->count(); @endphp
+                <div class="relative" data-notif-menu>
+                    <button type="button" data-notif-btn title="Notificações"
+                        class="relative w-10 h-10 grid place-items-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:text-slate-800 hover:border-slate-300 transition">
+                        <span class="material-symbols-outlined text-[20px]">notifications</span>
+                        @if($naoLidas > 0)
+                        <span class="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-extrabold grid place-items-center num">{{ $naoLidas > 9 ? '9+' : $naoLidas }}</span>
+                        @endif
+                    </button>
+                    <div data-notif-dropdown
+                        class="hidden absolute right-0 mt-2 w-[min(360px,90vw)] bg-white rounded-2xl shadow-xl border border-slate-200 py-2 overflow-hidden z-50">
+                        <div class="px-4 py-2.5 flex items-center justify-between gap-2 border-b border-slate-100">
+                            <p class="text-[13px] font-extrabold text-gray-800">Notificações</p>
+                            @if($naoLidas > 0)
+                            <form method="POST" action="{{ route('notificacoes.lidas') }}" class="inline">
+                                @csrf
+                                <button class="text-[11px] font-bold text-emerald-600 hover:text-emerald-700">Marcar lidas</button>
+                            </form>
+                            @endif
+                        </div>
+                        <div class="max-h-[320px] overflow-y-auto">
+                            @forelse($user->notifications()->take(10)->get() as $n)
+                            <a href="{{ $n->data['url'] ?? route('dashboard') }}" class="flex items-start gap-3 px-4 py-3 hover:bg-slate-50 transition {{ $n->read_at ? 'opacity-60' : '' }}">
+                                <span class="w-9 h-9 rounded-xl bg-slate-100 grid place-items-center shrink-0">
+                                    <span class="material-symbols-outlined text-[18px] text-slate-500">{{ $n->data['icon'] ?? 'notifications' }}</span>
+                                </span>
+                                <span class="min-w-0">
+                                    <span class="block text-[13px] font-extrabold text-gray-800 leading-snug">{{ $n->data['title'] ?? 'Aviso' }}</span>
+                                    <span class="block text-[12px] text-gray-500 mt-0.5 leading-snug">{{ $n->data['body'] ?? '' }}</span>
+                                    <span class="block text-[10px] text-gray-300 mt-1 num">{{ $n->created_at->diffForHumans() }}</span>
+                                </span>
+                                @if(! $n->read_at)<span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0 mt-1.5"></span>@endif
+                            </a>
+                            @empty
+                            <p class="text-[13px] text-gray-400 text-center py-8">Nenhuma notificação por aqui.</p>
+                            @endforelse
+                        </div>
+                    </div>
+                </div>
 
                 {{-- Avatar usuário (dropdown) --}}
                 <div class="relative" data-user-menu>
@@ -150,8 +191,8 @@
 
                     {{-- Dropdown --}}
                     <div data-user-menu-dropdown
-                        class="hidden absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-xl border border-gray-500 py-2 overflow-hidden z-50 transition-all duration-200 origin-top-right scale-95 opacity-0">
-                        <div class="px-4 py-3 border-b border-gray-500 mb-1 bg-slate-50/70">
+                        class="hidden absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-xl border border-slate-200 py-2 overflow-hidden z-50 transition-all duration-200 origin-top-right scale-95 opacity-0">
+                        <div class="px-4 py-3 border-b border-slate-200 mb-1 bg-slate-50/70">
                             <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Autenticado como</p>
                             <p class="text-sm font-bold text-gray-800 truncate">{{ $user->name }}</p>
                             <p class="text-[11px] text-gray-400 truncate">{{ $user->email }}</p>
@@ -172,7 +213,7 @@
                             <span class="text-xs font-bold text-gray-700">Configurações</span>
                         </a>
 
-                        <div class="border-t border-gray-500 my-1"></div>
+                        <div class="border-t border-slate-200 my-1"></div>
 
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
@@ -194,7 +235,7 @@
         </main>
 
         {{-- Footer discreto --}}
-        <footer class="shrink-0 px-4 lg:px-8 py-3 border-t border-gray-500 text-center">
+        <footer class="shrink-0 px-4 lg:px-8 py-3 border-t border-slate-200 text-center">
             <p class="text-[11px] text-gray-300 font-medium">FinFamília · Gestão financeira familiar segura</p>
         </footer>
     </div>
@@ -260,7 +301,7 @@ document.querySelectorAll('[data-filter-group]').forEach(group=>{
   const key = group.dataset.filterGroup;
   const btns = group.querySelectorAll('[data-filter]');
   btns.forEach(btn=>btn.addEventListener('click',()=>{
-    btns.forEach(x=>x.className='filtro-btn h-8 px-4 rounded-lg text-[12px] font-bold border bg-white border-gray-500 text-gray-600 hover:border-gray-500 transition');
+    btns.forEach(x=>x.className='filtro-btn h-8 px-4 rounded-lg text-[12px] font-bold border bg-white border-slate-200 text-gray-600 hover:border-slate-300 transition');
     btn.className='filtro-btn h-8 px-4 rounded-lg text-[12px] font-bold border bg-slate-900 text-white border-gray-900';
     const f = btn.dataset.filter;
     document.querySelectorAll('[data-ledger-row]').forEach(r=>{
@@ -277,6 +318,24 @@ document.querySelectorAll('.kpi-card, .section-card, .hero-card').forEach((el, i
   el.style.animationDelay = `${i * 60}ms`;
   el.classList.add('fade-up');
 });
+
+// Dropdown de notificações (abrir, fechar fora, Esc)
+const notifMenu = document.querySelector('[data-notif-menu]');
+if (notifMenu) {
+  const btn = notifMenu.querySelector('[data-notif-btn]');
+  const dd = notifMenu.querySelector('[data-notif-dropdown]');
+  const toggle = (show) => dd.classList.toggle('hidden', !show);
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggle(dd.classList.contains('hidden'));
+  });
+  document.addEventListener('click', (e) => {
+    if (!notifMenu.contains(e.target)) toggle(false);
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') toggle(false);
+  });
+}
 
 // Dropdown do usuário (abrir, fechar fora, Esc)
 const userMenu = document.querySelector('[data-user-menu]');

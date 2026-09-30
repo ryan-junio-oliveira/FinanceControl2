@@ -22,7 +22,7 @@
         iconBg="linear-gradient(135deg,#EFF6FF,#DBEAFE)"
         iconColor="#2563EB" />
 
-    <form method="POST" action="{{ $action }}" class="form-card">
+    <form method="POST" action="{{ $action }}" class="form-card tint-blue">
         @csrf
         @if($conta) @method('PATCH') @endif
 
@@ -68,7 +68,7 @@
             @endif
         </div>
 
-        <x-form.actions :cancelUrl="route('contas')" :submitLabel="$conta ? 'Salvar alterações' : 'Salvar conta'" :submitIcon="$conta ? 'save' : 'add_circle'" />
+        <x-form.actions :cancelUrl="route('contas')" :submitLabel="$conta ? 'Salvar alterações' : 'Salvar conta'" :submitIcon="$conta ? 'save' : 'add_circle'" color="blue" />
     </form>
 </div>
 

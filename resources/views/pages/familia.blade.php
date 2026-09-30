@@ -13,7 +13,7 @@
     @if($isGestor)
     <div class="flex gap-2">
         <x-btn-link :href="route('familia.mesadas.create')" color="ghost" icon="tune">Regras de Mesada</x-btn-link>
-        <x-btn-link :href="route('familia.convites.create')" icon="person_add">Convidar Pessoa</x-btn-link>
+        <x-btn-link :href="route('familia.convites.create')" color="rose" icon="person_add">Convidar Pessoa</x-btn-link>
     </div>
     @endif
 </div>
@@ -22,7 +22,7 @@
 <div class="grid sm:grid-cols-2 xl:grid-cols-4 gap-4">
     @foreach($membros as $u)
     <div class="section-card relative hover:-translate-y-1 hover:shadow-[var(--shadow-lift)] transition-all duration-200
-        {{ $u->role === 'admin' ? 'ring-2 ring-gray-500 ring-offset-2' : '' }}">
+        {{ $u->role === 'admin' ? 'ring-2 ring-slate-200 ring-offset-2' : '' }}">">
         {{-- Badge papel --}}
         <span class="absolute top-4 right-4">
             <x-badge :type="$u->role === 'admin' ? 'neutral' : ($u->role === 'co_admin' ? 'info' : 'warning')">
@@ -36,7 +36,7 @@
         <p class="font-extrabold mt-3 text-gray-900 text-[15px]">{{ $u->name }}</p>
         <p class="text-[11px] text-gray-400 mt-0.5">{{ $u->email }}</p>
 
-        <div class="mt-3 rounded-lg bg-slate-50 border border-gray-500 p-3 text-center">
+        <div class="mt-3 rounded-lg bg-slate-50 border border-slate-200 p-3 text-center">
             <p class="text-[11px] text-gray-400 font-medium">Despesas em {{ $mes }}</p>
             <p class="num font-extrabold text-[16px] text-gray-900 mt-0.5">{{ Fin::money($u->gasto_mes) }}</p>
         </div>
@@ -52,9 +52,9 @@
         @endif
 
         @if($isGestor && $u->id !== auth()->id() && $u->role !== 'admin')
-        <form method="POST" action="{{ route('familia.membros.papel', $u) }}" class="mt-4 pt-3 border-t border-gray-500 flex gap-2">
+        <form method="POST" action="{{ route('familia.membros.papel', $u) }}" class="mt-4 pt-3 border-t border-slate-200 flex gap-2">
             @csrf @method('PATCH')
-            <select name="role" class="h-9 flex-1 rounded-lg border border-gray-500 text-[12px] font-bold px-2 bg-white text-gray-700 focus:border-emerald-500 outline-none transition">
+            <select name="role" class="h-9 flex-1 rounded-lg border border-slate-200 text-[12px] font-bold px-2 bg-white text-gray-700 focus:border-emerald-500 outline-none transition">
                 @foreach(['co_admin'=>'Co-admin','dependente'=>'Dependente','junior'=>'Júnior'] as $v=>$l)
                     <option value="{{ $v }}" {{ $u->role===$v?'selected':'' }}>{{ $l }}</option>
                 @endforeach
@@ -75,7 +75,7 @@
     {{-- Convites pendentes --}}
     <x-section-card class="lg:col-span-7" title="Convites Pendentes" subtitle="Link de primeiro acesso por convite">
         @forelse($convites as $cv)
-        <div class="flex flex-wrap items-center gap-3 p-4 rounded-lg border border-gray-500 hover:border-gray-500 mb-2.5 transition bg-slate-50/30">
+        <div class="flex flex-wrap items-center gap-3 p-4 rounded-xl border border-slate-200 hover:border-slate-300 mb-2.5 transition bg-slate-50/30">
             <div class="flex-1 min-w-[180px]">
                 <p class="text-[13px] font-extrabold text-gray-800">{{ $cv->name }}
                     <span class="font-medium text-gray-500">· {{ $cv->email }}</span>

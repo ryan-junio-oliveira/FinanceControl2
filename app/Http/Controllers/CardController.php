@@ -7,7 +7,9 @@ use App\Http\Requests\CreditCardRequest;
 use App\Models\CardTransaction;
 use App\Models\CreditCard;
 use App\Models\Transaction;
+use App\Notifications\CompraDependente;
 use App\Support\Fin;
+use App\Support\Notify;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
@@ -23,6 +25,18 @@ class CardController extends Controller
         $cartoes = $family->creditCards()->with(['holder', 'account'])
             ->withSum(['items as open_invoice_sum' => fn ($q) => $q->where('status', 'pendente')], 'amount')
             ->where('active', true)->get();
+
+        // Fatura atual (período corrente) x próxima fatura por cartão.
+        $hoje = Carbon::today();
+        $cartoes->each(function ($c) use ($hoje) {
+            [$ini, $fim] = $c->currentInvoiceRange($hoje);
+            $c->setAttribute('fatura_atual', (float) $c->items()->where('status', 'pendente')
+                ->whereBetween('occurred_on', [$ini->toDateString(), $fim->toDateString()])->sum('amount'));
+            $c->setAttribute('proxima_fatura', (float) $c->items()->where('status', 'pendente')
+                ->whereDate('occurred_on', '>', $fim->toDateString())->sum('amount'));
+            $c->setAttribute('prox_fechamento', $c->nextClosingDate($hoje));
+            $c->setAttribute('prox_vencimento', $c->nextDueDate($hoje));
+        });
 
         $fatura = CardTransaction::where('family_id', $family->id)
             ->with(['member', 'category', 'card'])
@@ -126,9 +140,16 @@ class CardController extends Controller
         $data = $request->validated();
 
         $card = $family->creditCards()->findOrFail($data['credit_card_id']);
-        $family->users()->findOrFail($data['user_id']);
+        $member = $family->users()->findOrFail($data['user_id']);
 
-        $parcelas = max(1, min(48, (int) ($data['installments_total'] ?? 1)));
+        // Estorno entra com valor negativo e sem parcelamento.
+        $isEstorno = ($data['kind'] ?? 'compra') === 'estorno';
+        if ($isEstorno) {
+            $data['amount'] = -abs((float) $data['amount']);
+            $parcelas = 1;
+        } else {
+            $parcelas = max(1, min(48, (int) ($data['installments_total'] ?? 1)));
+        }
         unset($data['installments_total']);
 
         DB::transaction(function () use ($card, $family, $data, $parcelas) {
@@ -137,7 +158,6 @@ class CardController extends Controller
 
                 return;
             }
-
             $group = (string) Str::uuid();
             $totalCents = (int) round((float) $data['amount'] * 100);
             $base = intdiv($totalCents, $parcelas);
@@ -159,7 +179,26 @@ class CardController extends Controller
             }
         });
 
-        return redirect()->route('cartoes')->with('status', $parcelas > 1 ? "Compra parcelada em {$parcelas}x." : 'Compra lançada na fatura.');
+        $this->notifyDependentePurchase($family, $member, $data, $card);
+
+        return redirect()->route('cartoes')->with('status',
+            ($data['kind'] ?? 'compra') === 'estorno' ? 'Estorno lançado na fatura.'
+                : ($parcelas > 1 ? "Compra parcelada em {$parcelas}x." : 'Compra lançada na fatura.'));
+    }
+
+    /** Avisa gestores quando dependente/júnior lança (se a preferência estiver ativa). */
+    private function notifyDependentePurchase($family, $member, array $data, $card): void
+    {
+        if ($member->isAdmin() || ($data['kind'] ?? 'compra') === 'estorno') {
+            return;
+        }
+
+        Notify::gestoresIf($family, 'compra_dependente', new CompraDependente(
+            $member->name,
+            $data['description'],
+            abs((float) $data['amount']),
+            "Cartão {$card->name}",
+        ));
     }
 
     public function settleItem(CardTransaction $item): RedirectResponse
@@ -174,10 +213,10 @@ class CardController extends Controller
         DB::transaction(function () use ($family, $item) {
             $item->update(['status' => 'pago']);
 
-            // Baixa financeira: se o cartão tem conta vinculada, gera a despesa.
-            // Sem conta vinculada mantém só a marcação (compatibilidade).
+            // Baixa financeira: se o cartão tem conta vinculada e o valor é positivo, gera a despesa.
+            // Estornos e cartões sem conta vinculada mantêm só a marcação.
             $card = $item->card()->with('account')->first();
-            if ($card?->account_id) {
+            if ($card?->account_id && (float) $item->amount > 0) {
                 $family->accounts()->findOrFail($card->account_id);
                 Transaction::create([
                     'family_id' => $family->id,
@@ -214,7 +253,8 @@ class CardController extends Controller
         DB::transaction(function () use ($family, $cartao, $pendentes, $total) {
             $cartao->items()->where('status', 'pendente')->update(['status' => 'pago']);
 
-            if ($cartao->account_id) {
+            // Só gera despesa se o líquido for positivo e houver conta vinculada.
+            if ($cartao->account_id && $total > 0) {
                 $family->accounts()->findOrFail($cartao->account_id);
                 Transaction::create([
                     'family_id' => $family->id,

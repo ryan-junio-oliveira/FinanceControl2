@@ -25,7 +25,10 @@ abstract class FormRequest extends BaseRequest
     }
 
     /**
-     * Converte valor monetário BR ("1.234,56" ou "150,00") para ponto decimal.
+     * Converte valor monetário BR para ponto decimal.
+     *
+     * Aceita "1.234,56", "7.000" (milhar sem decimal), "7000", "7.5" e
+     * "R$ 1.234,56" — nunca interpreta milhar como decimal.
      */
     protected function normalizeMoney(array $fields): void
     {
@@ -34,14 +37,33 @@ abstract class FormRequest extends BaseRequest
             if (! $this->has($f)) {
                 continue;
             }
-            $v = trim((string) $this->input($f));
-            if (preg_match('/,\d{1,2}$/', $v)) {
-                $v = str_replace('.', '', $v);
-                $v = str_replace(',', '.', $v);
-            }
-            $data[$f] = $v === '' ? null : $v;
+            $data[$f] = self::parseBrazilianDecimal($this->input($f));
         }
         $this->merge($data);
+    }
+
+    public static function parseBrazilianDecimal(mixed $raw): ?string
+    {
+        $v = trim((string) $raw);
+        if ($v === '') {
+            return null;
+        }
+        // Remove símbolo de moeda e espaços: "R$ 1.234,56" → "1.234,56".
+        $v = str_replace(['R$', 'r$', '$'], '', $v);
+        $v = preg_replace('/\s+/', '', $v) ?? '';
+        if ($v === '' || $v === '-' || $v === '+' || $v === ',') {
+            return null;
+        }
+        if (str_contains($v, ',')) {
+            // Formato BR: pontos são milhar, vírgula é decimal.
+            $v = str_replace('.', '', $v);
+            $v = str_replace(',', '.', $v);
+        } elseif (preg_match('/^[+-]?\d{1,3}(?:\.\d{3})+$/', $v)) {
+            // Só pontos em grupos de milhar: "7.000" → "7000" (nunca 7,0).
+            $v = str_replace('.', '', $v);
+        }
+
+        return $v;
     }
 
     /**

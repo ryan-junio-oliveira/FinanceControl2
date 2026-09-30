@@ -17,7 +17,7 @@ class ContributionRequest extends FormRequest
         $fid = Auth::user()?->family_id;
 
         return [
-            'portfolio_id' => ['required', Rule::exists('portfolios', 'id')->where('family_id', $fid)],
+            'portfolio_id' => ['nullable', Rule::exists('portfolios', 'id')->where('family_id', $fid)],
             'asset_id' => ['nullable', Rule::exists('assets', 'id')->where('family_id', $fid), 'required_if:kind,rendimento'],
             'account_id' => ['required_if:kind,aporte', 'nullable', Rule::exists('accounts', 'id')->where('family_id', $fid)],
             'kind' => ['required', 'in:aporte,rendimento'],
@@ -30,8 +30,7 @@ class ContributionRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'portfolio_id.required' => 'Escolha a carteira.',
-            'asset_id.required_if' => 'Para rendimentos, escolha o ativo que rendeu.',
+            'portfolio_id.required' => 'Escolha a carteira.',            'asset_id.required_if' => 'Para rendimentos, escolha o ativo que rendeu.',
             'account_id.required_if' => 'Para aportes, escolha a conta de origem do dinheiro.',
             'amount.required' => 'Informe o valor.',
             'amount.min' => 'O valor deve ser maior que zero.',
