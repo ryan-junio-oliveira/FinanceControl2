@@ -5,9 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\TransactionRequest;
 use App\Models\Attachment;
 use App\Models\Transaction;
-use App\Notifications\CompraDependente;
 use App\Support\Fin;
-use App\Support\Notify;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -112,12 +110,7 @@ class TransactionController extends Controller
             abort_if($cat->type !== $type, 422, 'Categoria de outro tipo.');
         }
 
-        // Dependentes/júnior acima do limiar exigem aprovação (registra como pendente)
-        $threshold = (float) $family->setting()->approval_threshold;
-        if (! $member->isAdmin() && (float) $data['amount'] > $threshold && $type === 'despesa') {
-            $data['status'] = 'pendente';
-        }
-
+        // Sistema é só registro: sem aprovação — o status informado é mantido.
         $parcelas = max(1, min(48, (int) ($data['installments_total'] ?? 1)));
         unset($data['installments_total']);
 
@@ -166,15 +159,6 @@ class TransactionController extends Controller
 
         $rota = $type === 'despesa' ? 'despesas' : 'receitas';
 
-        if (! $member->isAdmin() && $type === 'despesa') {
-            Notify::gestoresIf($family, 'compra_dependente', new CompraDependente(
-                $member->name,
-                $parcelas > 1 ? "{$data['description']} ({$parcelas}x)" : $data['description'],
-                (float) $data['amount'],
-                'Lançamento avulso',
-            ));
-        }
-
         return redirect()->route($rota, ['mes' => Fin::month()])->with('status', $parcelas > 1 ? "Lançamento parcelado em {$parcelas}x." : 'Lançamento registrado.');
     }
 
@@ -196,12 +180,6 @@ class TransactionController extends Controller
             abort_if($cat->type !== $transaction->type, 422, 'Categoria de outro tipo.');
         }
         $data['is_fixed'] = $request->boolean('is_fixed');
-
-        // Reaplica a trava de aprovação também na edição (evita bypass).
-        $threshold = (float) $family->setting()->approval_threshold;
-        if (! $member->isAdmin() && (float) $data['amount'] > $threshold && $transaction->type === 'despesa') {
-            $data['status'] = 'pendente';
-        }
 
         $transaction->update($data);
 
@@ -238,21 +216,21 @@ class TransactionController extends Controller
     }
 
     /** Baixa o anexo (PDF/imagem do comprovante). */
-    public function downloadAttachment(Attachment $anexo): BinaryFileResponse|StreamedResponse
+    public function downloadAttachment(Attachment $attachment): BinaryFileResponse|StreamedResponse
     {
-        abort_if($anexo->family_id !== Fin::familyId(), 404);
-        abort_if(! Storage::disk('local')->exists($anexo->path), 404);
+        abort_if($attachment->family_id !== Fin::familyId(), 404);
+        abort_if(! Storage::disk('local')->exists($attachment->path), 404);
 
-        return Storage::disk('local')->download($anexo->path, $anexo->original_name);
+        return Storage::disk('local')->download($attachment->path, $attachment->original_name);
     }
 
     /** Remove o anexo (dono do envio ou gestor). */
-    public function destroyAttachment(Attachment $anexo): RedirectResponse
+    public function destroyAttachment(Attachment $attachment): RedirectResponse
     {
         $user = request()->user();
-        abort_if($anexo->family_id !== Fin::familyId(), 404);
-        abort_if($anexo->user_id !== $user->id && ! $user->isAdmin(), 403);
-        $anexo->delete();
+        abort_if($attachment->family_id !== Fin::familyId(), 404);
+        abort_if($attachment->user_id !== $user->id && ! $user->isAdmin(), 403);
+        $attachment->delete();
 
         return back()->with('status', 'Anexo removido.');
     }

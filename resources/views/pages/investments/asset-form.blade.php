@@ -4,10 +4,10 @@
 @section('nav-active', 'investimentos')
 
 @section('content')
-@php $val = fn($k, $d = null) => old($k, $ativo?->$k ?? $d); @endphp
+@php $val = fn($k, $d = null) => old($k, $asset?->$k ?? $d); @endphp
 <div class="max-w-4xl mx-auto w-full">
     <x-form.header
-        :title="$ativo ? 'Editar ativo' : 'Novo ativo'"
+        :title="$asset ? 'Editar ativo' : 'Novo ativo'"
         subtitle="Ex.: CDB de R$ 7.000 rendendo 120% do CDI. Carteira é opcional."
         :backUrl="route('investimentos')"
         backLabel="Voltar para investimentos"
@@ -15,9 +15,9 @@
         iconBg="linear-gradient(135deg,#ECFEFF,#CFFAFE)"
         iconColor="#0891B2" />
 
-    <form method="POST" action="{{ $ativo ? route('investimentos.ativos.update', $ativo) : route('investimentos.ativos.store') }}" class="form-card tint-cyan">
+    <form method="POST" action="{{ $asset ? route('investimentos.ativos.update', $asset) : route('investimentos.ativos.store') }}" class="form-card tint-cyan">
         @csrf
-        @if($ativo) @method('PATCH') @endif
+        @if($asset) @method('PATCH') @endif
         <div class="form-grid">
             <div class="form-grid form-grid-2">
                 <x-form.field label="Código" for="f-cod" :required="true" :error="$errors->first('code')">
@@ -60,7 +60,7 @@
                 </x-form.field>
             </div>
         </div>
-        <x-form.actions :cancelUrl="route('investimentos')" :submitLabel="$ativo ? 'Salvar alterações' : 'Salvar ativo'" :submitIcon="$ativo ? 'save' : 'add_circle'" color="cyan" />
+        <x-form.actions :cancelUrl="route('investimentos')" :submitLabel="$asset ? 'Salvar alterações' : 'Salvar ativo'" :submitIcon="$asset ? 'save' : 'add_circle'" color="cyan" />
     </form>
 </div>
 @endsection

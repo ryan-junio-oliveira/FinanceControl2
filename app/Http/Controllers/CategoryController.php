@@ -36,15 +36,15 @@ class CategoryController extends Controller
 
     public function create(): View
     {
-        return view('pages.categories.form', ['categoria' => null]);
+        return view('pages.categories.form', ['category' => null]);
     }
 
-    public function edit(Category $categoria): View
+    public function edit(Category $category): View
     {
-        abort_if($categoria->family_id !== Fin::familyId(), 404);
-        $this->authorize('manage', $categoria);
+        abort_if($category->family_id !== Fin::familyId(), 404);
+        $this->authorize('manage', $category);
 
-        return view('pages.categories.form', ['categoria' => $categoria]);
+        return view('pages.categories.form', ['category' => $category]);
     }
 
     public function store(CategoryRequest $request): RedirectResponse
@@ -62,26 +62,26 @@ class CategoryController extends Controller
         return redirect()->route('categorias')->with('status', 'Categoria criada.');
     }
 
-    public function update(CategoryRequest $request, Category $categoria): RedirectResponse
+    public function update(CategoryRequest $request, Category $category): RedirectResponse
     {
         $family = Fin::family();
-        abort_if($categoria->family_id !== $family->id, 404);
-        $this->authorize('manage', $categoria);
+        abort_if($category->family_id !== $family->id, 404);
+        $this->authorize('manage', $category);
 
         $data = $request->validated();
         $data['archived'] = $request->boolean('archived');
-        $categoria->update($data);
+        $category->update($data);
 
         return redirect()->route('categorias')->with('status', 'Categoria atualizada.');
     }
 
-    public function destroy(Category $categoria): RedirectResponse
+    public function destroy(Category $category): RedirectResponse
     {
         $family = Fin::family();
-        abort_if($categoria->family_id !== $family->id, 404);
-        $this->authorize('manage', $categoria);
-        abort_if($categoria->transactions()->exists(), 422, 'Categoria com lançamentos não pode ser excluída. Arquive-a.');
-        $categoria->delete();
+        abort_if($category->family_id !== $family->id, 404);
+        $this->authorize('manage', $category);
+        abort_if($category->transactions()->exists(), 422, 'Categoria com lançamentos não pode ser excluída. Arquive-a.');
+        $category->delete();
 
         return redirect()->route('categorias')->with('status', 'Categoria excluída.');
     }

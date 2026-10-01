@@ -30,7 +30,7 @@ class WelcomeEmail extends Mailable implements ShouldQueue
             with: [
                 'invitation' => $this->invitation,
                 'accountName' => $this->invitation->family->name,
-                'link' => url('/primeiro-acesso/'.$this->invitation->token),
+                'link' => url('/first-access/'.$this->invitation->token),
             ],
         );
     }

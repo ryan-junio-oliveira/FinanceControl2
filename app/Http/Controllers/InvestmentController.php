@@ -7,10 +7,8 @@ use App\Http\Requests\ContributionRequest;
 use App\Http\Requests\PortfolioRequest;
 use App\Models\Asset;
 use App\Models\Transaction;
-use App\Notifications\DividendoRegistrado;
 use App\Support\Fin;
 use App\Support\MarketData;
-use App\Support\Notify;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -62,7 +60,7 @@ class InvestmentController extends Controller
         $family = Fin::family();
 
         return view('pages.investments.asset-form', [
-            'ativo' => null,
+            'asset' => null,
             'portfolios' => $family->portfolios()->orderBy('name')->get(),
             'selected' => request()->query('carteira'),
         ]);
@@ -157,48 +155,41 @@ class InvestmentController extends Controller
             if ($asset) {
                 $asset->increment('current_value', (float) $data['amount']);
             }
-
-            if ($data['kind'] === 'rendimento') {
-                Notify::gestoresIf($family, 'dividendo', new DividendoRegistrado(
-                    $asset ? "{$asset->code} — {$asset->name}" : $portfolio->name,
-                    (float) $data['amount'],
-                ));
-            }
         });
 
         return redirect()->route('investimentos')->with('status', $data['kind'] === 'aporte' ? 'Aporte registrado.' : 'Rendimento registrado.');
     }
 
-    public function editAsset(Asset $ativo): View
+    public function editAsset(Asset $asset): View
     {
-        abort_if($ativo->family_id !== Fin::familyId(), 404);
+        abort_if($asset->family_id !== Fin::familyId(), 404);
         $family = Fin::family();
 
         return view('pages.investments.asset-form', [
-            'ativo' => $ativo,
+            'asset' => $asset,
             'portfolios' => $family->portfolios()->orderBy('name')->get(),
-            'selected' => $ativo->portfolio_id,
+            'selected' => $asset->portfolio_id,
         ]);
     }
 
     /** Corrige o cadastro do ativo (valor inicial errado, rentabilidade, etc.). */
-    public function updateAsset(AssetRequest $request, Asset $ativo): RedirectResponse
+    public function updateAsset(AssetRequest $request, Asset $asset): RedirectResponse
     {
-        abort_if($ativo->family_id !== Fin::familyId(), 404);
+        abort_if($asset->family_id !== Fin::familyId(), 404);
         $family = Fin::family();
         $data = $request->validated();
         if (! empty($data['portfolio_id'])) {
             $family->portfolios()->findOrFail($data['portfolio_id']);
         }
-        $ativo->update($data);
+        $asset->update($data);
 
         return redirect()->route('investimentos')->with('status', 'Ativo atualizado.');
     }
 
-    public function destroyAsset(Asset $ativo): RedirectResponse
+    public function destroyAsset(Asset $asset): RedirectResponse
     {
-        abort_if($ativo->family_id !== Fin::familyId(), 404);
-        $ativo->delete();
+        abort_if($asset->family_id !== Fin::familyId(), 404);
+        $asset->delete();
 
         return redirect()->route('investimentos')->with('status', 'Ativo removido.');
     }
