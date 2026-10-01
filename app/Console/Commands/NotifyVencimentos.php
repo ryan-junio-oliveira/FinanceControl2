@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Bot\BotNotifier;
 use App\Models\Family;
 use App\Models\Transaction;
 use App\Notifications\FaturaVencimento;
@@ -78,6 +79,9 @@ class NotifyVencimentos extends Command
         });
 
         $this->info("Avisos de vencimento enviados: {$total}.");
+
+        $bot = BotNotifier::vencimentos();
+        $this->info("Alertas no Telegram: {$bot}.");
 
         return self::SUCCESS;
     }

@@ -39,6 +39,10 @@ Trocar de canal = implementar `BotDriver` + `BOT_DRIVER=whatsapp`. As conversas 
 5. **Contas** — saldos por conta
 6. **Investimentos** — patrimônio e metas (leitura)
 
+## Alertas proativos
+
+Todo dia às 08:00 o `notify:vencimentos` (mesmo agendamento das notificações) também envia **uma mensagem agregada por usuário** no Telegram para quem tem o chat vinculado — contas e faturas vencendo em até 3 dias. Respeita as mesmas preferências da conta (`fatura_vencimento`, `conta_vencimento`).
+
 ## Vínculo da conta
 
 Cada usuário tem um `bot_code` de 6 dígitos (perfil → “Bot no Celular”). No Telegram: `/start 123456`. O vínculo fica em `bot_identities` (canal + chat → usuário).

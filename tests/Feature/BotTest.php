@@ -127,6 +127,35 @@ class BotTest extends TestCase
         $this->assertStringContainsString('FinFamília', (string) NullDriver::lastText());
     }
 
+    public function test_vencimento_alerts(): void
+    {
+        [$family, $admin] = $this->familyWithLinkedUser();
+        BotIdentity::create(['user_id' => $admin->id, 'channel' => 'telegram', 'external_id' => '99']);
+        $family->setting()->update(['notifications' => ['conta_vencimento' => true, 'fatura_vencimento' => false]]);
+
+        $bank = Bank::firstOrCreate(['code' => '341'], ['name' => 'Itaú', 'color' => '#EC7000']);
+        $conta = $admin->family->accounts()->create([
+            'bank_id' => $bank->id, 'name' => 'Conta', 'kind' => 'corrente', 'initial_balance' => 0,
+        ]);
+        $cat = $family->categories()->where('type', 'despesa')->firstOrFail();
+        $mk = fn (string $desc, string $due) => Transaction::create([
+            'family_id' => $family->id, 'user_id' => $admin->id, 'account_id' => $conta->id,
+            'category_id' => $cat->id, 'type' => 'despesa', 'description' => $desc,
+            'amount' => 100, 'occurred_on' => now()->toDateString(), 'due_on' => $due, 'status' => 'pendente',
+        ]);
+        $mk('Conta de luz', now()->addDay()->toDateString());
+        $mk('Internet futura', now()->addDays(10)->toDateString());
+
+        NullDriver::flush();
+        $this->artisan('notify:vencimentos')->assertSuccessful();
+
+        $text = (string) NullDriver::lastText();
+        $this->assertStringContainsString('Vencimentos próximos', $text);
+        $this->assertStringContainsString('Conta de luz', $text);
+        $this->assertStringContainsString('amanhã', $text);
+        $this->assertStringNotContainsString('Internet futura', $text);
+    }
+
     public function test_manager_resolves_null_driver(): void
     {
         $this->assertSame('null', BotManager::driver()->name());
