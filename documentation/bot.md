@@ -28,6 +28,8 @@ Webhook → BotDriver::parseWebhook → IncomingMessage → BotRouter → Handle
 
 Trocar de canal = implementar `BotDriver` + `BOT_DRIVER=whatsapp`. As conversas não mudam.
 
+> 📖 Passo a passo completo de configuração: [bot-telegram-setup.md](bot-telegram-setup.md).
+
 ## Menu (espelha a sidebar)
 
 1. **Dados financeiros** — saldo, resultado do mês, a pagar, patrimônio
