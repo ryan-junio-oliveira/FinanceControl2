@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\BankRequest;
 use App\Http\Requests\SettingsRequest;
 use App\Support\Fin;
 use Illuminate\Http\RedirectResponse;
@@ -17,9 +16,8 @@ class SettingsController extends Controller
     {
         $family = Fin::family();
         $settings = $family->setting();
-        $bancos = $family->bankConnections()->orderBy('bank')->get();
 
-        return view('pages.configuracoes', compact('settings', 'bancos'));
+        return view('pages.configuracoes', compact('settings'));
     }
 
     public function update(SettingsRequest $request): RedirectResponse
@@ -31,9 +29,6 @@ class SettingsController extends Controller
         $family->setting()->update([
             'currency' => $data['currency'],
             'timezone' => $data['timezone'],
-            'closing_day' => $data['closing_day'],
-            'approval_threshold' => $data['approval_threshold'],
-            'privacy_hide_under' => $data['privacy_hide_under'],
             'consolidate_dependent_yield' => $request->boolean('consolidate_dependent_yield'),
         ]);
 
@@ -43,7 +38,7 @@ class SettingsController extends Controller
     public function updateNotifications(Request $request): RedirectResponse
     {
         $family = Fin::family();
-        $keys = ['compra_dependente', 'fatura_vencimento', 'resumo_semanal', 'dividendo'];
+        $keys = ['fatura_vencimento', 'conta_vencimento'];
         $notifications = [];
         foreach ($keys as $k) {
             $notifications[$k] = $request->boolean("notifications.$k");
@@ -51,28 +46,6 @@ class SettingsController extends Controller
         $family->setting()->update(['notifications' => $notifications]);
 
         return back()->with('status', 'Notificações atualizadas.');
-    }
-
-    public function createBank(): View
-    {
-        return view('pages.settings.bank-form');
-    }
-
-    public function storeBank(BankRequest $request): RedirectResponse
-    {
-        $family = Fin::family();
-        $data = $request->validated();
-        $family->bankConnections()->create($data + ['status' => 'manual']);
-
-        return redirect()->route('configuracoes')->with('status', 'Banco anotado como referência.');
-    }
-
-    public function destroyBank(Request $request, int $banco): RedirectResponse
-    {
-        $family = Fin::family();
-        $family->bankConnections()->findOrFail($banco)->delete();
-
-        return back()->with('status', 'Conexão removida.');
     }
 
     public function logoutOthers(Request $request): RedirectResponse

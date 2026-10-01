@@ -11,6 +11,5 @@ Artisan::command('inspire', function () {
 // Indicadores + ações renovados a cada 15 min (TTLs de 30/15 min).
 Schedule::command('market:warm')->everyFifteenMinutes();
 
-// Avisos de vencimento todo dia às 08:00; resumo semanal às segundas 08:00.
+// Avisos de vencimento (faturas e contas) todo dia às 08:00.
 Schedule::command('notify:vencimentos')->dailyAt('08:00');
-Schedule::command('notify:resumo')->weeklyOn(1, '08:00');

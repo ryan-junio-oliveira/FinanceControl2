@@ -50,19 +50,9 @@ class Family extends Model
         return $this->hasMany(Portfolio::class);
     }
 
-    public function allowances(): HasMany
-    {
-        return $this->hasMany(Allowance::class);
-    }
-
     public function invitations(): HasMany
     {
         return $this->hasMany(Invitation::class);
-    }
-
-    public function bankConnections(): HasMany
-    {
-        return $this->hasMany(BankConnection::class);
     }
 
     public function setting(): FamilySetting

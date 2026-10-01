@@ -49,11 +49,6 @@ class User extends Authenticatable
         return $this->hasMany(CardTransaction::class);
     }
 
-    public function allowance(): HasMany
-    {
-        return $this->hasMany(Allowance::class);
-    }
-
     public function isAdmin(): bool
     {
         return in_array($this->role, ['admin', 'co_admin'], true);

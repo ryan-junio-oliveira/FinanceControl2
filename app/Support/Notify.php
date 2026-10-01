@@ -10,8 +10,9 @@ use Illuminate\Support\Collection;
 /**
  * Envio de notificações respeitando as preferências da família.
  *
- * Chaves de `family_settings.notifications`: compra_dependente,
- * fatura_vencimento, resumo_semanal, dividendo.
+ * Chaves de `family_settings.notifications`: fatura_vencimento
+ * (fatura do cartão próxima do vencimento), conta_vencimento
+ * (conta/lançamento próximo do pagamento).
  */
 final class Notify
 {
