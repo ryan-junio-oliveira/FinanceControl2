@@ -39,6 +39,10 @@ Trocar de canal = implementar `BotDriver` + `BOT_DRIVER=whatsapp`. As conversas 
 5. **Contas** — saldos por conta
 6. **Investimentos** — patrimônio e metas (leitura)
 
+## Comprovantes (foto/PDF)
+
+Envie a **foto do comprovante** (ou o **PDF**) no chat e o bot lê com OCR local (Tesseract, grátis/offline), identifica **banco, valor, data, canal (Pix/TED/boleto/cartão) e direção (despesa/receita)** — e **pergunta o que não entendeu** (valor? data? tipo? conta? categoria?) antes de confirmar. O arquivo vira **anexo do lançamento**. PDFs com texto embarcado são lidos direto; PDF escaneado pede foto.
+
 ## Alertas proativos
 
 Todo dia às 08:00 o `notify:vencimentos` (mesmo agendamento das notificações) também envia **uma mensagem agregada por usuário** no Telegram para quem tem o chat vinculado — contas e faturas vencendo em até 3 dias. Respeita as mesmas preferências da conta (`fatura_vencimento`, `conta_vencimento`).

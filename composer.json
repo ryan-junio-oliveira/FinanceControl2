@@ -12,6 +12,8 @@
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^3.0",
         "lucascudo/laravel-pt-br-localization": "^3.0",
+        "smalot/pdfparser": "^2.12",
+        "thiagoalessio/tesseract_ocr": "^2.13",
         "vladimir-yuldashev/laravel-queue-rabbitmq": "^15.0"
     },
     "require-dev": {

@@ -25,4 +25,10 @@ interface BotDriver
      * Retorna null quando o payload é inválido (ex.: verificação/segredo).
      */
     public function parseWebhook(Request $request): ?IncomingMessage;
+
+    /**
+     * Baixa um arquivo do canal (foto/documento) para o disco local.
+     * Retorna o caminho local ou null se falhar.
+     */
+    public function downloadFile(string $fileId): ?string;
 }

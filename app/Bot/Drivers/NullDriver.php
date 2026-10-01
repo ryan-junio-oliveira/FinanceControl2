@@ -16,6 +16,9 @@ final class NullDriver implements BotDriver
     /** @var array<int, array{chat: string, text: string}> */
     public static array $sent = [];
 
+    /** Caminho local a devolver no download (definido pelo teste). */
+    public static ?string $fixturePath = null;
+
     public function name(): string
     {
         return 'null';
@@ -24,6 +27,11 @@ final class NullDriver implements BotDriver
     public function sendText(string $chatId, string $text, ?BotKeyboard $keyboard = null): void
     {
         self::$sent[] = ['chat' => $chatId, 'text' => $text];
+    }
+
+    public function downloadFile(string $fileId): ?string
+    {
+        return self::$fixturePath;
     }
 
     public function parseWebhook(Request $request): ?IncomingMessage
@@ -46,11 +54,41 @@ final class NullDriver implements BotDriver
             return new IncomingMessage('telegram', $chatId, (string) ($cb['data'] ?? ''));
         }
         $msg = $data['message'] ?? null;
-        if (is_array($msg) && isset($msg['chat']['id']) && isset($msg['text'])) {
-            return new IncomingMessage('telegram', (string) $msg['chat']['id'], (string) $msg['text']);
+        if (! is_array($msg) || ! isset($msg['chat']['id'])) {
+            return null;
         }
 
-        return null;
+        $fileId = null;
+        $fileKind = null;
+        $fileMime = null;
+        $fileName = null;
+        if (! empty($msg['photo']) && is_array($msg['photo'])) {
+            $biggest = collect($msg['photo'])->sortByDesc(fn ($p) => ($p['file_size'] ?? 0))->first();
+            $fileId = $biggest['file_id'] ?? null;
+            $fileKind = $fileId ? 'photo' : null;
+            $fileMime = 'image/jpeg';
+        } elseif (! empty($msg['document']['file_id'])) {
+            $fileId = $msg['document']['file_id'];
+            $fileKind = 'document';
+            $fileMime = $msg['document']['mime_type'] ?? null;
+            $fileName = $msg['document']['file_name'] ?? null;
+        }
+
+        $text = trim((string) ($msg['text'] ?? ($msg['caption'] ?? '')));
+        if ($text === '' && $fileId === null) {
+            return null;
+        }
+
+        return new IncomingMessage(
+            'telegram',
+            (string) $msg['chat']['id'],
+            $text,
+            $msg['from']['first_name'] ?? null,
+            $fileId,
+            $fileKind,
+            $fileMime,
+            $fileName,
+        );
     }
 
     public static function flush(): void

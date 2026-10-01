@@ -9,6 +9,7 @@ use App\Bot\Handlers\ExpenseHandler;
 use App\Bot\Handlers\IncomeHandler;
 use App\Bot\Handlers\LinkHandler;
 use App\Bot\Handlers\MenuHandler;
+use App\Bot\Handlers\ReceiptHandler;
 use App\Bot\ValueObjects\IncomingMessage;
 use App\Models\BotIdentity;
 use App\Models\User;
@@ -53,6 +54,14 @@ final class BotRouter
         }
 
         Auth::setUser($user);
+
+        // Foto/documento sempre inicia o fluxo de comprovante.
+        if ($msg->hasFile()) {
+            ConversationState::put($msg->channel, $msg->chatId, ReceiptHandler::class, 'download');
+            app(ReceiptHandler::class)->handle($driver, $msg, ['step' => 'download', 'data' => []], $user);
+
+            return;
+        }
 
         // Atalhos de submenu vindos dos botões (ex.: despesa:new).
         if (preg_match('/^(despesa|receita):(list|new)$/', $low, $m)) {

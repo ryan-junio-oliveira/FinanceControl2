@@ -10,5 +10,14 @@ final class IncomingMessage
         public readonly string $chatId,
         public readonly string $text,
         public readonly ?string $fromName = null,
+        public readonly ?string $fileId = null,
+        public readonly ?string $fileKind = null, // 'photo'|'document'
+        public readonly ?string $fileMime = null,
+        public readonly ?string $fileName = null,
     ) {}
+
+    public function hasFile(): bool
+    {
+        return $this->fileId !== null;
+    }
 }
