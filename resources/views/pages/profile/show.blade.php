@@ -60,6 +60,26 @@
         </form>
     </x-section-card>
 
+    {{-- Bot no celular --}}
+    <x-section-card title="Bot no Celular" subtitle="Vincule o Telegram para lançar e consultar pelo chat">
+        @if($user->bot_code)
+        <div class="flex items-center gap-3 p-4 rounded-xl bg-emerald-50 border border-emerald-200">
+            <span class="material-symbols-outlined text-emerald-600 text-[22px]">smartphone</span>
+            <div class="flex-1 min-w-0">
+                <p class="text-[11px] font-bold uppercase tracking-widest text-emerald-700">Seu código</p>
+                <p class="text-[22px] font-extrabold num tracking-widest text-gray-900">{{ $user->bot_code }}</p>
+                <p class="text-[12px] text-gray-500 mt-0.5">No Telegram, envie <b>/start {{ $user->bot_code }}</b> para o bot.</p>
+            </div>
+        </div>
+        @else
+        <p class="text-[13px] text-gray-500">Você ainda não tem um código. Gere um para vincular o celular.</p>
+        @endif
+        <form method="POST" action="{{ route('perfil.botcode') }}" class="mt-3">
+            @csrf
+            <x-btn-submit size="sm" icon="key">{{ $user->bot_code ? 'Gerar novo código' : 'Gerar código' }}</x-btn-submit>
+        </form>
+    </x-section-card>
+
     {{-- Encerrar cadastro (só admin) --}}
     <x-section-card title="Encerrar Cadastro" subtitle="Apaga a conta da família inteira">
         @if($user->role === 'admin')

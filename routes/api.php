@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\V1\DashboardController;
 use App\Http\Controllers\Api\V1\FamilyController;
 use App\Http\Controllers\Api\V1\InvestmentController;
 use App\Http\Controllers\Api\V1\TransactionController;
+use App\Http\Controllers\BotWebhookController;
 use App\Http\Resources\UserResource;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -20,6 +21,9 @@ use Illuminate\Support\Facades\Route;
 | REST para o bot (smartphone). Autenticação via Sanctum (Bearer token).
 | Middleware `family.ownership` garante que o recurso pertence à família.
 */
+
+// Webhook do bot (público; validado pelo segredo do canal)
+Route::post('/bot/telegram', [BotWebhookController::class, 'telegram'])->name('bot.telegram');
 
 Route::prefix('v1')->group(function () {
     // Autenticação por token

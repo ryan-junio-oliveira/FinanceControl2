@@ -42,3 +42,4 @@ php artisan serve
 - **Bancos do catálogo**: `php artisan banks:seed` (idempotente, ~112 bancos com cor da marca).
 - **População fake 2026**: `php artisan db:seed --class=PopulateDatabaseSeeder` — usa o usuário #1/família #1 e recria contas, cartões, lançamentos, cartão de crédito, investimentos e membros do ano de 2026 (reexecutável).
 - **Logs de auditoria**: trilha de todas as ações (criação/edição/exclusão de lançamentos, contas, cartões, categorias, investimentos, membros, login/logout, configurações) com quem, IP, método, URL e mudanças. Acessível só pelo admin em `/admin/logs` (`App\Support\Audit` + observers; ignora CLI/seed; `Audit::silence` para limpezas em massa).
+- **Bot**: módulo `App\Bot` com driver trocável (`BOT_DRIVER`: `telegram` grátis/ilimitado, `whatsapp` futuro); menu espelha a sidebar; vínculo via `bot_code` do perfil; webhook em `/api/bot/telegram` (`php artisan bot:telegram-webhook`).

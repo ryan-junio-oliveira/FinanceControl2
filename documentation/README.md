@@ -7,6 +7,7 @@ Bem-vindo à documentação técnica do FinFamília. Aqui você encontra tudo pa
 | Documento | Descrição |
 |-----------|-----------|
 | [API](api.md) | Referência completa da REST API v1 (Swagger/OpenAPI) |
+| [Bot](bot.md) | Assistente conversacional (Telegram/WhatsApp) |
 | [Arquitetura](architecture.md) | Padrões, camadas, SOLID e decisões técnicas |
 | [Domínio](domain.md) | Regras de negócio, entidades e fluxos |
 | [Desenvolvimento](development.md) | Setup, comandos, testes e convenções |

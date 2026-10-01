@@ -7,6 +7,7 @@ Sistema de gestão financeira familiar — dashboard, despesas, receitas, contas
 | Documento | Descrição |
 |-----------|-----------|
 | [API](documentation/api.md) | Referência completa da REST API v1 (Swagger/OpenAPI) |
+| [Bot](documentation/bot.md) | Assistente conversacional no celular (Telegram/WhatsApp) |
 | [Arquitetura](documentation/architecture.md) | Padrões, camadas, SOLID e decisões técnicas |
 | [Domínio](documentation/domain.md) | Regras de negócio, entidades e fluxos |
 | [Desenvolvimento](documentation/development.md) | Setup, comandos, testes e convenções |

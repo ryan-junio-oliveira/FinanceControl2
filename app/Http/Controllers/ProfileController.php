@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfilePasswordRequest;
 use App\Http\Requests\ProfileRequest;
+use App\Models\User;
 use App\Services\ProfileService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
@@ -37,6 +38,18 @@ class ProfileController extends Controller
         $service->updatePassword($request->user(), $request->validated()['password']);
 
         return redirect()->route('perfil')->with('status', 'Senha alterada com sucesso.');
+    }
+
+    /** Gera (ou troca) o código de vínculo com o bot no celular. */
+    public function regenerateBotCode(): RedirectResponse
+    {
+        $user = request()->user();
+        do {
+            $code = (string) random_int(100000, 999999);
+        } while (User::where('bot_code', $code)->exists());
+        $user->update(['bot_code' => $code]);
+
+        return redirect()->route('perfil')->with('status', 'Código do bot gerado.');
     }
 
     /**

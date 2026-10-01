@@ -57,6 +57,7 @@ Route::middleware('auth')->group(function () {
         Route::patch('/profile', [ProfileController::class, 'update'])->name('perfil.update');
         Route::get('/profile/password', [ProfileController::class, 'editPassword'])->name('perfil.senha');
         Route::patch('/profile/password', [ProfileController::class, 'updatePassword'])->name('perfil.senha.update');
+        Route::post('/profile/bot-code', [ProfileController::class, 'regenerateBotCode'])->name('perfil.botcode');
         Route::delete('/profile', [ProfileController::class, 'destroy'])->name('perfil.destroy');
 
         // Expenses & Incomes
