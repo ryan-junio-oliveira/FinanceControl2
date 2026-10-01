@@ -22,7 +22,7 @@ $a = $accents[$accent] ?? $accents['emerald'];
         <div class="min-w-0 flex-1">
             <p class="text-[11px] font-extrabold uppercase tracking-widest text-gray-400">{{ $label }}</p>
             <p class="num text-[26px] leading-8 font-extrabold tracking-tight mt-1.5 {{ $a['value'] }}"@if($raw !== null) data-count="{{ $raw }}" data-prefix="{{ $prefix }}" data-suffix="{{ $suffix }}"@endif>{{ $value }}</p>
-            @if($top)<div class="mt-1">{{ $top }}</div>@endif
+            @if($top)<div class="mt-1">{!! $top !!}</div>@endif
         </div>
         <div class="w-11 h-11 rounded-lg grid place-items-center shrink-0 {{ $a['icon_bg'] }} {{ $a['icon_text'] }} shadow-sm">
             <span class="material-symbols-outlined text-[22px]">{{ $icon }}</span>
@@ -30,7 +30,7 @@ $a = $accents[$accent] ?? $accents['emerald'];
     </div>
     @if($bottom)
     <div class="mt-4 pt-3 border-t border-slate-200 flex items-center justify-between gap-2 relative">
-        {{ $bottom }}
+        {!! $bottom !!}
     </div>
     @endif
     {{ $slot }}

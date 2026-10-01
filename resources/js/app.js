@@ -4,6 +4,7 @@ import { gsap } from 'gsap';
 import ScrollReveal from 'scrollreveal';
 import IMask from 'imask';
 import $ from 'jquery';
+import './dashboard';
 
 // jQuery disponível globalmente (plugins, console e helpers legados).
 window.$ = window.jQuery = $;

@@ -17,6 +17,7 @@
         "@laravel/multiplex": "^0.4.1"
     },
     "dependencies": {
+        "apexcharts": "^7.6.1",
         "gsap": "^3.15.0",
         "imask": "^7.6.1",
         "jquery": "^3.7.1",
