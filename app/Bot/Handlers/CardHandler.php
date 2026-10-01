@@ -60,10 +60,11 @@ class CardHandler extends BotHandler
     public function faturas(BotDriver $driver, IncomingMessage $msg, ?User $user): void
     {
         $cards = app(CardService::class)->list($user->family);
-        $lines = ['💳 <b>Faturas em aberto</b>', ''];
+        $lines = [BotPresenter::header('Faturas em aberto'), ''];
         foreach ($cards as $c) {
             $open = (float) $c->open_invoice;
-            $lines[] = '• '.$c->name.' — <b>'.BotPresenter::money($open).'</b> (vence '.$c->nextDueDate()->format('d/m').')';
+            $lines[] = '💳 <b>'.$c->name.'</b>';
+            $lines[] = '   '.BotPresenter::money($open).' · vence '.$c->nextDueDate()->format('d/m');
         }
         if ($cards->isEmpty()) {
             $lines[] = 'Nenhum cartão ativo.';
@@ -143,11 +144,12 @@ class CardHandler extends BotHandler
 
         $card = $user->family->creditCards()->find($data['credit_card_id']);
         $cat = $user->family->categories()->find($data['category_id']);
-        $summary = "🧾 <b>Confirmar compra?</b>\n\n"
-            .'• '.($card->name ?? '—')."\n"
-            .'• '.$data['description']."\n"
-            .'• '.BotPresenter::money($data['amount'])."\n"
-            .'• '.($cat->name ?? '—');
+        $summary = "🧾 <b>Confirmar compra?</b>\n"
+            .BotPresenter::divider()."\n"
+            .'💳 '.($card->name ?? '—')."\n"
+            .'🛒 '.$data['description']."\n"
+            .'💵 <b>'.BotPresenter::money($data['amount']).'</b>'."\n"
+            .'🏷️ '.($cat->name ?? '—');
         $this->ask($driver, $msg, 'confirm', $data, $summary, $this->confirmKeyboard());
     }
 

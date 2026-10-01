@@ -19,6 +19,27 @@ final class BotPresenter
         return ucfirst(Carbon::createFromFormat('Y-m', $mes)->translatedFormat('F/Y'));
     }
 
+    /** Linha divisória padrão das mensagens. */
+    public static function divider(): string
+    {
+        return '──────────────────';
+    }
+
+    /** Cabeçalho padrão: ✦ Título + divisória. */
+    public static function header(string $title): string
+    {
+        return "✦ <b>{$title}</b>\n".self::divider();
+    }
+
+    /** Barra de progresso em blocos: ▰▰▰▱▱ 45%. */
+    public static function bar(float $pct, int $width = 10): string
+    {
+        $pct = max(0, min(100, $pct));
+        $filled = (int) round($pct / 100 * $width);
+
+        return str_repeat('▰', $filled).str_repeat('▱', $width - $filled).' '.(int) round($pct).'%';
+    }
+
     /** "150,50" / "150.50" / "1.234,56" → float ou null. */
     public static function parseAmount(string $text): ?float
     {
@@ -54,16 +75,19 @@ final class BotPresenter
     public static function dashboardText(array $dados, string $mes): string
     {
         $k = $dados['kpi'];
+        $pos = $k['resultado']['atual'] >= 0;
         $lines = [
-            '📊 <b>Dados financeiros — '.self::mesLabel($mes).'</b>',
+            self::header('Dados financeiros'),
+            self::mesLabel($mes),
             '',
-            '💰 Receitas: '.self::money($k['receitas']['atual']),
-            '💸 Despesas: '.self::money($k['despesas']['atual']),
-            ($k['resultado']['atual'] >= 0 ? '✅' : '🔴').' Resultado: '.self::money($k['resultado']['atual']),
+            '💰 Receitas: <b>'.self::money($k['receitas']['atual']).'</b>',
+            '💸 Despesas: <b>'.self::money($k['despesas']['atual']).'</b>',
+            ($pos ? '✅' : '🔴').' Resultado: <b>'.self::money($k['resultado']['atual']).'</b>',
             '',
-            '🏦 Saldo em contas: '.self::money($dados['saldoContas']),
-            '💳 Faturas em aberto: '.self::money($dados['faturaAberto']),
-            '🧾 A pagar (30d): '.self::money($dados['aPagar']['s30']['valor']).' ('.$dados['aPagar']['s30']['qtd'].')',
+            self::divider(),
+            '🏦 Contas: <b>'.self::money($dados['saldoContas']).'</b>',
+            '💳 Faturas: <b>'.self::money($dados['faturaAberto']).'</b>',
+            '🧾 A pagar (30d): <b>'.self::money($dados['aPagar']['s30']['valor']).'</b> · '.$dados['aPagar']['s30']['qtd'].' contas',
         ];
 
         return implode("\n", $lines);

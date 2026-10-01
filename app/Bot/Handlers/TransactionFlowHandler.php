@@ -188,13 +188,12 @@ abstract class TransactionFlowHandler extends BotHandler
         $member = $user->family->users()->find($data['user_id']);
         $account = $user->family->accounts()->find($data['account_id']);
         $cat = $user->family->categories()->find($data['category_id']);
-        $summary = "🧾 <b>Confirmar {$this->typeLabel(true)}?</b>\n\n"
-            ."• {$data['description']}\n"
-            .'• '.BotPresenter::money($data['amount'])."\n"
-            .'• '.Carbon::parse($data['occurred_on'])->format('d/m/Y')."\n"
-            .'• '.($member->name ?? '—')."\n"
-            .'• '.($account->name ?? '—')."\n"
-            .'• '.($cat->name ?? '—');
+        $summary = '🧾 <b>Confirmar '.strtolower($this->typeLabel(true)).'?</b>'."\n"
+            .BotPresenter::divider()."\n"
+            .'📝 '.$data['description']."\n"
+            .'💵 <b>'.BotPresenter::money($data['amount']).'</b> · '.Carbon::parse($data['occurred_on'])->format('d/m/Y')."\n"
+            .'👤 '.($member->name ?? '—').' · 🏦 '.($account->name ?? '—')."\n"
+            .'🏷️ '.($cat->name ?? '—');
         $this->ask($driver, $msg, 'confirm', $data, $summary, $this->confirmKeyboard());
     }
 
@@ -233,9 +232,13 @@ abstract class TransactionFlowHandler extends BotHandler
             ->where('type', $this->type())->whereIn('status', ['pago', 'pendente'])
             ->whereYear('occurred_on', substr($mes, 0, 4))->whereMonth('occurred_on', substr($mes, 5, 2))->sum('amount');
 
-        $lines = ['💰 <b>'.$this->typeLabel().' — '.BotPresenter::mesLabel($mes).'</b>', 'Total: <b>'.BotPresenter::money($total).'</b>', ''];
+        $lines = [
+            BotPresenter::header($this->typeLabel().' — '.BotPresenter::mesLabel($mes)),
+            'Total: <b>'.BotPresenter::money($total).'</b>',
+            '',
+        ];
         foreach ($items as $t) {
-            $lines[] = '• '.$t->description.' — <b>'.BotPresenter::money((float) $t->amount).'</b> ('.Carbon::parse($t->occurred_on)->format('d/m').')';
+            $lines[] = '• '.$t->description.' — <b>'.BotPresenter::money((float) $t->amount).'</b> · '.Carbon::parse($t->occurred_on)->format('d/m');
         }
         if ($items->isEmpty()) {
             $lines[] = 'Nenhum lançamento no mês.';

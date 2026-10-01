@@ -2,6 +2,7 @@
 
 namespace App\Bot\Handlers;
 
+use App\Bot\BotPresenter;
 use App\Bot\Contracts\BotDriver;
 use App\Bot\ConversationState;
 use App\Bot\ValueObjects\IncomingMessage;
@@ -37,7 +38,9 @@ class LinkHandler extends BotHandler
     {
         $driver->sendText(
             $msg->chatId,
-            "👋 Olá! Para usar o FinFamília, vincule sua conta.\n\nDigite o <b>código de 6 dígitos</b> que aparece no seu perfil no sistema.",
+            "👋 <b>Bem-vindo ao FinFamília!</b>\n"
+            .BotPresenter::divider()."\n"
+            ."Para usar o bot, vincule sua conta.\n\nDigite o <b>código de 6 dígitos</b> que aparece em <b>Perfil → Bot no Celular</b> no sistema.",
             $this->cancelKeyboard()
         );
     }
@@ -59,7 +62,7 @@ class LinkHandler extends BotHandler
             ['user_id' => $user->id]
         );
         Auth::setUser($user);
-        $driver->sendText($msg->chatId, '✅ Conta vinculada! Bem-vindo(a), '.explode(' ', $user->name)[0].'.');
+        $driver->sendText($msg->chatId, '✅ <b>Conta vinculada!</b> Bem-vindo(a), '.explode(' ', $user->name)[0].'.');
         $this->showMenu($driver, $msg, $user);
 
         return true;

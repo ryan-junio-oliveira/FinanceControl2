@@ -18,10 +18,12 @@ class InvestmentHandler extends BotHandler
     public function show(BotDriver $driver, IncomingMessage $msg, ?User $user): void
     {
         $dados = app(InvestmentService::class)->dashboard($user->family);
-        $lines = ['📈 <b>Investimentos</b>', 'Patrimônio: <b>'.BotPresenter::money((float) $dados['patrimonio']).'</b>', ''];
+        $lines = [BotPresenter::header('Investimentos'), 'Patrimônio: <b>'.BotPresenter::money((float) $dados['patrimonio']).'</b>', ''];
         foreach ($dados['metas'] as $meta) {
-            $pct = (int) round($meta->progress ?? 0);
-            $lines[] = '🎯 '.$meta->name.' — '.$pct.'% ('.BotPresenter::money((float) $meta->total).' de '.BotPresenter::money((float) $meta->target_amount).')';
+            $pct = (float) ($meta->progress ?? 0);
+            $lines[] = '🎯 <b>'.$meta->name.'</b>';
+            $lines[] = '   '.BotPresenter::bar($pct);
+            $lines[] = '   '.BotPresenter::money((float) $meta->total).' de '.BotPresenter::money((float) $meta->target_amount);
         }
         if ($dados['metas']->isEmpty()) {
             $lines[] = 'Nenhuma meta configurada.';
