@@ -12,25 +12,72 @@ class FinfamBackendTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_guest_pages_render(): void
+public function test_guest_pages_render(): void
     {
         $this->get('/login')->assertOk();
-        $this->get('/cadastro')->assertOk();
-        $this->get('/recuperar-senha')->assertOk();
+        $this->get('/register')->assertOk();
+        $this->get('/forgot-password')->assertOk();
         // convite inválido deve dar 404 (não 500)
-        $this->get('/primeiro-acesso/token-invalido')->assertNotFound();
+        $this->get('/first-access/token-invalido')->assertNotFound();
+    }
+
+    public function test_legal_pages_render(): void
+    {
+        $this->get(route('termos'))->assertOk()->assertSee('Termos de Uso')->assertSee('LGPD');
+        $this->get(route('privacidade'))->assertOk()->assertSee('Política de Privacidade')->assertSee('LGPD');
+        $this->get(route('termos'))->assertDontSee('sections');
+    }
+
+    public function test_admin_logs_are_restricted_and_list_actions(): void
+    {
+        $this->post('/register', [
+            'manager_name' => 'Admin Logs',
+            'email' => 'adminlogs@email.com',
+            'family_name' => 'Família Logs',
+            'password' => 'Senha@123',
+            'password_confirmation' => 'Senha@123',
+            'terms' => '1',
+        ])->assertRedirect(route('dashboard'));
+        $admin = User::where('email', 'adminlogs@email.com')->first();
+
+        // dependente e co_admin não acessam
+        foreach (['dependente', 'co_admin'] as $role) {
+            $membro = User::create([
+                'name' => 'Membro', 'email' => $role.'@email.com', 'password' => bcrypt('Senha@123'),
+                'family_id' => $admin->family_id, 'role' => $role,
+            ]);
+            $this->actingAs($membro)->get('/admin/logs')->assertForbidden();
+        }
+
+        // admin executa uma ação e ela aparece na trilha com IP
+        $this->actingAs($admin);
+        $banco = \App\Models\Bank::create(['code' => '341', 'name' => 'Itaú']);
+        $this->post('/accounts', ['name' => 'Conta Logs', 'bank_id' => $banco->id, 'kind' => 'corrente', 'initial_balance' => '0'])->assertSessionHasNoErrors();
+        $conta = \App\Models\Account::where('name', 'Conta Logs')->first();
+        $cat = $admin->family->categories()->where('type', 'despesa')->first();
+        $this->post('/expenses', [
+            'description' => 'Compra auditada', 'amount' => '99', 'occurred_on' => now()->toDateString(),
+            'status' => 'pago', 'user_id' => $admin->id, 'category_id' => $cat->id, 'account_id' => $conta->id,
+        ])->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => 'created', 'user_id' => $admin->id, 'description' => 'Criou Lançamento: Compra auditada',
+        ]);
+        $this->assertTrue(\App\Models\AuditLog::where('action', 'created')->whereNotNull('ip_address')->exists());
+
+        $this->get('/admin/logs')->assertOk()->assertSee('Criou Lançamento')->assertSee('127.0.0.1');
     }
 
     public function test_guests_are_redirected_to_login(): void
     {
         $this->get('/')->assertRedirect('/login');
-        $this->get('/despesas')->assertRedirect('/login');
+        $this->get('/expenses')->assertRedirect('/login');
     }
 
     public function test_full_family_flow(): void
     {
         // --- registro cria família + admin ---
-        $res = $this->post('/cadastro', [
+        $res = $this->post('/register', [
             'manager_name' => 'Carlos Silva',
             'email' => 'carlos@email.com',
             'family_name' => 'Família Silva',
@@ -47,42 +94,43 @@ class FinfamBackendTest extends TestCase
         $mes = now()->format('Y-m');
 
         // --- páginas com estado vazio ---
-        foreach (['/', '/despesas', '/receitas', '/contas', '/cartoes', '/categorias', '/familia', '/investimentos', '/configuracoes'] as $uri) {
+        foreach (['/', '/expenses', '/incomes', '/accounts', '/cards', '/categories', '/family', '/investments', '/settings'] as $uri) {
             $this->get($uri)->assertOk();
         }
 
         // --- categoria ---
-        $this->post('/categorias', ['name' => 'Alimentação', 'type' => 'despesa'])->assertSessionHasNoErrors();
+        $this->post('/categories', ['name' => 'Alimentação', 'type' => 'despesa'])->assertSessionHasNoErrors();
         $this->assertDatabaseHas('categories', ['name' => 'Alimentação']);
         $catDesp = \App\Models\Category::where('name', 'Alimentação')->first();
-        $this->post('/categorias', ['name' => 'Salário', 'type' => 'receita'])->assertSessionHasNoErrors();
+        $this->post('/categories', ['name' => 'Salário', 'type' => 'receita'])->assertSessionHasNoErrors();
         $catRec = \App\Models\Category::where('name', 'Salário')->first();
 
-        // --- conta ---
-        $this->post('/contas', ['name' => 'Itaú Conjunta', 'kind' => 'corrente', 'initial_balance' => '1000'])->assertSessionHasNoErrors();
+        // --- conta (exige banco do catálogo) ---
+        $banco = \App\Models\Bank::create(['code' => '341', 'name' => 'Banco Itaú Unibanco']);
+        $this->post('/accounts', ['name' => 'Itaú Conjunta', 'bank_id' => $banco->id, 'kind' => 'corrente', 'initial_balance' => '1000'])->assertSessionHasNoErrors();
         $conta = \App\Models\Account::where('name', 'Itaú Conjunta')->first();
         $this->assertNotNull($conta);
         $this->assertEquals(1000, (float) $conta->balance);
 
         // --- receita + despesa ---
-        $this->post('/receitas', [
+        $this->post('/incomes', [
             'description' => 'Salário', 'amount' => '5000', 'occurred_on' => now()->toDateString(),
             'status' => 'pago', 'user_id' => $admin->id, 'account_id' => $conta->id, 'category_id' => $catRec->id,
         ])->assertSessionHasNoErrors();
-        $this->post('/despesas', [
+        $this->post('/expenses', [
             'description' => 'Mercado', 'amount' => '500', 'occurred_on' => now()->toDateString(),
             'status' => 'pendente', 'user_id' => $admin->id, 'account_id' => $conta->id, 'category_id' => $catDesp->id,
         ])->assertSessionHasNoErrors();
         $this->assertEquals(6000, (float) $conta->fresh()->balance); // 1000 + 5000 (despesa pendente não abate)
 
         $desp = \App\Models\Transaction::where('description', 'Mercado')->first();
-        $this->post("/lancamentos/{$desp->id}/liquidar")->assertSessionHasNoErrors();
+        $this->post("/transactions/{$desp->id}/settle")->assertSessionHasNoErrors();
         $this->assertEquals(5500, (float) $conta->fresh()->balance);
 
         // --- transferência interna ---
-        $this->post('/contas', ['name' => 'Nubank', 'kind' => 'digital', 'initial_balance' => '0'])->assertSessionHasNoErrors();
+        $this->post('/accounts', ['name' => 'Nubank', 'bank_id' => $banco->id, 'kind' => 'digital', 'initial_balance' => '0'])->assertSessionHasNoErrors();
         $nu = \App\Models\Account::where('name', 'Nubank')->first();
-        $this->post('/contas/transferir', [
+        $this->post('/accounts/transfer', [
             'from_account_id' => $conta->id, 'to_account_id' => $nu->id,
             'amount' => '500', 'occurred_on' => now()->toDateString(), 'user_id' => $admin->id,
         ])->assertSessionHasNoErrors();
@@ -90,67 +138,63 @@ class FinfamBackendTest extends TestCase
         $this->assertEquals(500, (float) $nu->fresh()->balance);
 
         // --- cartão + item + liquidação ---
-        $this->post('/cartoes', ['name' => 'Nubank UV', 'credit_limit' => '10000', 'closing_day' => 3, 'due_day' => 10, 'holder_user_id' => $admin->id])->assertSessionHasNoErrors();
+        $this->post('/cards', ['name' => 'Nubank UV', 'credit_limit' => '10000', 'closing_day' => 3, 'due_day' => 10, 'holder_user_id' => $admin->id])->assertSessionHasNoErrors();
         $card = \App\Models\CreditCard::where('name', 'Nubank UV')->first();
-        $this->post('/cartoes/itens', [
+        $this->post('/cards/items', [
             'credit_card_id' => $card->id, 'description' => 'Mercado cartão', 'amount' => '200',
             'occurred_on' => now()->toDateString(), 'user_id' => $admin->id, 'category_id' => $catDesp->id,
         ])->assertSessionHasNoErrors();
         $this->assertEquals(200, (float) $card->fresh()->open_invoice);
         $item = \App\Models\CardTransaction::first();
-        $this->post("/cartoes/itens/{$item->id}/liquidar")->assertSessionHasNoErrors();
+        $this->post("/cards/items/{$item->id}/settle")->assertSessionHasNoErrors();
         $this->assertEquals(0, (float) $card->fresh()->open_invoice);
 
         // --- investimentos: carteira + ativo + aporte (abate da conta) ---
-        $this->post('/investimentos/carteiras', ['name' => 'Reserva', 'kind' => 'reserva', 'target_amount' => '50000'])->assertSessionHasNoErrors();
+        $this->post('/investments/portfolios', ['name' => 'Reserva', 'kind' => 'reserva', 'target_amount' => '50000'])->assertSessionHasNoErrors();
         $cart = \App\Models\Portfolio::where('name', 'Reserva')->first();
-        $this->post('/investimentos/ativos', [
+        $this->post('/investments/assets', [
             'portfolio_id' => $cart->id, 'code' => 'SELIC', 'name' => 'Tesouro Selic',
             'kind' => 'renda_fixa', 'current_value' => '10000',
         ])->assertSessionHasNoErrors();
-        $this->post('/investimentos/aportes', [
+        $this->post('/investments/contributions', [
             'portfolio_id' => $cart->id, 'account_id' => $conta->id, 'kind' => 'aporte',
             'amount' => '1000', 'occurred_on' => now()->toDateString(),
         ])->assertSessionHasNoErrors();
         $this->assertEquals(4000, (float) $conta->fresh()->balance);
-        $this->get('/investimentos')->assertOk();
+        $this->get('/investments')->assertOk();
 
         // --- convite + primeiro acesso (convidado abre o link deslogado) ---
         \Illuminate\Support\Facades\Mail::fake();
-        $this->post('/familia/convites', ['name' => 'Lucas Silva', 'email' => 'lucas@email.com', 'role' => 'dependente'])->assertSessionHasNoErrors();
+        $this->post('/family/invites', ['name' => 'Lucas Silva', 'email' => 'lucas@email.com', 'role' => 'dependente'])->assertSessionHasNoErrors();
         $convite = Invitation::where('email', 'lucas@email.com')->first();
         $this->assertNotNull($convite);
         // e-mail de boas-vindas enfileirado com o link de primeiro acesso
         \Illuminate\Support\Facades\Mail::assertQueued(\App\Mail\WelcomeEmail::class, function ($mail) use ($convite) {
             return $mail->hasTo('lucas@email.com')
-                && str_contains($mail->render(), '/primeiro-acesso/'.$convite->token);
+                && str_contains($mail->render(), '/first-access/'.$convite->token);
         });
         $this->post('/logout')->assertRedirect(route('login'));
-        $this->get("/primeiro-acesso/{$convite->token}")->assertOk();
-        $this->post("/primeiro-acesso/{$convite->token}", ['password' => 'Filho@123', 'password_confirmation' => 'Filho@123'])->assertRedirect(route('dashboard'));
+        $this->get("/first-access/{$convite->token}")->assertOk();
+        $this->post("/first-access/{$convite->token}", ['password' => 'Filho@123', 'password_confirmation' => 'Filho@123'])->assertRedirect(route('dashboard'));
         $lucas = User::where('email', 'lucas@email.com')->first();
         $this->assertEquals('dependente', $lucas->role);
-
-        // --- mesada ---
-        $this->actingAs($admin)->post('/familia/mesadas', ['user_id' => $lucas->id, 'amount' => '600', 'frequency' => 'mensal', 'payday' => 5])->assertSessionHasNoErrors();
 
         // --- dependente: vê dashboard mas não investimentos/config ---
         $this->actingAs($lucas);
         $this->get('/')->assertOk();
-        $this->get('/despesas')->assertOk();
-        $this->get('/investimentos')->assertForbidden();
-        $this->get('/configuracoes')->assertForbidden();
+        $this->get('/expenses')->assertOk();
+        $this->get('/investments')->assertForbidden();
+        $this->get('/settings')->assertForbidden();
 
-        // --- despesa acima do limiar vira pendente p/ dependente ---
-        $this->actingAs($admin)->patch('/configuracoes', [
+        // --- sistema é só registro: sem aprovação, status informado é mantido ---
+        $this->actingAs($admin)->patch('/settings', [
             'name' => 'Família Silva', 'currency' => 'BRL', 'timezone' => 'America/Sao_Paulo',
-            'closing_day' => 1, 'approval_threshold' => '500', 'privacy_hide_under' => '50',
         ])->assertSessionHasNoErrors();
-        $this->actingAs($lucas)->post('/despesas', [
+        $this->actingAs($lucas)->post('/expenses', [
             'description' => 'Videogame', 'amount' => '2000', 'occurred_on' => now()->toDateString(),
             'status' => 'pago', 'user_id' => $lucas->id, 'category_id' => $catDesp->id,
         ])->assertSessionHasNoErrors();
-        $this->assertEquals('pendente', \App\Models\Transaction::where('description', 'Videogame')->first()->status);
+        $this->assertEquals('pago', \App\Models\Transaction::where('description', 'Videogame')->first()->status);
 
         // --- logout + login ---
         $this->actingAs($admin)->post('/logout')->assertRedirect(route('login'));
@@ -158,20 +202,25 @@ class FinfamBackendTest extends TestCase
 
         // --- reuniões finais de render ---
         $this->get('/')->assertOk();
-        $this->get("/despesas?mes={$mes}&status=pendente")->assertOk();
-        $this->get('/familia')->assertOk();
+        $this->get("/expenses?mes={$mes}&status=pendente")->assertOk();
+        $this->get('/family')->assertOk();
     }
 
     public function test_login_invalido(): void
     {
         User::factory()->create(['email' => 'x@email.com', 'password' => Hash::make('Senha@123')]);
         $this->post('/login', ['email' => 'x@email.com', 'password' => 'errada'])->assertSessionHasErrors('email');
+        // mensagem de falha vem em pt-BR (tradução ativa)
+        $bag = session('errors');
+        $msg = $bag->get('email')[0] ?? '';
+        $this->assertStringContainsString('Credenciais', $msg);
+        $this->assertStringNotContainsString('These credentials', $msg);
     }
 
     public function test_login_funciona_com_lembrar_marcado(): void
     {
         // Reproduz o envio real do formulário (checkbox "lembrar" vem marcado).
-        $this->post('/cadastro', [
+        $this->post('/register', [
             'manager_name' => 'Lembrado',
             'email' => 'lembrado@email.com',
             'family_name' => 'Família Lembrada',
@@ -221,7 +270,7 @@ class FinfamBackendTest extends TestCase
         };
 
         // --- senha fraca: deve listar maiúscula/minúscula, número e símbolo em pt-BR ---
-        $this->post('/cadastro', [
+        $this->post('/register', [
             'manager_name' => 'Teste',
             'email' => 'fraco@email.com',
             'family_name' => 'Família Teste',
@@ -237,7 +286,7 @@ class FinfamBackendTest extends TestCase
         $this->assertStringContainsString('símbolo', $texto);
 
         // --- confirmação divergente ---
-        $this->post('/cadastro', [
+        $this->post('/register', [
             'manager_name' => 'Teste',
             'email' => 'outro@email.com',
             'family_name' => 'Família Teste',
@@ -248,7 +297,7 @@ class FinfamBackendTest extends TestCase
         $assertFriendly($bag('password'));
 
         // --- e-mail duplicado usa texto próprio ---
-        $this->post('/cadastro', [
+        $this->post('/register', [
             'manager_name' => 'Base',
             'email' => 'base@email.com',
             'family_name' => 'Família Base',
@@ -257,7 +306,7 @@ class FinfamBackendTest extends TestCase
             'terms' => '1',
         ])->assertRedirect(route('dashboard'));
         $this->post('/logout')->assertRedirect(route('login'));
-        $this->post('/cadastro', [
+        $this->post('/register', [
             'manager_name' => 'Cópia',
             'email' => 'base@email.com',
             'family_name' => 'Família Cópia',
@@ -269,7 +318,7 @@ class FinfamBackendTest extends TestCase
         $this->assertStringContainsString('já tem conta', $bag('email')[0]);
 
         // --- termos não aceitos ---
-        $this->post('/cadastro', [
+        $this->post('/register', [
             'manager_name' => 'Sem Termos',
             'email' => 'semtermos@email.com',
             'family_name' => 'Família ST',
@@ -284,7 +333,7 @@ class FinfamBackendTest extends TestCase
         $assertFriendly($bag('password'));
 
         // --- lançamento inválido (logado) ---
-        $this->post('/cadastro', [
+        $this->post('/register', [
             'manager_name' => 'Dono',
             'email' => 'dono@email.com',
             'family_name' => 'Família Dona',
@@ -292,23 +341,23 @@ class FinfamBackendTest extends TestCase
             'password_confirmation' => 'Senha@123',
             'terms' => '1',
         ])->assertRedirect(route('dashboard'));
-        $this->post('/despesas', [])->assertSessionHasErrors(['description', 'amount', 'occurred_on', 'status', 'user_id']);
+        $this->post('/expenses', [])->assertSessionHasErrors(['description', 'amount', 'occurred_on', 'status', 'user_id']);
         $assertFriendly($bag('description'));
         $assertFriendly($bag('amount'));
-        $this->post('/despesas', [
+        $this->post('/expenses', [
             'description' => 'Teste', 'amount' => '0', 'occurred_on' => now()->toDateString(),
             'status' => 'pago', 'user_id' => User::where('email', 'dono@email.com')->first()->id,
         ])->assertSessionHasErrors('amount');
         $this->assertStringContainsString('maior que zero', $bag('amount')[0]);
 
         // --- categoria sem nome ---
-        $this->post('/categorias', ['type' => 'despesa'])->assertSessionHasErrors('name');
+        $this->post('/categories', ['type' => 'despesa'])->assertSessionHasErrors('name');
         $assertFriendly($bag('name'));
     }
 
     public function test_mvp_pages_profile_and_card_account_link(): void
     {
-        $this->post('/cadastro', [
+        $this->post('/register', [
             'manager_name' => 'Dona',
             'email' => 'dona@email.com',
             'family_name' => 'Família Dona',
@@ -320,46 +369,48 @@ class FinfamBackendTest extends TestCase
 
         // --- todas as páginas de cadastro abrem ---
         foreach ([
-            '/despesas/criar', '/receitas/criar', '/contas/criar', '/contas/transferir',
-            '/cartoes/criar', '/cartoes/itens/criar', '/categorias/criar',
-            '/investimentos/carteiras/criar', '/investimentos/ativos/criar', '/investimentos/aportes/criar',
-            '/familia/convites/criar', '/familia/mesadas/criar', '/configuracoes/bancos/criar',
-            '/perfil', '/perfil/editar', '/perfil/senha',
+            '/expenses/create', '/incomes/create', '/accounts/create', '/accounts/transfer',
+            '/cards/create', '/cards/items/create', '/categories/create',
+            '/investments/portfolios/create', '/investments/assets/create', '/investments/contributions/create',
+            '/family/invites/create',
+            '/profile', '/profile/edit', '/profile/password',
         ] as $uri) {
             $this->get($uri)->assertOk($uri);
         }
 
-        // --- conta com cor + cartão vinculado herda a cor ---
-        $this->post('/contas', [
-            'name' => 'Inter', 'kind' => 'digital', 'initial_balance' => '0', 'color' => '#EA580C',
+        // --- conta herda a cor do banco; cartão herda do banco via conta ---
+        $bancoInter = \App\Models\Bank::create(['code' => '077', 'name' => 'Banco Inter', 'color' => '#EA580C']);
+        $this->post('/accounts', [
+            'name' => 'Inter', 'bank_id' => $bancoInter->id, 'kind' => 'digital', 'initial_balance' => '0',
         ])->assertRedirect(route('contas'));
         $conta = \App\Models\Account::where('name', 'Inter')->first();
-        $this->assertEquals('#EA580C', $conta->color);
+        $this->assertEquals($bancoInter->id, $conta->bank_id);
+        $this->assertEquals('#EA580C', $conta->display_color);
 
-        $this->post('/cartoes', [
+        $this->post('/cards', [
             'name' => 'Inter Gold', 'credit_limit' => '5000', 'closing_day' => 5, 'due_day' => 15,
             'holder_user_id' => $admin->id, 'account_id' => $conta->id,
         ])->assertRedirect(route('cartoes'));
         $cartao = \App\Models\CreditCard::where('name', 'Inter Gold')->first();
         $this->assertEquals($conta->id, $cartao->account_id);
         $this->assertEquals('#EA580C', $cartao->display_color);
-        $this->get('/cartoes/'.$cartao->id.'/editar')->assertOk();
-        $this->get('/cartoes')->assertSee('#EA580C', false);
+        $this->get('/cards/'.$cartao->id.'/edit')->assertOk();
+        $this->get('/cards')->assertSee('#EA580C', false);
 
-        // --- cor inválida é rejeitada com mensagem amigável ---
-        $this->post('/contas', [
-            'name' => 'Ruim', 'kind' => 'digital', 'initial_balance' => '0', 'color' => 'laranja',
-        ])->assertSessionHasErrors('color');
+        // --- conta sem banco é rejeitada ---
+        $this->post('/accounts', [
+            'name' => 'Sem Banco', 'kind' => 'digital', 'initial_balance' => '0',
+        ])->assertSessionHasErrors('bank_id');
 
         // --- perfil: ver, editar e trocar senha ---
-        $this->get('/perfil')->assertSee('Dona');
-        $this->patch('/perfil', [
+        $this->get('/profile')->assertSee('Dona');
+        $this->patch('/profile', [
             'name' => 'Dona Silva', 'email' => 'dona@email.com', 'phone' => '11999998888',
         ])->assertRedirect(route('perfil'));
         $this->assertEquals('Dona Silva', $admin->fresh()->name);
         $this->assertEquals('11999998888', $admin->fresh()->phone);
 
-        $this->patch('/perfil/senha', [
+        $this->patch('/profile/password', [
             'current_password' => 'Senha@123',
             'password' => 'Nova@123',
             'password_confirmation' => 'Nova@123',
@@ -368,8 +419,67 @@ class FinfamBackendTest extends TestCase
         $this->post('/login', ['email' => 'dona@email.com', 'password' => 'Nova@123'])->assertRedirect(route('dashboard'));
 
         // --- toast de sucesso aparece com timeout de 10s ---
-        $res = $this->post('/categorias', ['name' => 'Teste Toast', 'type' => 'despesa']);
+        $res = $this->post('/categories', ['name' => 'Teste Toast', 'type' => 'despesa']);
         $res->assertRedirect(route('categorias'));
         $this->followRedirects($res)->assertSee('data-toast', false)->assertSee('data-toast-timeout="10000"', false);
+    }
+
+    public function test_banks_catalog_notifications_sidebar_and_account_closure(): void
+    {
+        $this->post('/register', [
+            'manager_name' => 'Admin',
+            'email' => 'admin@email.com',
+            'family_name' => 'Família Admin',
+            'password' => 'Senha@123',
+            'password_confirmation' => 'Senha@123',
+            'terms' => '1',
+        ])->assertRedirect(route('dashboard'));
+        $admin = User::where('email', 'admin@email.com')->first();
+
+        // --- catálogo de bancos semeado e exigido na conta ---
+        $this->artisan('banks:seed')->assertSuccessful();
+        $this->assertTrue(\App\Models\Bank::count() >= 100);
+        $bb = \App\Models\Bank::where('code', '001')->first();
+        $this->assertNotNull($bb);
+
+        // --- formulário de conta lista o catálogo ---
+        $this->get('/accounts/create')->assertOk()->assertSee('001 — Banco do Brasil S.A.', false);
+
+        // --- conta exibe o banco na listagem ---
+        $this->post('/accounts', [
+            'name' => 'BB Principal', 'bank_id' => $bb->id, 'kind' => 'corrente', 'initial_balance' => '0',
+        ])->assertSessionHasNoErrors();
+        $this->get('/accounts')->assertOk()->assertSee('Banco do Brasil S.A.');
+
+        // --- prefs de notificação: só vencimento ---
+        $this->patch('/settings/notifications', [
+            'notifications' => ['fatura_vencimento' => '1', 'conta_vencimento' => '1'],
+        ])->assertSessionHasNoErrors();
+        $this->assertEquals(
+            ['fatura_vencimento' => true, 'conta_vencimento' => true],
+            $admin->family->setting()->notifications
+        );
+
+        // --- sidebar: clicar na notificação marca como lida e redireciona ---
+        $admin->notify(new \App\Notifications\FaturaVencimento('Teste', 10.0, now()->format('d/m/Y'), 1));
+        $n = $admin->notifications()->first();
+        $this->assertNull($n->read_at);
+        $this->get(route('notificacoes.ler', $n))->assertRedirect(route('despesas', ['status' => 'pendente']));
+        $this->assertNotNull($n->fresh()->read_at);
+
+        // --- membro comum não pode encerrar o cadastro ---
+        $membro = User::factory()->create([
+            'name' => 'Membro', 'email' => 'membro@email.com',
+            'family_id' => $admin->family_id, 'role' => 'dependente',
+        ]);
+        $this->actingAs($membro)->delete('/profile', ['password' => 'password'])->assertForbidden();
+
+        // --- admin encerra: apaga família inteira (membros + registros) ---
+        $familyId = $admin->family_id;
+        $this->actingAs($admin)->delete('/profile', ['password' => 'Senha@123'])->assertRedirect(route('login'));
+        $this->assertGuest();
+        $this->assertDatabaseMissing('families', ['id' => $familyId]);
+        $this->assertDatabaseMissing('users', ['email' => 'admin@email.com']);
+        $this->assertDatabaseMissing('users', ['email' => 'membro@email.com']);
     }
 }

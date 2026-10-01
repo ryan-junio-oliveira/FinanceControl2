@@ -50,7 +50,7 @@ class MoneyFormatTest extends TestCase
 
     public function test_lancamento_aceita_milhar_br(): void
     {
-        $this->post('/cadastro', [
+        $this->post('/register', [
             'manager_name' => 'M', 'email' => 'm@email.com',
             'family_name' => 'Fam M', 'password' => 'Senha@123',
             'password_confirmation' => 'Senha@123', 'terms' => '1',
@@ -61,14 +61,14 @@ class MoneyFormatTest extends TestCase
         $conta = $admin->family->accounts()->create(['name' => 'Conta', 'kind' => 'corrente', 'initial_balance' => 0]);
 
         // "7.000" digitado = sete mil, nunca 7 reais.
-        $this->post('/despesas', [
+        $this->post('/expenses', [
             'description' => 'Teste milhar', 'amount' => '7.000', 'occurred_on' => now()->toDateString(),
             'status' => 'pago', 'user_id' => $admin->id, 'account_id' => $conta->id, 'category_id' => $cat->id,
         ])->assertSessionHasNoErrors();
         $this->assertSame(7000.0, (float) Transaction::where('description', 'Teste milhar')->first()->amount);
 
         // Percentual "120" = cento e vinte.
-        $this->post('/investimentos/ativos', [
+        $this->post('/investments/assets', [
             'code' => 'CDB', 'name' => 'CDB X', 'kind' => 'renda_fixa',
             'current_value' => '7000', 'yield_percent' => '120', 'yield_base' => 'cdi',
         ])->assertSessionHasNoErrors();
