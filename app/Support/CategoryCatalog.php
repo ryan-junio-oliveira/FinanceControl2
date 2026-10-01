@@ -45,6 +45,7 @@ final class CategoryCatalog
             $r('Renda extra', 'add_circle'),
             $r('Investimentos', 'trending_up'),
             $r('Benefícios', 'card_giftcard'),
+            $r('Presentes recebidos', 'redeem'),
             $r('Outras receitas', 'more_horiz'),
         ];
     }
@@ -70,6 +71,7 @@ final class CategoryCatalog
         if ($type === 'receita') {
             return [
                 'Benefícios' => ['decimo', '13', 'ferias', 'plr', 'bonus', 'vale', 'bolsa', 'pensao', 'aposentadoria', 'beneficio'],
+                'Presentes recebidos' => ['presente recebido', 'presente de', 'presente do', 'ganhei', 'gift'],
                 'Salário' => ['salario', 'holerite', 'provento'],
                 'Investimentos' => ['dividendo', 'rendimento', 'investimento', 'acao', 'fii', 'juros'],
                 'Renda extra' => ['freela', 'bico', 'comissao', 'venda', 'extra', 'premio', 'gorjeta', 'ajuda de custo', 'cashback', 'aluguel'],
