@@ -1,18 +1,18 @@
 @extends('layouts.app')
-@section('title', ($cartao ? 'Editar' : 'Novo').' Cartão')
-@section('breadcrumb', 'Cartões / '.($cartao ? 'Editar' : 'Novo'))
+@section('title', ($card ? 'Editar' : 'Novo').' Cartão')
+@section('breadcrumb', 'Cartões / '.($card ? 'Editar' : 'Novo'))
 @section('nav-active', 'cartoes')
 
 @section('content')
 @php
-    $action = $cartao ? route('cartoes.update', $cartao) : route('cartoes.store');
-    $val = fn($k, $d = null) => old($k, $cartao?->$k ?? $d);
-    $contaSel = old('account_id', $cartao?->account_id);
+    $action = $card ? route('cartoes.update', $card) : route('cartoes.store');
+    $val = fn($k, $d = null) => old($k, $card?->$k ?? $d);
+    $contaSel = old('account_id', $card?->account_id);
 @endphp
 <div class="max-w-4xl mx-auto w-full">
     <x-form.header
-        :title="$cartao ? 'Editar cartão' : 'Novo cartão'"
-        subtitle="Vincule o cartão a uma conta para herdar a cor dela no visual."
+        :title="$card ? 'Editar cartão' : 'Novo cartão'"
+        subtitle="Vincule o cartão a uma conta para usar a cor do banco."
         :backUrl="route('cartoes')"
         backLabel="Voltar para cartões"
         icon="credit_card"
@@ -21,10 +21,10 @@
 
     <div class="grid lg:grid-cols-5 gap-4">
         <div class="lg:col-span-2">
-            <div id="prev-cartao" class="cc-sheen rounded-2xl text-white p-5 min-h-[190px] flex flex-col justify-between shadow-md" style="background:{{ $cartao?->display_color ?? 'linear-gradient(135deg,#0f172a,#334155)' }}">
+            <div id="prev-cartao" class="cc-sheen rounded-2xl text-white p-5 min-h-[190px] flex flex-col justify-between shadow-md" style="background:{{ $card?->display_color ?? 'linear-gradient(135deg,#0f172a,#334155)' }}">
                 <div class="flex items-center justify-between gap-2">
                     <p class="text-[11px] font-extrabold tracking-widest" id="prev-nome">{{ $val('name', 'SEU CARTÃO') }}</p>
-                    <span class="text-[10px] font-bold rounded-lg px-2 py-0.5 uppercase tracking-wider" style="background: rgba(0,0,0,0.2);" id="prev-bandeira">{{ $cartao?->brand_label ?? '' }}</span>
+                    <span class="text-[10px] font-bold rounded-lg px-2 py-0.5 uppercase tracking-wider" style="background: rgba(0,0,0,0.2);" id="prev-bandeira">{{ $card?->brand_label ?? '' }}</span>
                 </div>
                 <p class="text-[11px] opacity-70" id="prev-titular">Titular</p>
                 <div>
@@ -33,8 +33,8 @@
                 </div>
             </div>
             <p class="fld-hint">Pré-visualização ao vivo da cor e dos dados.</p>
-            @if($cartao && $cartao->open_invoice > 0)
-                <form method="POST" action="{{ route('cartoes.fatura.pagar', $cartao) }}" onsubmit="return confirm('Pagar a fatura de {{ $cartao->name }}? Isso liquida todos os itens pendentes.')" class="mt-4">
+            @if($card && $card->open_invoice > 0)
+                <form method="POST" action="{{ route('cartoes.fatura.pagar', $card) }}" onsubmit="return confirm('Pagar a fatura de {{ $card->name }}? Isso liquida todos os itens pendentes.')" class="mt-4">
                     @csrf
                     <x-btn-submit color="orange" icon="payments" class="w-full">Pagar fatura</x-btn-submit>
                 </form>
@@ -43,7 +43,7 @@
 
         <form method="POST" action="{{ $action }}" class="lg:col-span-3 form-card tint-orange">
             @csrf
-            @if($cartao) @method('PATCH') @endif
+            @if($card) @method('PATCH') @endif
 
             <div class="form-grid">
                 <x-form.field label="Nome do cartão" for="f-nome" :required="true" :error="$errors->first('name')">
@@ -65,10 +65,10 @@
                     </x-form.field>
                 </div>
 
-                <x-form.field label="Conta vinculada" for="f-conta" hint="O cartão herda a cor da conta (ex.: Inter → laranja)." :error="$errors->first('account_id')">
+                <x-form.field label="Conta vinculada" for="f-conta" hint="O cartão usa a cor do banco da conta." :error="$errors->first('account_id')">
                     <x-form.select id="f-conta" name="account_id">
                         <option value="">Sem vínculo (cor padrão)</option>
-                        @foreach($contas as $c)<option value="{{ $c->id }}" data-cor="{{ $c->color }}" {{ (string)$contaSel === (string)$c->id ? 'selected' : '' }}>{{ $c->name }}</option>@endforeach
+                        @foreach($contas as $c)<option value="{{ $c->id }}" data-cor="{{ $c->display_color }}" {{ (string)$contaSel === (string)$c->id ? 'selected' : '' }}>{{ $c->name }}</option>@endforeach
                     </x-form.select>
                 </x-form.field>
 
@@ -84,12 +84,12 @@
                     </x-form.field>
                 </div>
 
-                @if($cartao)
-                    <x-form.check name="active" value="1" :checked="(bool) old('active', $cartao->active)" label="Cartão ativo" />
+                @if($card)
+                    <x-form.check name="active" value="1" :checked="(bool) old('active', $card->active)" label="Cartão ativo" />
                 @endif
             </div>
 
-            <x-form.actions :cancelUrl="route('cartoes')" :submitLabel="$cartao ? 'Salvar alterações' : 'Salvar cartão'" :submitIcon="$cartao ? 'save' : 'add_circle'" color="orange" />
+            <x-form.actions :cancelUrl="route('cartoes')" :submitLabel="$card ? 'Salvar alterações' : 'Salvar cartão'" :submitIcon="$card ? 'save' : 'add_circle'" color="orange" />
         </form>
     </div>
 </div>

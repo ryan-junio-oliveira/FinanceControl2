@@ -7,9 +7,7 @@ use App\Http\Requests\CreditCardRequest;
 use App\Models\CardTransaction;
 use App\Models\CreditCard;
 use App\Models\Transaction;
-use App\Notifications\CompraDependente;
 use App\Support\Fin;
-use App\Support\Notify;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
@@ -22,7 +20,7 @@ class CardController extends Controller
     {
         $family = Fin::family();
 
-        $cartoes = $family->creditCards()->with(['holder', 'account'])
+        $cartoes = $family->creditCards()->with(['holder', 'account.bank'])
             ->withSum(['items as open_invoice_sum' => fn ($q) => $q->where('status', 'pendente')], 'amount')
             ->where('active', true)->get();
 
@@ -58,22 +56,22 @@ class CardController extends Controller
         $family = Fin::family();
 
         return view('pages.cards.form', [
-            'cartao' => null,
+            'card' => null,
             'membros' => $family->users()->orderBy('name')->get(),
-            'contas' => $family->accounts()->where('active', true)->orderBy('name')->get(),
+            'contas' => $family->accounts()->with('bank')->where('active', true)->orderBy('name')->get(),
         ]);
     }
 
-    public function edit(CreditCard $cartao): View
+    public function edit(CreditCard $card): View
     {
         $family = Fin::family();
-        abort_if($cartao->family_id !== $family->id, 404);
-        $this->authorize('manage', $cartao);
+        abort_if($card->family_id !== $family->id, 404);
+        $this->authorize('manage', $card);
 
         return view('pages.cards.form', [
-            'cartao' => $cartao->load('account'),
+            'card' => $card->load('account.bank'),
             'membros' => $family->users()->orderBy('name')->get(),
-            'contas' => $family->accounts()->where('active', true)->orderBy('name')->get(),
+            'contas' => $family->accounts()->with('bank')->where('active', true)->orderBy('name')->get(),
         ]);
     }
 
@@ -93,11 +91,11 @@ class CardController extends Controller
         return redirect()->route('cartoes')->with('status', 'Cartão adicionado.');
     }
 
-    public function update(CreditCardRequest $request, CreditCard $cartao): RedirectResponse
+    public function update(CreditCardRequest $request, CreditCard $card): RedirectResponse
     {
         $family = Fin::family();
-        abort_if($cartao->family_id !== $family->id, 404);
-        $this->authorize('manage', $cartao);
+        abort_if($card->family_id !== $family->id, 404);
+        $this->authorize('manage', $card);
 
         $data = $request->validated();
         $data['active'] = $request->boolean('active');
@@ -107,18 +105,18 @@ class CardController extends Controller
         if (! empty($data['account_id'])) {
             $family->accounts()->findOrFail($data['account_id']);
         }
-        $cartao->update($data);
+        $card->update($data);
 
         return redirect()->route('cartoes')->with('status', 'Cartão atualizado.');
     }
 
-    public function destroy(CreditCard $cartao): RedirectResponse
+    public function destroy(CreditCard $card): RedirectResponse
     {
         $family = Fin::family();
-        abort_if($cartao->family_id !== $family->id, 404);
-        $this->authorize('manage', $cartao);
-        abort_if($cartao->items()->exists(), 422, 'Cartão com lançamentos não pode ser excluído. Desative-o.');
-        $cartao->delete();
+        abort_if($card->family_id !== $family->id, 404);
+        $this->authorize('manage', $card);
+        abort_if($card->items()->exists(), 422, 'Cartão com lançamentos não pode ser excluído. Desative-o.');
+        $card->delete();
 
         return redirect()->route('cartoes')->with('status', 'Cartão excluído.');
     }
@@ -179,26 +177,9 @@ class CardController extends Controller
             }
         });
 
-        $this->notifyDependentePurchase($family, $member, $data, $card);
-
         return redirect()->route('cartoes')->with('status',
             ($data['kind'] ?? 'compra') === 'estorno' ? 'Estorno lançado na fatura.'
                 : ($parcelas > 1 ? "Compra parcelada em {$parcelas}x." : 'Compra lançada na fatura.'));
-    }
-
-    /** Avisa gestores quando dependente/júnior lança (se a preferência estiver ativa). */
-    private function notifyDependentePurchase($family, $member, array $data, $card): void
-    {
-        if ($member->isAdmin() || ($data['kind'] ?? 'compra') === 'estorno') {
-            return;
-        }
-
-        Notify::gestoresIf($family, 'compra_dependente', new CompraDependente(
-            $member->name,
-            $data['description'],
-            abs((float) $data['amount']),
-            "Cartão {$card->name}",
-        ));
     }
 
     public function settleItem(CardTransaction $item): RedirectResponse
@@ -237,32 +218,32 @@ class CardController extends Controller
     }
 
     /** Paga a fatura cheia: liquida todos os pendentes e gera a despesa na conta vinculada. */
-    public function payInvoice(CreditCard $cartao): RedirectResponse
+    public function payInvoice(CreditCard $card): RedirectResponse
     {
         $family = Fin::family();
-        abort_if($cartao->family_id !== $family->id, 404);
-        $this->authorize('manage', $cartao);
+        abort_if($card->family_id !== $family->id, 404);
+        $this->authorize('manage', $card);
 
-        $pendentes = $cartao->items()->where('status', 'pendente')->orderBy('occurred_on')->get();
+        $pendentes = $card->items()->where('status', 'pendente')->orderBy('occurred_on')->get();
         if ($pendentes->isEmpty()) {
             return back()->with('status', 'Nenhum item pendente nesta fatura.');
         }
 
         $total = (float) $pendentes->sum('amount');
 
-        DB::transaction(function () use ($family, $cartao, $pendentes, $total) {
-            $cartao->items()->where('status', 'pendente')->update(['status' => 'pago']);
+        DB::transaction(function () use ($family, $card, $pendentes, $total) {
+            $card->items()->where('status', 'pendente')->update(['status' => 'pago']);
 
             // Só gera despesa se o líquido for positivo e houver conta vinculada.
-            if ($cartao->account_id && $total > 0) {
-                $family->accounts()->findOrFail($cartao->account_id);
+            if ($card->account_id && $total > 0) {
+                $family->accounts()->findOrFail($card->account_id);
                 Transaction::create([
                     'family_id' => $family->id,
-                    'user_id' => $cartao->holder_user_id ?? request()->user()->id,
-                    'account_id' => $cartao->account_id,
+                    'user_id' => $card->holder_user_id ?? request()->user()->id,
+                    'account_id' => $card->account_id,
                     'category_id' => $pendentes->first()->category_id,
                     'type' => 'despesa',
-                    'description' => "Pagamento fatura {$cartao->name}",
+                    'description' => "Pagamento fatura {$card->name}",
                     'amount' => $total,
                     'occurred_on' => Fin::today(),
                     'due_on' => Fin::today(),

@@ -1,21 +1,19 @@
 @extends('layouts.app')
-@section('title', ($conta ? 'Editar' : 'Nova').' Conta')
-@section('breadcrumb', 'Contas / '.($conta ? 'Editar' : 'Nova'))
+@section('title', ($account ? 'Editar' : 'Nova').' Conta')
+@section('breadcrumb', 'Contas / '.($account ? 'Editar' : 'Nova'))
 @section('nav-active', 'contas')
 
 @section('content')
 @php
-    $action = $conta ? route('contas.update', $conta) : route('contas.store');
-    $val = fn($k, $d = null) => old($k, $conta?->$k ?? $d);
-    $corAtual = old('color', $conta?->color ?? '#059669');
-    $cores = ['#059669','#0F172A','#820AD1','#EA580C','#EC7000','#CC092F','#EC0000','#005CA9','#FBC105','#21C25E','#3B82F6','#EC4899'];
+    $action = $account ? route('contas.update', $account) : route('contas.store');
+    $val = fn($k, $d = null) => old($k, $account?->$k ?? $d);
     $tiposKind = ['corrente'=>'Corrente','poupanca'=>'Poupança','digital'=>'Digital','investimento'=>'Investimento','carteira'=>'Carteira'];
 @endphp
 
 <div class="max-w-4xl mx-auto w-full">
     <x-form.header
-        :title="$conta ? 'Editar conta' : 'Nova conta'"
-        subtitle="Cadastre bancos, carteiras e caixinhas."
+        :title="$account ? 'Editar conta' : 'Nova conta'"
+        subtitle="Vincule cada conta ao seu banco (a cor vem do banco)."
         :backUrl="route('contas')"
         backLabel="Voltar para contas"
         icon="account_balance"
@@ -24,9 +22,22 @@
 
     <form method="POST" action="{{ $action }}" class="form-card tint-blue">
         @csrf
-        @if($conta) @method('PATCH') @endif
+        @if($account) @method('PATCH') @endif
 
         <div class="form-grid">
+            <x-form.field label="Banco" for="f-banco" :required="true" :error="$errors->first('bank_id')" hint="A conta usa a cor do banco.">
+                <div class="flex items-center gap-3">
+                    <span id="bank-swatch" class="w-11 h-11 rounded-xl shadow-sm shrink-0 border border-slate-200"
+                        style="background:#0F172A" title="Cor do banco"></span>
+                    <x-form.select id="f-banco" name="bank_id" class="flex-1">
+                        <option value="">Selecione o banco</option>
+                        @foreach($bancos as $b)
+                            <option value="{{ $b->id }}" data-cor="{{ $b->color ?? '#0F172A' }}" {{ (string)$val('bank_id') === (string)$b->id ? 'selected' : '' }}>{{ $b->label }}</option>
+                        @endforeach
+                    </x-form.select>
+                </div>
+            </x-form.field>
+
             <x-form.field label="Nome da conta" for="f-nome" :required="true" :error="$errors->first('name')">
                 <x-form.input id="f-nome" name="name" required value="{{ $val('name') }}" placeholder="Ex.: Itaú Conjunta" />
             </x-form.field>
@@ -46,45 +57,26 @@
                 </x-form.field>
             </div>
 
-            <div>
-                <p class="form-section-title">Cor da conta</p>
-                <p class="fld-hint" style="margin-top:.25rem;margin-bottom:.75rem">Cartões vinculados a esta conta herdam esta cor.</p>
-                <div class="flex flex-wrap items-center gap-2.5">
-                    @foreach($cores as $cor)
-                    <button type="button" data-cor="{{ $cor }}"
-                        class="color-swatch {{ strtolower($corAtual) === strtolower($cor) ? 'selected' : '' }}"
-                        style="background:{{ $cor }}" title="{{ $cor }}" aria-label="Cor {{ $cor }}">
-                    </button>
-                    @endforeach
-                    <label class="w-9 h-9 rounded-xl overflow-hidden cursor-pointer ring-2 ring-offset-2 ring-slate-200 hover:ring-slate-300 transition" title="Cor personalizada">
-                        <input id="f-cor" name="color" type="color" value="{{ $corAtual }}" class="w-12 h-12 -ml-1.5 -mt-1.5 cursor-pointer">
-                    </label>
-                </div>
-                @error('color')<p class="fld-msg-error">{{ $message }}</p>@enderror
-            </div>
-
-            @if($conta)
-                <x-form.check name="active" value="1" :checked=" (bool) old('active', $conta->active)" label="Conta ativa" hint="Aparece nos lançamentos e transferências." />
+            @if($account)
+                <x-form.check name="active" value="1" :checked=" (bool) old('active', $account->active)" label="Conta ativa" hint="Aparece nos lançamentos e transferências." />
             @endif
         </div>
 
-        <x-form.actions :cancelUrl="route('contas')" :submitLabel="$conta ? 'Salvar alterações' : 'Salvar conta'" :submitIcon="$conta ? 'save' : 'add_circle'" color="blue" />
+        <x-form.actions :cancelUrl="route('contas')" :submitLabel="$account ? 'Salvar alterações' : 'Salvar conta'" :submitIcon="$account ? 'save' : 'add_circle'" color="blue" />
     </form>
 </div>
 
 @push('scripts')
 <script>
-document.querySelectorAll('.color-swatch').forEach(b => b.addEventListener('click', () => {
-    document.getElementById('f-cor').value = b.dataset.cor;
-    document.querySelectorAll('.color-swatch').forEach(x => x.classList.remove('selected'));
-    b.classList.add('selected');
-}));
-document.getElementById('f-cor')?.addEventListener('input', e => {
-    document.querySelectorAll('.color-swatch').forEach(x => {
-        const on = x.dataset.cor.toLowerCase() === e.target.value.toLowerCase();
-        x.classList.toggle('selected', on);
-    });
-});
+// Mostra a cor do banco selecionado (a conta herda essa cor).
+const bankSel = document.getElementById('f-banco');
+const bankSwatch = document.getElementById('bank-swatch');
+function atualizaSwatch() {
+    const opt = bankSel.options[bankSel.selectedIndex];
+    bankSwatch.style.background = (opt && opt.dataset.cor) ? opt.dataset.cor : '#0F172A';
+}
+bankSel?.addEventListener('change', atualizaSwatch);
+atualizaSwatch();
 </script>
 @endpush
 @endsection

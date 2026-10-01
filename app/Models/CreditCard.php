@@ -12,7 +12,7 @@ class CreditCard extends Model
 {
     protected $fillable = [
         'family_id', 'holder_user_id', 'account_id', 'name', 'brand', 'last4',
-        'credit_limit', 'closing_day', 'due_day', 'color', 'active',
+        'credit_limit', 'closing_day', 'due_day', 'active',
     ];
 
     protected function casts(): array
@@ -101,12 +101,12 @@ class CreditCard extends Model
     }
 
     /**
-     * Cor visual do cartão: herda da conta vinculada; senão, cor própria;
-     * senão, gradiente padrão escuro.
+     * Cor visual do cartão: herdada do banco da conta vinculada
+     * (cartão → conta → banco); senão, gradiente padrão escuro.
      */
     public function getDisplayColorAttribute(): string
     {
-        return $this->account?->color ?: ($this->color ?: 'linear-gradient(135deg,#0f172a,#334155)');
+        return $this->account?->bank?->color ?: 'linear-gradient(135deg,#0f172a,#334155)';
     }
 
     /** Rótulo pt-BR da bandeira (tolerante a valores legados fora do enum). */

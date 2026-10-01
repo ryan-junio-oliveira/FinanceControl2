@@ -65,7 +65,7 @@
             <div class="flex items-center justify-between text-[12px] mb-2.5">
                 <span class="text-gray-400 flex items-center gap-1.5">
                     @if($c->account)
-                    <span class="w-2.5 h-2.5 rounded-full inline-block" style="background:{{ $c->account->color ?? '#9ca3af' }}"></span>
+                    <span class="w-2.5 h-2.5 rounded-full inline-block" style="background:{{ $c->account->bank->color ?? '#9ca3af' }}"></span>
                     {{ $c->account->name }}
                     @else
                     <span class="text-gray-300">Sem conta vinculada</span>
@@ -155,7 +155,7 @@
     </x-section-card>
 
     {{-- Gastos por membro --}}
-    <x-section-card class="lg:col-span-5" title="Gastos por Pessoa" subtitle="Somente valores pendentes">
+    <x-section-card class="lg:col-span-5" title="Gastos por Membro" subtitle="Somente valores pendentes">
         @forelse($porMembro as $r)
         <div class="flex items-center gap-3 mb-3.5">
             <span class="w-9 h-9 rounded-full grid place-items-center text-white text-[11px] font-extrabold ring-2 ring-offset-1 ring-slate-200"
@@ -166,7 +166,7 @@
         @empty
         <div class="text-center py-10 text-gray-400">
             <span class="material-symbols-outlined text-[40px] text-gray-300">group</span>
-            <p class="text-[13px] font-bold mt-2 text-gray-500">Sem valores pendentes por pessoa.</p>
+            <p class="text-[13px] font-bold mt-2 text-gray-500">Sem valores pendentes por membro.</p>
         </div>
         @endforelse
     </x-section-card>

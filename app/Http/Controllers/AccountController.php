@@ -18,7 +18,7 @@ class AccountController extends Controller
         $family = Fin::family();
         $fid = $family->id;
 
-        $contas = $family->accounts()->orderBy('name')->get();
+        $contas = $family->accounts()->with('bank')->orderBy('name')->get();
         $balances = Account::balancesForFamily($fid);
         $contas->each(function ($a) use ($balances) {
             // Expõe saldo pré-calculado sem N+1; getBalanceAttribute segue disponível.
@@ -35,15 +35,21 @@ class AccountController extends Controller
 
     public function create(): View
     {
-        return view('pages.accounts.form', ['conta' => null]);
+        return view('pages.accounts.form', [
+            'account' => null,
+            'bancos' => \App\Models\Bank::where('is_active', true)->orderBy('name')->get(),
+        ]);
     }
 
-    public function edit(Account $conta): View
+    public function edit(Account $account): View
     {
-        abort_if($conta->family_id !== Fin::familyId(), 404);
-        $this->authorize('manage', $conta);
+        abort_if($account->family_id !== Fin::familyId(), 404);
+        $this->authorize('manage', $account);
 
-        return view('pages.accounts.form', ['conta' => $conta]);
+        return view('pages.accounts.form', [
+            'account' => $account,
+            'bancos' => \App\Models\Bank::where('is_active', true)->orderBy('name')->get(),
+        ]);
     }
 
     public function store(AccountRequest $request): RedirectResponse
@@ -56,24 +62,24 @@ class AccountController extends Controller
         return redirect()->route('contas')->with('status', 'Conta criada.');
     }
 
-    public function update(AccountRequest $request, Account $conta): RedirectResponse
+    public function update(AccountRequest $request, Account $account): RedirectResponse
     {
         $family = Fin::family();
-        abort_if($conta->family_id !== $family->id, 404);
-        $this->authorize('manage', $conta);
+        abort_if($account->family_id !== $family->id, 404);
+        $this->authorize('manage', $account);
 
-        $conta->update($request->validated() + ['active' => $request->boolean('active')]);
+        $account->update($request->validated() + ['active' => $request->boolean('active')]);
 
         return redirect()->route('contas')->with('status', 'Conta atualizada.');
     }
 
-    public function destroy(Account $conta): RedirectResponse
+    public function destroy(Account $account): RedirectResponse
     {
         $family = Fin::family();
-        abort_if($conta->family_id !== $family->id, 404);
-        $this->authorize('manage', $conta);
-        abort_if($conta->transactions()->exists(), 422, 'Conta com movimentações não pode ser excluída. Desative-a.');
-        $conta->delete();
+        abort_if($account->family_id !== $family->id, 404);
+        $this->authorize('manage', $account);
+        abort_if($account->transactions()->exists(), 422, 'Conta com movimentações não pode ser excluída. Desative-a.');
+        $account->delete();
 
         return redirect()->route('contas')->with('status', 'Conta excluída.');
     }

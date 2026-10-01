@@ -22,7 +22,6 @@ class CreditCardRequest extends FormRequest
             'closing_day' => ['required', 'integer', 'min:1', 'max:28'],
             'due_day' => ['required', 'integer', 'min:1', 'max:28'],
             'holder_user_id' => ['nullable', 'exists:users,id'],
-            'color' => ['nullable', 'string', 'max:255'],
             'active' => ['sometimes', 'boolean'],
         ];
     }

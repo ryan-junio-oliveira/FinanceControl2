@@ -24,10 +24,10 @@
     <div class="section-card hover:-translate-y-1 hover:shadow-[var(--shadow-lift)] transition-all duration-200">
         <div class="flex items-center gap-3 mb-3">
             <span class="w-11 h-11 rounded-lg grid place-items-center text-white text-[13px] font-extrabold shadow-sm"
-                style="background:{{ $c->color ?? '#0F172A' }}">{{ mb_strtoupper(mb_substr($c->name, 0, 2)) }}</span>
+                style="background:{{ $c->display_color }}">{{ mb_strtoupper(mb_substr($c->name, 0, 2)) }}</span>
             <div class="flex-1 min-w-0">
                 <p class="font-extrabold text-[14px] truncate text-gray-800">{{ $c->name }}</p>
-                <p class="text-[11px] text-gray-400">{{ ucfirst($c->kind) }}</p>
+                <p class="text-[11px] text-gray-400">{{ $c->bank->name ?? '—' }} · {{ ucfirst($c->kind) }}</p>
             </div>
             @if(!$c->active)<x-badge type="warning">Inativa</x-badge>@endif
         </div>
