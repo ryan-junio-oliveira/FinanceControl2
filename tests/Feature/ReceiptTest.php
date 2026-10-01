@@ -127,7 +127,7 @@ class ReceiptTest extends TestCase
 
         $this->send('1'); // conta
         $cats = $family->categories()->where('type', 'despesa')->where('archived', false)->orderBy('name')->get();
-        $supermercado = $cats->firstWhere('name', 'Supermercado');
+        $supermercado = $cats->firstWhere('name', 'Alimentação');
         $num = $cats->search(fn ($c) => $c->id === $supermercado->id) + 1;
         $this->send((string) $num); // categoria
         $this->assertStringContainsString('Confirmar', (string) NullDriver::lastText());

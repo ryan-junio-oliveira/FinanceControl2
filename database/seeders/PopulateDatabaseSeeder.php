@@ -111,7 +111,7 @@ class PopulateDatabaseSeeder extends Seeder
                 'due_on' => $data13,
                 'status' => $statusPorData($data13),
                 'account_id' => $contas['itau']->id,
-                'category_id' => $cat('receita', '13º salário')?->id,
+                'category_id' => $cat('receita', 'Benefícios')?->id,
             ]);
 
             // Rendas extras esporádicas.
@@ -128,25 +128,25 @@ class PopulateDatabaseSeeder extends Seeder
                     'status' => $statusPorData($data),
                     'account_id' => $contas['itau']->id,
                     'category_id' => $cat('receita', match ($desc) {
-                        'Freelance — site' => 'Freelas e bicos',
-                        'Venda de usados' => 'Venda de usados',
-                        'Reembolso' => 'Reembolso',
-                        'Dividendos FII' => 'Dividendos',
-                        default => 'Cashback',
+                        'Freelance — site' => 'Renda extra',
+                        'Venda de usados' => 'Renda extra',
+                        'Reembolso' => 'Outras receitas',
+                        'Dividendos FII' => 'Investimentos',
+                        default => 'Outras receitas',
                     })?->id,
                 ]);
             }
 
             // ───────────────────── DESPESAS FIXAS ─────────────────────
             $fixas = [
-                ['Aluguel', 2300, 10, 'Moradia', 'Aluguel'],
-                ['Condomínio', 580, 10, 'Moradia', 'Condomínio'],
-                ['Plano de saúde', 920, 5, 'Saúde', 'Plano de saúde'],
-                ['Mensalidade escolar', 1850, 10, 'Educação', 'Mensalidade escolar'],
-                ['Internet fibra', 149, 8, 'Moradia', 'Internet'],
-                ['Celular (2 linhas)', 128, 8, 'Contas e assinaturas', 'Celular'],
-                ['TV e streaming', 65, 15, 'Contas e assinaturas', 'TV e streaming'],
-                ['Academia', 119, 3, 'Saúde', 'Academia'],
+                ['Aluguel', 2300, 10, 'Moradia', 'Moradia'],
+                ['Condomínio', 580, 10, 'Moradia', 'Moradia'],
+                ['Plano de saúde', 920, 5, 'Saúde', 'Saúde'],
+                ['Mensalidade escolar', 1850, 10, 'Educação', 'Educação'],
+                ['Internet fibra', 149, 8, 'Moradia', 'Contas e assinaturas'],
+                ['Celular (2 linhas)', 128, 8, 'Contas e assinaturas', 'Contas e assinaturas'],
+                ['TV e streaming', 65, 15, 'Contas e assinaturas', 'Lazer'],
+                ['Academia', 119, 3, 'Saúde', 'Saúde'],
             ];
 
             foreach ($fixas as [$desc, $valor, $dia, $grupo, $nomeCat]) {
@@ -184,25 +184,25 @@ class PopulateDatabaseSeeder extends Seeder
                         'due_on' => $data,
                         'status' => $statusPorData($data),
                         'account_id' => $contas['itau']->id,
-                        'category_id' => $cat('despesa', $desc === 'Energia elétrica' ? 'Energia elétrica' : 'Água e esgoto')?->id,
+                        'category_id' => $cat('despesa', 'Moradia')?->id,
                     ]);
                 }
             }
 
             // ───────────────────── DESPESAS VARIÁVEIS ─────────────────────
             $variaveis = [
-                ['Supermercado', 640, 980, 'Supermercado'],
-                ['Feira', 90, 160, 'Feira'],
-                ['Padaria', 25, 70, 'Padaria'],
-                ['Restaurantes', 120, 320, 'Restaurantes'],
-                ['Delivery', 40, 120, 'Delivery'],
-                ['Cafeteria e lanches', 15, 55, 'Cafeteria e lanches'],
-                ['Combustível', 180, 360, 'Combustível'],
-                ['Transporte por app', 30, 120, 'Transporte por app'],
-                ['Farmácia', 40, 180, 'Farmácia'],
-                ['Roupas', 90, 320, 'Roupas'],
-                ['Cinema e teatro', 50, 140, 'Cinema e teatro'],
-                ['Presentes', 60, 250, 'Presentes'],
+                ['Supermercado', 640, 980, 'Alimentação'],
+                ['Feira', 90, 160, 'Alimentação'],
+                ['Padaria', 25, 70, 'Alimentação'],
+                ['Restaurantes', 120, 320, 'Alimentação'],
+                ['Delivery', 40, 120, 'Alimentação'],
+                ['Cafeteria e lanches', 15, 55, 'Alimentação'],
+                ['Combustível', 180, 360, 'Transporte'],
+                ['Transporte por app', 30, 120, 'Transporte'],
+                ['Farmácia', 40, 180, 'Saúde'],
+                ['Roupas', 90, 320, 'Vestuário'],
+                ['Cinema e teatro', 50, 140, 'Lazer'],
+                ['Presentes', 60, 250, 'Doações e presentes'],
             ];
 
             foreach (range(1, 12) as $mes) {
@@ -236,7 +236,7 @@ class PopulateDatabaseSeeder extends Seeder
                     'due_on' => $data,
                     'status' => $statusPorData($data),
                     'account_id' => $contas['nubank']->id,
-                    'category_id' => $cat('despesa', 'Viagens')?->id,
+                    'category_id' => $cat('despesa', 'Lazer')?->id,
                 ]);
             }
 
@@ -247,7 +247,7 @@ class PopulateDatabaseSeeder extends Seeder
                 ['Notebook', 4200, 6, 8],         // de agosto/2026
             ];
             foreach ($parcelas as [$desc, $total, $qtd, $mesInicio]) {
-                $this->parcelas($family, $membros['admin'], $contas['itau'], $cat('despesa', 'Móveis e decoração')?->id, $desc, $total, $qtd, Carbon::create($year, $mesInicio, 5), $statusPorData);
+                $this->parcelas($family, $membros['admin'], $contas['itau'], $cat('despesa', 'Moradia')?->id, $desc, $total, $qtd, Carbon::create($year, $mesInicio, 5), $statusPorData);
             }
 
             // ───────────────────── TRANSFERÊNCIAS ─────────────────────
@@ -268,12 +268,12 @@ class PopulateDatabaseSeeder extends Seeder
 
             // ───────────────────── COMPRAS NO CARTÃO ─────────────────────
             $comprasCartao = [
-                ['Mercado cartão', 350, 'Supermercado'],
-                ['Restaurante', 180, 'Restaurantes'],
-                ['Combustível', 240, 'Combustível'],
-                ['Farmácia', 90, 'Farmácia'],
-                ['Eletrônicos', 650, 'Móveis e decoração'],
-                ['Streaming', 45, 'TV e streaming'],
+                ['Mercado cartão', 350, 'Alimentação'],
+                ['Restaurante', 180, 'Alimentação'],
+                ['Combustível', 240, 'Transporte'],
+                ['Farmácia', 90, 'Saúde'],
+                ['Eletrônicos', 650, 'Moradia'],
+                ['Streaming', 45, 'Lazer'],
             ];
             foreach (range(1, 12) as $mes) {
                 $qtd = random_int(3, 5);

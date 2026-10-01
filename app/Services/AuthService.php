@@ -26,7 +26,7 @@ final class AuthService
             ]);
             $family->settings()->create([]);
 
-            // Catálogo padrão: a família já nasce com ~100 categorias.
+            // Catálogo padrão: a família já nasce com os temas.
             CategoryCatalog::seedForFamily($family);
 
             return User::create([

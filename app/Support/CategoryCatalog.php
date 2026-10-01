@@ -2,14 +2,17 @@
 
 namespace App\Support;
 
+use App\Models\CardTransaction;
 use App\Models\Family;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Catálogo padrão de categorias do FinFamília.
+ * Catálogo padrão de categorias do FinFamília: só os grandes temas.
  *
  * Semeado automaticamente para cada família nova (via cadastro) e
  * reaplicável via `php artisan categories:seed` sem duplicar.
+ * Famílias antigas são consolidadas via `php artisan categories:prune`
+ * (remapa lançamentos para o tema e apaga as categorias detalhadas).
  */
 final class CategoryCatalog
 {
@@ -22,142 +25,100 @@ final class CategoryCatalog
         $r = fn (string $name, string $icon) => ['name' => $name, 'type' => 'receita', 'icon' => $icon];
 
         return [
-            // ── Moradia ──
-            $d('Aluguel', 'home'),
-            $d('Condomínio', 'apartment'),
-            $d('IPTU', 'receipt_long'),
-            $d('Energia elétrica', 'bolt'),
-            $d('Água e esgoto', 'water_drop'),
-            $d('Gás', 'local_fire_department'),
-            $d('Internet', 'wifi'),
-            $d('Manutenção residencial', 'handyman'),
-            $d('Móveis e decoração', 'chair'),
-            $d('Seguro residencial', 'verified_user'),
-            $d('Diarista e limpeza', 'cleaning_services'),
+            $d('Moradia', 'home'),
+            $d('Alimentação', 'restaurant'),
+            $d('Transporte', 'directions_car'),
+            $d('Saúde', 'medical_services'),
+            $d('Educação', 'school'),
+            $d('Lazer', 'celebration'),
+            $d('Vestuário', 'checkroom'),
+            $d('Cuidados pessoais', 'spa'),
+            $d('Pets', 'pets'),
+            $d('Filhos', 'child_care'),
+            $d('Doações e presentes', 'redeem'),
+            $d('Contas e assinaturas', 'subscriptions'),
+            $d('Financeiro', 'payments'),
+            $d('Trabalho', 'work'),
+            $d('Outras despesas', 'more_horiz'),
 
-            // ── Contas e assinaturas ──
-            $d('Celular', 'smartphone'),
-            $d('TV e streaming', 'tv'),
-            $d('Assinaturas digitais', 'subscriptions'),
-            $d('Tarifas bancárias', 'account_balance'),
-            $d('Anuidade do cartão', 'credit_card'),
-            $d('Juros e multas', 'warning'),
-
-            // ── Alimentação ──
-            $d('Supermercado', 'shopping_cart'),
-            $d('Feira', 'local_grocery_store'),
-            $d('Padaria', 'bakery_dining'),
-            $d('Restaurantes', 'restaurant'),
-            $d('Delivery', 'delivery_dining'),
-            $d('Cafeteria e lanches', 'local_cafe'),
-            $d('Encontros e churrasco', 'groups'),
-
-            // ── Transporte ──
-            $d('Combustível', 'local_gas_station'),
-            $d('Estacionamento', 'local_parking'),
-            $d('Pedágio', 'toll'),
-            $d('Transporte por app', 'local_taxi'),
-            $d('Transporte público', 'directions_bus'),
-            $d('Manutenção do carro', 'car_repair'),
-            $d('Seguro auto', 'no_crash'),
-            $d('IPVA e licenciamento', 'badge'),
-            $d('Lavagem do carro', 'local_car_wash'),
-            $d('Fretes e motoboy', 'local_shipping'),
-
-            // ── Saúde ──
-            $d('Plano de saúde', 'medical_services'),
-            $d('Consultas e exames', 'stethoscope'),
-            $d('Farmácia', 'medication'),
-            $d('Dentista', 'dentistry'),
-            $d('Terapia e psicologia', 'psychology'),
-            $d('Óculos e lentes', 'eyeglasses'),
-            $d('Academia', 'fitness_center'),
-            $d('Esportes', 'sports_soccer'),
-            $d('Suplementos', 'nutrition'),
-            $d('Vacinas', 'vaccines'),
-            $d('Cuidador e home care', 'accessible'),
-
-            // ── Educação ──
-            $d('Mensalidade escolar', 'school'),
-            $d('Faculdade', 'cast_for_education'),
-            $d('Cursos e idiomas', 'menu_book'),
-            $d('Material escolar', 'edit'),
-            $d('Livros', 'book'),
-            $d('Transporte escolar', 'directions_bus'),
-            $d('Reforço escolar', 'lightbulb'),
-
-            // ── Filhos ──
-            $d('Fraldas e bebê', 'child_care'),
-            $d('Roupas infantis', 'stroller'),
-            $d('Brinquedos', 'toys'),
-            $d('Passeios em família', 'park'),
-
-            // ── Pets ──
-            $d('Ração e petshop', 'pets'),
-            $d('Veterinário', 'healing'),
-            $d('Banho e tosa', 'shower'),
-            $d('Creche e adestramento', 'star'),
-
-            // ── Vestuário ──
-            $d('Roupas', 'checkroom'),
-            $d('Calçados', 'footprints'),
-            $d('Acessórios', 'watch'),
-            $d('Lavanderia e costureira', 'dry_cleaning'),
-
-            // ── Beleza ──
-            $d('Cabelo e barbearia', 'content_cut'),
-            $d('Manicure e pedicure', 'spa'),
-            $d('Cosméticos', 'face'),
-
-            // ── Lazer ──
-            $d('Cinema e teatro', 'movie'),
-            $d('Shows e eventos', 'celebration'),
-            $d('Viagens', 'flight'),
-            $d('Games e hobbies', 'sports_esports'),
-            $d('Clube e parque', 'attractions'),
-
-            // ── Doações e presentes ──
-            $d('Dízimo e ofertas', 'volunteer_activism'),
-            $d('Doações', 'favorite'),
-            $d('Presentes', 'redeem'),
-
-            // ── Financeiro ──
-            $d('Empréstimos', 'payments'),
-            $d('Consórcio', 'savings'),
-            $d('Imposto de renda', 'receipt'),
-            $d('Taxas e documentos', 'description'),
-
-            // ── Trabalho ──
-            $d('Coworking', 'work'),
-            $d('Equipamentos de trabalho', 'computer'),
-            $d('Ferramentas e software', 'build'),
-
-            // ── Receitas ──
             $r('Salário', 'payments'),
-            $r('13º salário', 'card_giftcard'),
-            $r('Férias', 'beach_access'),
-            $r('Bônus e PLR', 'emoji_events'),
-            $r('Comissões', 'percent'),
-            $r('Freelas e bicos', 'work'),
             $r('Renda extra', 'add_circle'),
-            $r('Aposentadoria', 'elderly'),
-            $r('Pensão', 'family_restroom'),
-            $r('Bolsa de estudos', 'school'),
-            $r('Aluguel recebido', 'home'),
-            $r('Dividendos', 'trending_up'),
-            $r('Rendimentos de investimentos', 'show_chart'),
-            $r('Juros recebidos', 'attach_money'),
-            $r('Reembolso', 'undo'),
-            $r('Restituição do IR', 'receipt'),
-            $r('Venda de usados', 'sell'),
-            $r('Cashback', 'loyalty'),
-            $r('Prêmios', 'celebration'),
-            $r('Ajuda de custo', 'handshake'),
-            $r('Vale-alimentação', 'lunch_dining'),
-            $r('Gorjetas', 'tips_and_updates'),
-            $r('Herança', 'account_balance'),
+            $r('Investimentos', 'trending_up'),
+            $r('Benefícios', 'card_giftcard'),
             $r('Outras receitas', 'more_horiz'),
         ];
+    }
+
+    public static function isTheme(string $type, string $name): bool
+    {
+        foreach (self::items() as $item) {
+            if ($item['type'] === $type && $item['name'] === $name) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Palavras-chave por tema (ordem importa: prefixos específicos primeiro).
+     *
+     * @return array<string, array<int, string>>
+     */
+    private static function keywords(string $type): array
+    {
+        if ($type === 'receita') {
+            return [
+                'Benefícios' => ['decimo', '13', 'ferias', 'plr', 'bonus', 'vale', 'bolsa', 'pensao', 'aposentadoria', 'beneficio'],
+                'Salário' => ['salario', 'holerite', 'provento'],
+                'Investimentos' => ['dividendo', 'rendimento', 'investimento', 'acao', 'fii', 'juros'],
+                'Renda extra' => ['freela', 'bico', 'comissao', 'venda', 'extra', 'premio', 'gorjeta', 'ajuda de custo', 'cashback', 'aluguel'],
+            ];
+        }
+
+        return [
+            'Educação' => ['escola', 'escolar', 'faculdade', 'universidade', 'curso', 'livro', 'material', 'reforco', 'mensalidade', 'professor'],
+            'Saúde' => ['saude', 'medico', 'consulta', 'exame', 'farmacia', 'drogaria', 'dentista', 'terapia', 'oculos', 'academia', 'esporte', 'suplemento', 'vacina', 'hospital', 'plano de saude', 'clinica', 'remedio'],
+            'Transporte' => ['transporte por app', 'transporte publico', 'uber', '99', 'combustivel', 'gasolina', 'posto', 'estacionamento', 'pedagio', 'motoboy', 'frete', 'carro', 'ipva', 'seguro auto', 'lavagem', 'onibus', 'metro', 'passagem de onibus'],
+            'Alimentação' => ['alimentacao', 'supermercado', 'mercado', 'feira', 'padaria', 'restaurante', 'delivery', 'ifood', 'lanche', 'cafeteria', 'churrasco', 'comida', 'hortifruti', 'sacolao', 'atacadao', 'carrefour', 'assai', 'pao de acucar'],
+            'Moradia' => ['moradia', 'aluguel', 'condominio', 'iptu', 'energia', 'luz', 'agua', 'esgoto', 'gas', 'diarista', 'limpeza', 'manutencao', 'moveis', 'imobiliaria', 'reforma', 'faxina'],
+            'Lazer' => ['lazer', 'cinema', 'teatro', 'show', 'evento', 'viagem', 'hotel', 'streaming', 'netflix', 'spotify', 'game', 'hobby', 'clube', 'parque', 'passeio', 'festa', 'praia'],
+            'Vestuário' => ['roupa', 'calcado', 'sapato', 'vestuario', 'acessorio', 'lavanderia', 'costureira', 'moda'],
+            'Cuidados pessoais' => ['cabelo', 'barbearia', 'manicure', 'pedicure', 'cosmetico', 'beleza', 'higiene', 'perfume', 'salao'],
+            'Pets' => ['pet', 'racao', 'veterinario', 'tosa', 'adestramento', 'petshop', 'cobasi', 'petz'],
+            'Filhos' => ['filho', 'filha', 'bebe', 'fralda', 'brinquedo', 'infantil', 'crianca'],
+            'Doações e presentes' => ['dizimo', 'doacao', 'presente', 'oferta', 'caridade'],
+            'Contas e assinaturas' => ['celular', 'assinatura', 'internet', 'telefone', 'vivo', 'claro', 'tim'],
+            'Financeiro' => ['tarifa', 'anuidade', 'juro', 'multa', 'emprestimo', 'consorcio', 'imposto', 'taxa', 'documento', 'financiamento', 'divida', 'iof', 'banco'],
+            'Trabalho' => ['trabalho', 'coworking', 'escritorio', 'equipamento', 'ferramenta', 'software'],
+        ];
+    }
+
+    /**
+     * Tema correspondente a um nome/descrição livre. Null = sem palpite.
+     * O fallback (Outras...) fica por conta de quem chama.
+     */
+    public static function themeFor(string $type, string $text): ?string
+    {
+        $norm = CategoryKeywords::normalize($text);
+        if ($norm === '') {
+            return null;
+        }
+
+        foreach (self::keywords($type) as $theme => $words) {
+            foreach ($words as $w) {
+                if (str_contains($norm, $w)) {
+                    return $theme;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    public static function fallback(string $type): string
+    {
+        return $type === 'receita' ? 'Outras receitas' : 'Outras despesas';
     }
 
     /**
@@ -190,6 +151,52 @@ final class CategoryCatalog
             }
 
             return $created;
+        });
+    }
+
+    /**
+     * Consolida categorias detalhadas nos temas: move lançamentos
+     * (transações e itens de cartão) e apaga as excedentes.
+     *
+     * @return array{moved: int, removed: int}
+     */
+    public static function pruneForFamily(Family $family): array
+    {
+        return DB::transaction(function () use ($family) {
+            self::seedForFamily($family);
+
+            $themeIds = [];
+            foreach (['despesa', 'receita'] as $type) {
+                foreach (self::items() as $item) {
+                    if ($item['type'] !== $type) {
+                        continue;
+                    }
+                    $themeIds[$type][$item['name']] = $family->categories()
+                        ->where('type', $type)->where('name', $item['name'])->value('id');
+                }
+            }
+
+            $moved = 0;
+            $removed = 0;
+            foreach (['despesa', 'receita'] as $type) {
+                $themeNames = array_column(array_filter(self::items(), fn ($i) => $i['type'] === $type), 'name');
+                $old = $family->categories()->where('type', $type)->whereNotIn('name', $themeNames)->get();
+
+                foreach ($old as $cat) {
+                    $theme = self::themeFor($cat->type, $cat->name) ?? self::fallback($cat->type);
+                    $target = $themeIds[$cat->type][$theme] ?? null;
+                    if (! $target) {
+                        continue;
+                    }
+
+                    $moved += $family->transactions()->where('category_id', $cat->id)->update(['category_id' => $target]);
+                    $moved += \App\Models\CardTransaction::where('family_id', $family->id)->where('category_id', $cat->id)->update(['category_id' => $target]);
+                    $cat->delete();
+                    $removed++;
+                }
+            }
+
+            return ['moved' => $moved, 'removed' => $removed];
         });
     }
 }
