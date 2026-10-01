@@ -15,15 +15,22 @@ class EnsureFamilyRole
     public function handle(Request $request, Closure $next, string ...$roles): Response
     {
         $user = $request->user();
+        $api = $request->is('api/*') || $request->expectsJson();
 
-        // Sem usuário autenticado: vai para o login.
+        // Sem usuário autenticado: JSON na API, login na web.
         if (! $user) {
-            return redirect()->route('login');
+            return $api
+                ? response()->json(['message' => 'Não autenticado.'], 401)
+                : redirect()->route('login');
         }
 
         // Usuário sem conta vinculada: sai daqui com mensagem clara,
         // em vez de um loop silencioso login → dashboard → login.
         if (! $user->family_id) {
+            if ($api) {
+                return response()->json(['message' => 'Sua conta não está vinculada a nenhuma família.'], 422);
+            }
+
             Auth::logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();

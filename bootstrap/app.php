@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Middleware\EnsureFamilyOwnership;
+use App\Http\Middleware\EnsureFamilyRole;
+use App\Http\Middleware\NoStoreHtml;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -8,13 +11,17 @@ use Illuminate\Http\Request;
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
+        api: __DIR__.'/../routes/api.php',
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->alias(['family.role' => \App\Http\Middleware\EnsureFamilyRole::class]);
+        $middleware->alias([
+            'family.role' => EnsureFamilyRole::class,
+            'family.ownership' => EnsureFamilyOwnership::class,
+        ]);
         $middleware->web(append: [
-            \App\Http\Middleware\NoStoreHtml::class,
+            NoStoreHtml::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
