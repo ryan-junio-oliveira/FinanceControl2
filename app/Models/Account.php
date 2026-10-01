@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\BankCatalog;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -94,6 +95,6 @@ class Account extends Model
     /** Cor visual: herdada do banco (1 conta pertence a 1 banco). */
     public function getDisplayColorAttribute(): string
     {
-        return $this->bank?->color ?: \App\Support\BankCatalog::DEFAULT_COLOR;
+        return $this->bank?->color ?: BankCatalog::DEFAULT_COLOR;
     }
 }

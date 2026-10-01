@@ -2,17 +2,30 @@
 
 namespace Tests\Feature;
 
+use App\Mail\WelcomeEmail;
+use App\Models\Account;
+use App\Models\AuditLog;
+use App\Models\Bank;
+use App\Models\CardTransaction;
+use App\Models\Category;
+use App\Models\CreditCard;
 use App\Models\Invitation;
+use App\Models\Portfolio;
+use App\Models\Transaction;
 use App\Models\User;
+use App\Notifications\FaturaVencimento;
+use Illuminate\Contracts\Support\MessageBag;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\ViewErrorBag;
 use Tests\TestCase;
 
 class FinfamBackendTest extends TestCase
 {
     use RefreshDatabase;
 
-public function test_guest_pages_render(): void
+    public function test_guest_pages_render(): void
     {
         $this->get('/login')->assertOk();
         $this->get('/register')->assertOk();
@@ -51,9 +64,9 @@ public function test_guest_pages_render(): void
 
         // admin executa uma ação e ela aparece na trilha com IP
         $this->actingAs($admin);
-        $banco = \App\Models\Bank::create(['code' => '341', 'name' => 'Itaú']);
+        $banco = Bank::create(['code' => '341', 'name' => 'Itaú']);
         $this->post('/accounts', ['name' => 'Conta Logs', 'bank_id' => $banco->id, 'kind' => 'corrente', 'initial_balance' => '0'])->assertSessionHasNoErrors();
-        $conta = \App\Models\Account::where('name', 'Conta Logs')->first();
+        $conta = Account::where('name', 'Conta Logs')->first();
         $cat = $admin->family->categories()->where('type', 'despesa')->first();
         $this->post('/expenses', [
             'description' => 'Compra auditada', 'amount' => '99', 'occurred_on' => now()->toDateString(),
@@ -63,7 +76,7 @@ public function test_guest_pages_render(): void
         $this->assertDatabaseHas('audit_logs', [
             'action' => 'created', 'user_id' => $admin->id, 'description' => 'Criou Lançamento: Compra auditada',
         ]);
-        $this->assertTrue(\App\Models\AuditLog::where('action', 'created')->whereNotNull('ip_address')->exists());
+        $this->assertTrue(AuditLog::where('action', 'created')->whereNotNull('ip_address')->exists());
 
         $this->get('/admin/logs')->assertOk()->assertSee('Criou Lançamento')->assertSee('127.0.0.1');
     }
@@ -101,14 +114,14 @@ public function test_guest_pages_render(): void
         // --- categoria ---
         $this->post('/categories', ['name' => 'Alimentação', 'type' => 'despesa'])->assertSessionHasNoErrors();
         $this->assertDatabaseHas('categories', ['name' => 'Alimentação']);
-        $catDesp = \App\Models\Category::where('name', 'Alimentação')->first();
+        $catDesp = Category::where('name', 'Alimentação')->first();
         $this->post('/categories', ['name' => 'Salário', 'type' => 'receita'])->assertSessionHasNoErrors();
-        $catRec = \App\Models\Category::where('name', 'Salário')->first();
+        $catRec = Category::where('name', 'Salário')->first();
 
         // --- conta (exige banco do catálogo) ---
-        $banco = \App\Models\Bank::create(['code' => '341', 'name' => 'Banco Itaú Unibanco']);
+        $banco = Bank::create(['code' => '341', 'name' => 'Banco Itaú Unibanco']);
         $this->post('/accounts', ['name' => 'Itaú Conjunta', 'bank_id' => $banco->id, 'kind' => 'corrente', 'initial_balance' => '1000'])->assertSessionHasNoErrors();
-        $conta = \App\Models\Account::where('name', 'Itaú Conjunta')->first();
+        $conta = Account::where('name', 'Itaú Conjunta')->first();
         $this->assertNotNull($conta);
         $this->assertEquals(1000, (float) $conta->balance);
 
@@ -123,13 +136,13 @@ public function test_guest_pages_render(): void
         ])->assertSessionHasNoErrors();
         $this->assertEquals(6000, (float) $conta->fresh()->balance); // 1000 + 5000 (despesa pendente não abate)
 
-        $desp = \App\Models\Transaction::where('description', 'Mercado')->first();
+        $desp = Transaction::where('description', 'Mercado')->first();
         $this->post("/transactions/{$desp->id}/settle")->assertSessionHasNoErrors();
         $this->assertEquals(5500, (float) $conta->fresh()->balance);
 
         // --- transferência interna ---
         $this->post('/accounts', ['name' => 'Nubank', 'bank_id' => $banco->id, 'kind' => 'digital', 'initial_balance' => '0'])->assertSessionHasNoErrors();
-        $nu = \App\Models\Account::where('name', 'Nubank')->first();
+        $nu = Account::where('name', 'Nubank')->first();
         $this->post('/accounts/transfer', [
             'from_account_id' => $conta->id, 'to_account_id' => $nu->id,
             'amount' => '500', 'occurred_on' => now()->toDateString(), 'user_id' => $admin->id,
@@ -139,19 +152,19 @@ public function test_guest_pages_render(): void
 
         // --- cartão + item + liquidação ---
         $this->post('/cards', ['name' => 'Nubank UV', 'credit_limit' => '10000', 'closing_day' => 3, 'due_day' => 10, 'holder_user_id' => $admin->id])->assertSessionHasNoErrors();
-        $card = \App\Models\CreditCard::where('name', 'Nubank UV')->first();
+        $card = CreditCard::where('name', 'Nubank UV')->first();
         $this->post('/cards/items', [
             'credit_card_id' => $card->id, 'description' => 'Mercado cartão', 'amount' => '200',
             'occurred_on' => now()->toDateString(), 'user_id' => $admin->id, 'category_id' => $catDesp->id,
         ])->assertSessionHasNoErrors();
         $this->assertEquals(200, (float) $card->fresh()->open_invoice);
-        $item = \App\Models\CardTransaction::first();
+        $item = CardTransaction::first();
         $this->post("/cards/items/{$item->id}/settle")->assertSessionHasNoErrors();
         $this->assertEquals(0, (float) $card->fresh()->open_invoice);
 
         // --- investimentos: carteira + ativo + aporte (abate da conta) ---
         $this->post('/investments/portfolios', ['name' => 'Reserva', 'kind' => 'reserva', 'target_amount' => '50000'])->assertSessionHasNoErrors();
-        $cart = \App\Models\Portfolio::where('name', 'Reserva')->first();
+        $cart = Portfolio::where('name', 'Reserva')->first();
         $this->post('/investments/assets', [
             'portfolio_id' => $cart->id, 'code' => 'SELIC', 'name' => 'Tesouro Selic',
             'kind' => 'renda_fixa', 'current_value' => '10000',
@@ -164,12 +177,12 @@ public function test_guest_pages_render(): void
         $this->get('/investments')->assertOk();
 
         // --- convite + primeiro acesso (convidado abre o link deslogado) ---
-        \Illuminate\Support\Facades\Mail::fake();
+        Mail::fake();
         $this->post('/family/invites', ['name' => 'Lucas Silva', 'email' => 'lucas@email.com', 'role' => 'dependente'])->assertSessionHasNoErrors();
         $convite = Invitation::where('email', 'lucas@email.com')->first();
         $this->assertNotNull($convite);
         // e-mail de boas-vindas enfileirado com o link de primeiro acesso
-        \Illuminate\Support\Facades\Mail::assertQueued(\App\Mail\WelcomeEmail::class, function ($mail) use ($convite) {
+        Mail::assertQueued(WelcomeEmail::class, function ($mail) use ($convite) {
             return $mail->hasTo('lucas@email.com')
                 && str_contains($mail->render(), '/first-access/'.$convite->token);
         });
@@ -194,7 +207,7 @@ public function test_guest_pages_render(): void
             'description' => 'Videogame', 'amount' => '2000', 'occurred_on' => now()->toDateString(),
             'status' => 'pago', 'user_id' => $lucas->id, 'category_id' => $catDesp->id,
         ])->assertSessionHasNoErrors();
-        $this->assertEquals('pago', \App\Models\Transaction::where('description', 'Videogame')->first()->status);
+        $this->assertEquals('pago', Transaction::where('description', 'Videogame')->first()->status);
 
         // --- logout + login ---
         $this->actingAs($admin)->post('/logout')->assertRedirect(route('login'));
@@ -250,10 +263,10 @@ public function test_guest_pages_render(): void
     {
         $bag = function (string $field): array {
             $errors = session('errors');
-            if ($errors instanceof \Illuminate\Support\ViewErrorBag) {
+            if ($errors instanceof ViewErrorBag) {
                 return $errors->getBag('default')->get($field);
             }
-            if ($errors instanceof \Illuminate\Contracts\Support\MessageBag) {
+            if ($errors instanceof MessageBag) {
                 return $errors->get($field);
             }
             if (is_array($errors)) {
@@ -379,11 +392,11 @@ public function test_guest_pages_render(): void
         }
 
         // --- conta herda a cor do banco; cartão herda do banco via conta ---
-        $bancoInter = \App\Models\Bank::create(['code' => '077', 'name' => 'Banco Inter', 'color' => '#EA580C']);
+        $bancoInter = Bank::create(['code' => '077', 'name' => 'Banco Inter', 'color' => '#EA580C']);
         $this->post('/accounts', [
             'name' => 'Inter', 'bank_id' => $bancoInter->id, 'kind' => 'digital', 'initial_balance' => '0',
         ])->assertRedirect(route('contas'));
-        $conta = \App\Models\Account::where('name', 'Inter')->first();
+        $conta = Account::where('name', 'Inter')->first();
         $this->assertEquals($bancoInter->id, $conta->bank_id);
         $this->assertEquals('#EA580C', $conta->display_color);
 
@@ -391,7 +404,7 @@ public function test_guest_pages_render(): void
             'name' => 'Inter Gold', 'credit_limit' => '5000', 'closing_day' => 5, 'due_day' => 15,
             'holder_user_id' => $admin->id, 'account_id' => $conta->id,
         ])->assertRedirect(route('cartoes'));
-        $cartao = \App\Models\CreditCard::where('name', 'Inter Gold')->first();
+        $cartao = CreditCard::where('name', 'Inter Gold')->first();
         $this->assertEquals($conta->id, $cartao->account_id);
         $this->assertEquals('#EA580C', $cartao->display_color);
         $this->get('/cards/'.$cartao->id.'/edit')->assertOk();
@@ -438,8 +451,8 @@ public function test_guest_pages_render(): void
 
         // --- catálogo de bancos semeado e exigido na conta ---
         $this->artisan('banks:seed')->assertSuccessful();
-        $this->assertTrue(\App\Models\Bank::count() >= 100);
-        $bb = \App\Models\Bank::where('code', '001')->first();
+        $this->assertTrue(Bank::count() >= 100);
+        $bb = Bank::where('code', '001')->first();
         $this->assertNotNull($bb);
 
         // --- formulário de conta lista o catálogo ---
@@ -461,7 +474,7 @@ public function test_guest_pages_render(): void
         );
 
         // --- sidebar: clicar na notificação marca como lida e redireciona ---
-        $admin->notify(new \App\Notifications\FaturaVencimento('Teste', 10.0, now()->format('d/m/Y'), 1));
+        $admin->notify(new FaturaVencimento('Teste', 10.0, now()->format('d/m/Y'), 1));
         $n = $admin->notifications()->first();
         $this->assertNull($n->read_at);
         $this->get(route('notificacoes.ler', $n))->assertRedirect(route('despesas', ['status' => 'pendente']));

@@ -1,0 +1,1872 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "FinFamília API",
+        "description": "REST API do FinFamília — gestão financeira familiar para o bot (smartphone).",
+        "contact": {
+            "email": "suporte@finfamilia.com.br"
+        },
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "/api/v1"
+        }
+    ],
+    "paths": {
+        "/api/v1/accounts": {
+            "get": {
+                "tags": [
+                    "Accounts"
+                ],
+                "summary": "Lista contas",
+                "operationId": "4bbac367ecf8af0f1c2dbad57ff21dc3",
+                "responses": {
+                    "200": {
+                        "description": "Contas com saldo"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Accounts"
+                ],
+                "summary": "Cria conta",
+                "operationId": "ca10abbfc49106114ac7da3d8678501b",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "bank_id",
+                                    "kind",
+                                    "initial_balance"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Conta Itaú"
+                                    },
+                                    "bank_id": {
+                                        "type": "integer"
+                                    },
+                                    "kind": {
+                                        "type": "string",
+                                        "enum": [
+                                            "corrente",
+                                            "poupanca",
+                                            "digital",
+                                            "investimento",
+                                            "carteira"
+                                        ]
+                                    },
+                                    "initial_balance": {
+                                        "type": "string",
+                                        "example": "0,00"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Conta criada"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/accounts/{account}": {
+            "get": {
+                "tags": [
+                    "Accounts"
+                ],
+                "summary": "Detalha conta",
+                "operationId": "1fa7b38ff1e250c827f9316881895a9f",
+                "parameters": [
+                    {
+                        "name": "account",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Conta"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Accounts"
+                ],
+                "summary": "Exclui conta",
+                "operationId": "72e23c9f3a4955346c1d36b40a1961c5",
+                "parameters": [
+                    {
+                        "name": "account",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Excluída"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "patch": {
+                "tags": [
+                    "Accounts"
+                ],
+                "summary": "Atualiza conta",
+                "operationId": "7dc6de99a5e733d482ea957c1b883205",
+                "parameters": [
+                    {
+                        "name": "account",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "bank_id": {
+                                        "type": "integer"
+                                    },
+                                    "kind": {
+                                        "type": "string"
+                                    },
+                                    "active": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Conta atualizada"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/accounts/transfer": {
+            "post": {
+                "tags": [
+                    "Accounts"
+                ],
+                "summary": "Transferência interna",
+                "operationId": "d6151ebd6469cb0d957d442a0400f1ec",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "from_account_id",
+                                    "to_account_id",
+                                    "amount",
+                                    "occurred_on",
+                                    "user_id"
+                                ],
+                                "properties": {
+                                    "from_account_id": {
+                                        "type": "integer"
+                                    },
+                                    "to_account_id": {
+                                        "type": "integer"
+                                    },
+                                    "amount": {
+                                        "type": "string",
+                                        "example": "250,00"
+                                    },
+                                    "occurred_on": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "user_id": {
+                                        "type": "integer"
+                                    },
+                                    "description": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Transferência registrada"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/logs": {
+            "get": {
+                "tags": [
+                    "Audit"
+                ],
+                "summary": "Lista logs de auditoria",
+                "description": "Trilha de todas as ações na conta. Somente o administrador principal.",
+                "operationId": "442bfc79167a9562d6656c91346c09a3",
+                "parameters": [
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "acao",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "membro",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "de",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "ate",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 25
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Logs paginados"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/auth/token": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Emite token de API",
+                "description": "Autentica com e-mail + senha e retorna um Bearer token (Sanctum).",
+                "operationId": "91fabd5c5e0f3fff64ee77e8110689c7",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email",
+                                    "password",
+                                    "device_name"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "admin@email.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "example": "Senha@123"
+                                    },
+                                    "device_name": {
+                                        "type": "string",
+                                        "example": "bot"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Token emitido"
+                    },
+                    "422": {
+                        "description": "Credenciais inválidas"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Revoga o token atual",
+                "description": "Encerra a sessão revogando o token usado na requisição.",
+                "operationId": "24d9be7c07ee6b447230ce15d17716e4",
+                "responses": {
+                    "200": {
+                        "description": "Sessão encerrada"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/cards": {
+            "get": {
+                "tags": [
+                    "Cards"
+                ],
+                "summary": "Lista cartões",
+                "operationId": "caaea73c66718ff13de334b48b79cd3f",
+                "responses": {
+                    "200": {
+                        "description": "Cartões ativos"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Cards"
+                ],
+                "summary": "Cria cartão",
+                "operationId": "76f926547a49ef5a68fef1b5ac0aac92",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "credit_limit",
+                                    "closing_day",
+                                    "due_day"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Nubank"
+                                    },
+                                    "credit_limit": {
+                                        "type": "string",
+                                        "example": "5000"
+                                    },
+                                    "closing_day": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "due_day": {
+                                        "type": "integer",
+                                        "example": 10
+                                    },
+                                    "holder_user_id": {
+                                        "type": "integer"
+                                    },
+                                    "account_id": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Cartão criado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/cards/{card}": {
+            "get": {
+                "tags": [
+                    "Cards"
+                ],
+                "summary": "Detalha cartão",
+                "operationId": "2743aaf209e79a67f107b9a8e1d46695",
+                "parameters": [
+                    {
+                        "name": "card",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Cartão"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Cards"
+                ],
+                "summary": "Exclui cartão",
+                "operationId": "cc47a9ec153de600fa18b19dd42d99ad",
+                "parameters": [
+                    {
+                        "name": "card",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Excluído"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "patch": {
+                "tags": [
+                    "Cards"
+                ],
+                "summary": "Atualiza cartão",
+                "operationId": "090be95aa5dcd023896c7d31f90ca3d2",
+                "parameters": [
+                    {
+                        "name": "card",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "credit_limit": {
+                                        "type": "string"
+                                    },
+                                    "closing_day": {
+                                        "type": "integer"
+                                    },
+                                    "due_day": {
+                                        "type": "integer"
+                                    },
+                                    "active": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Cartão atualizado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/cards/items": {
+            "post": {
+                "tags": [
+                    "Cards"
+                ],
+                "summary": "Lança compra/estorno",
+                "operationId": "1268fc555d7b26cfef005b06ab32ef4d",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "credit_card_id",
+                                    "description",
+                                    "amount",
+                                    "occurred_on",
+                                    "user_id"
+                                ],
+                                "properties": {
+                                    "credit_card_id": {
+                                        "type": "integer"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Mercado"
+                                    },
+                                    "amount": {
+                                        "type": "string",
+                                        "example": "120,00"
+                                    },
+                                    "occurred_on": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "user_id": {
+                                        "type": "integer"
+                                    },
+                                    "category_id": {
+                                        "type": "integer"
+                                    },
+                                    "kind": {
+                                        "type": "string",
+                                        "enum": [
+                                            "compra",
+                                            "estorno"
+                                        ]
+                                    },
+                                    "installments_total": {
+                                        "type": "integer",
+                                        "example": 1
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Item criado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/cards/items/{item}/settle": {
+            "post": {
+                "tags": [
+                    "Cards"
+                ],
+                "summary": "Liquida item da fatura",
+                "operationId": "af70e60a16b3f0dca1a82bf2750e6804",
+                "parameters": [
+                    {
+                        "name": "item",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Item liquidado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/cards/{card}/pay-invoice": {
+            "post": {
+                "tags": [
+                    "Cards"
+                ],
+                "summary": "Paga fatura do cartão",
+                "operationId": "b98268b8765c5ba516af37dabcc09fff",
+                "parameters": [
+                    {
+                        "name": "card",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Fatura paga"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/categories": {
+            "get": {
+                "tags": [
+                    "Categories"
+                ],
+                "summary": "Lista categorias",
+                "operationId": "e225c2b7eb5daf7fb16e00f4f07ff030",
+                "parameters": [
+                    {
+                        "name": "tipo",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "despesa",
+                                "receita"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "arquivadas",
+                        "in": "query",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Categorias"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Categories"
+                ],
+                "summary": "Cria categoria",
+                "operationId": "dd76b8d73b7ea8b4951f03d7c0904c92",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "type"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Alimentação"
+                                    },
+                                    "type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "despesa",
+                                            "receita"
+                                        ]
+                                    },
+                                    "icon": {
+                                        "type": "string",
+                                        "example": "restaurant"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Categoria criada"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/categories/{category}": {
+            "get": {
+                "tags": [
+                    "Categories"
+                ],
+                "summary": "Detalha categoria",
+                "operationId": "d5023633bd2ab475b5f7d3fe21113fd9",
+                "parameters": [
+                    {
+                        "name": "category",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Categoria"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Categories"
+                ],
+                "summary": "Exclui categoria",
+                "operationId": "9d956da3b4cf5d9bf6b8b59812334243",
+                "parameters": [
+                    {
+                        "name": "category",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Excluída"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "patch": {
+                "tags": [
+                    "Categories"
+                ],
+                "summary": "Atualiza categoria",
+                "operationId": "bda3865aede2b7cd372aa4135349c863",
+                "parameters": [
+                    {
+                        "name": "category",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "icon": {
+                                        "type": "string"
+                                    },
+                                    "archived": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Categoria atualizada"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/dashboard": {
+            "get": {
+                "tags": [
+                    "Dashboard"
+                ],
+                "summary": "Dados da dashboard",
+                "description": "KPIs do mês, patrimônio, contas a pagar, cartões, investimentos e configs dos gráficos.",
+                "operationId": "d1625943bfc57cc98d4de5135ef923aa",
+                "parameters": [
+                    {
+                        "name": "mes",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "example": "2026-10"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Dados agregados"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/family/members": {
+            "get": {
+                "tags": [
+                    "Family"
+                ],
+                "summary": "Lista membros",
+                "operationId": "3fcdc716940ae85b574ed6fe4c853ccd",
+                "responses": {
+                    "200": {
+                        "description": "Membros da família"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/family/invites": {
+            "get": {
+                "tags": [
+                    "Family"
+                ],
+                "summary": "Lista convites pendentes",
+                "operationId": "caab401602b0b3d868bd2aa539842f00",
+                "responses": {
+                    "200": {
+                        "description": "Convites pendentes"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Family"
+                ],
+                "summary": "Convida membro",
+                "operationId": "06c952405e11e1208a2daf4dd1924132",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "email",
+                                    "role"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Maria"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email"
+                                    },
+                                    "role": {
+                                        "type": "string",
+                                        "enum": [
+                                            "co_admin",
+                                            "dependente",
+                                            "junior"
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Convite criado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/family/invites/{invite}": {
+            "delete": {
+                "tags": [
+                    "Family"
+                ],
+                "summary": "Revoga convite",
+                "operationId": "e83cbb39c839d22518dc963dc962198d",
+                "parameters": [
+                    {
+                        "name": "invite",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Revogado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/family/members/{member}": {
+            "delete": {
+                "tags": [
+                    "Family"
+                ],
+                "summary": "Remove membro",
+                "operationId": "25fabf6931385af79f8a4df9ceb4cfda",
+                "parameters": [
+                    {
+                        "name": "member",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Removido"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/family/members/{member}/role": {
+            "patch": {
+                "tags": [
+                    "Family"
+                ],
+                "summary": "Altera papel do membro",
+                "operationId": "17889462d56c3c0222932121a24a1478",
+                "parameters": [
+                    {
+                        "name": "member",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "role"
+                                ],
+                                "properties": {
+                                    "role": {
+                                        "type": "string",
+                                        "enum": [
+                                            "co_admin",
+                                            "dependente",
+                                            "junior"
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Papel atualizado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/portfolios": {
+            "get": {
+                "tags": [
+                    "Investments"
+                ],
+                "summary": "Lista carteiras",
+                "operationId": "0a54af8a5a8d46f025987b45b7b7d5d7",
+                "responses": {
+                    "200": {
+                        "description": "Carteiras com progresso"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Investments"
+                ],
+                "summary": "Cria carteira",
+                "operationId": "8833cdecfec022a512281afee4cdd11c",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "kind"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Reserva"
+                                    },
+                                    "kind": {
+                                        "type": "string",
+                                        "enum": [
+                                            "reserva",
+                                            "estudos",
+                                            "futuro",
+                                            "livre"
+                                        ]
+                                    },
+                                    "target_amount": {
+                                        "type": "string",
+                                        "example": "30000"
+                                    },
+                                    "deadline": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "objective": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Carteira criada"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/assets": {
+            "get": {
+                "tags": [
+                    "Investments"
+                ],
+                "summary": "Lista ativos",
+                "operationId": "5ecb46d908d0ea33df1904c896f35f67",
+                "parameters": [
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Ativos"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Investments"
+                ],
+                "summary": "Cria ativo",
+                "operationId": "c3e5a860f52cecb9755abc964ca020a2",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "code",
+                                    "name",
+                                    "kind",
+                                    "current_value"
+                                ],
+                                "properties": {
+                                    "code": {
+                                        "type": "string",
+                                        "example": "CDB"
+                                    },
+                                    "name": {
+                                        "type": "string",
+                                        "example": "CDB Inter"
+                                    },
+                                    "kind": {
+                                        "type": "string",
+                                        "enum": [
+                                            "renda_fixa",
+                                            "fii",
+                                            "acao",
+                                            "etf",
+                                            "previdencia"
+                                        ]
+                                    },
+                                    "current_value": {
+                                        "type": "string",
+                                        "example": "10000"
+                                    },
+                                    "institution": {
+                                        "type": "string"
+                                    },
+                                    "yield_percent": {
+                                        "type": "string",
+                                        "example": "120"
+                                    },
+                                    "yield_base": {
+                                        "type": "string",
+                                        "enum": [
+                                            "cdi",
+                                            "selic",
+                                            "ipca",
+                                            "prefixado"
+                                        ]
+                                    },
+                                    "portfolio_id": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Ativo criado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/assets/{asset}": {
+            "delete": {
+                "tags": [
+                    "Investments"
+                ],
+                "summary": "Exclui ativo",
+                "operationId": "01cef025b9f80e4a35de3ea35d4fb64f",
+                "parameters": [
+                    {
+                        "name": "asset",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Excluído"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "patch": {
+                "tags": [
+                    "Investments"
+                ],
+                "summary": "Atualiza ativo",
+                "operationId": "75a23a7fc8c985cd2a0e4624969229b3",
+                "parameters": [
+                    {
+                        "name": "asset",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "current_value": {
+                                        "type": "string"
+                                    },
+                                    "yield_percent": {
+                                        "type": "string"
+                                    },
+                                    "portfolio_id": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Ativo atualizado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/contributions": {
+            "post": {
+                "tags": [
+                    "Investments"
+                ],
+                "summary": "Registra aporte/rendimento",
+                "operationId": "a456a6e7fcd3d80bf1927b484afdc6bf",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "kind",
+                                    "amount",
+                                    "occurred_on"
+                                ],
+                                "properties": {
+                                    "kind": {
+                                        "type": "string",
+                                        "enum": [
+                                            "aporte",
+                                            "rendimento"
+                                        ]
+                                    },
+                                    "amount": {
+                                        "type": "string",
+                                        "example": "1000"
+                                    },
+                                    "occurred_on": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "asset_id": {
+                                        "type": "integer"
+                                    },
+                                    "account_id": {
+                                        "type": "integer"
+                                    },
+                                    "portfolio_id": {
+                                        "type": "integer"
+                                    },
+                                    "note": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Registrado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/transactions/{type}": {
+            "get": {
+                "tags": [
+                    "Transactions"
+                ],
+                "summary": "Lista lançamentos",
+                "description": "Lista paginada de despesas ou receitas do mês de referência.",
+                "operationId": "bf2544619d08af304c68d3de92f8ed37",
+                "parameters": [
+                    {
+                        "name": "type",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "despesa",
+                                "receita"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "pago",
+                                "pendente",
+                                "agendado"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "categoria",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "membro",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "mes",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "example": "2026-10"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 15
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista de lançamentos"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Transactions"
+                ],
+                "summary": "Cria lançamento",
+                "description": "Cria um lançamento (ou parcelas) de despesa/receita.",
+                "operationId": "281b8fc4bb42d24bca25e8fd4846d077",
+                "parameters": [
+                    {
+                        "name": "type",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "despesa",
+                                "receita"
+                            ]
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "description",
+                                    "amount",
+                                    "occurred_on",
+                                    "status",
+                                    "user_id"
+                                ],
+                                "properties": {
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Mercado"
+                                    },
+                                    "amount": {
+                                        "type": "string",
+                                        "example": "150,50"
+                                    },
+                                    "occurred_on": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "due_on": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "pago",
+                                            "pendente",
+                                            "agendado"
+                                        ]
+                                    },
+                                    "user_id": {
+                                        "type": "integer"
+                                    },
+                                    "account_id": {
+                                        "type": "integer"
+                                    },
+                                    "category_id": {
+                                        "type": "integer"
+                                    },
+                                    "is_fixed": {
+                                        "type": "boolean"
+                                    },
+                                    "installments_total": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "notes": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Lançamento criado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/transactions/{type}/{transaction}": {
+            "get": {
+                "tags": [
+                    "Transactions"
+                ],
+                "summary": "Detalha lançamento",
+                "operationId": "0ec58004d6eba34673abd003597a162f",
+                "parameters": [
+                    {
+                        "name": "type",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "despesa",
+                                "receita"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "transaction",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lançamento"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Transactions"
+                ],
+                "summary": "Exclui lançamento",
+                "operationId": "d7cf0ce623d6b08185a53a18b302d928",
+                "parameters": [
+                    {
+                        "name": "type",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "despesa",
+                                "receita"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "transaction",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Excluído"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "patch": {
+                "tags": [
+                    "Transactions"
+                ],
+                "summary": "Atualiza lançamento",
+                "operationId": "67be7654e55482a7e991fdc741c75433",
+                "parameters": [
+                    {
+                        "name": "type",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "despesa",
+                                "receita"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "transaction",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "description": {
+                                        "type": "string"
+                                    },
+                                    "amount": {
+                                        "type": "string"
+                                    },
+                                    "occurred_on": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "pago",
+                                            "pendente",
+                                            "agendado"
+                                        ]
+                                    },
+                                    "user_id": {
+                                        "type": "integer"
+                                    },
+                                    "account_id": {
+                                        "type": "integer"
+                                    },
+                                    "category_id": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Lançamento atualizado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/transactions/{type}/{transaction}/settle": {
+            "post": {
+                "tags": [
+                    "Transactions"
+                ],
+                "summary": "Marca como pago/recebido",
+                "operationId": "c96e97928714fead2f3a204d2ac52b61",
+                "parameters": [
+                    {
+                        "name": "type",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "despesa",
+                                "receita"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "transaction",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Liquidado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "bearerFormat": "JWT",
+                "scheme": "bearer"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Accounts",
+            "description": "Contas bancárias e transferências"
+        },
+        {
+            "name": "Audit",
+            "description": "Trilha de auditoria (somente admin)"
+        },
+        {
+            "name": "Cards",
+            "description": "Cartões de crédito e itens de fatura"
+        },
+        {
+            "name": "Categories",
+            "description": "Categorias de despesas e receitas"
+        },
+        {
+            "name": "Dashboard",
+            "description": "KPIs e gráficos da dashboard"
+        },
+        {
+            "name": "Family",
+            "description": "Membros e convites da família"
+        },
+        {
+            "name": "Investments",
+            "description": "Carteiras, ativos e aportes"
+        },
+        {
+            "name": "Transactions",
+            "description": "Lançamentos de despesas e receitas"
+        },
+        {
+            "name": "Auth",
+            "description": "Auth"
+        }
+    ]
+}

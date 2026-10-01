@@ -11,7 +11,7 @@ namespace App\Support;
  * - success: submits de receita (green)
  * - cyan: submits de investimentos
  * - orange: submits de cartões
-  * - blue: submits de contas · violet: categorias · rose: membros
+ * - blue: submits de contas · violet: categorias · rose: membros
  * - dark: ações administrativas secundárias
  * - ghost: "Voltar" / "Cancelar" e ações neutras
  * - soft-red: ações destrutivas pequenas (revogar, remover)

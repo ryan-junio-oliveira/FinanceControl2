@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\Account;
 use App\Models\Asset;
+use App\Models\Bank;
 use App\Models\CardTransaction;
 use App\Models\Contribution;
 use App\Models\CreditCard;
@@ -438,7 +439,7 @@ class PopulateDatabaseSeeder extends Seeder
     /** Contas ligadas aos bancos do catálogo. */
     private function contas($family): array
     {
-        $porCodigo = fn (string $cod) => \App\Models\Bank::where('code', $cod)->first();
+        $porCodigo = fn (string $cod) => Bank::where('code', $cod)->first();
         $itau = $porCodigo('341');
         $nubank = $porCodigo('260');
         $inter = $porCodigo('077');

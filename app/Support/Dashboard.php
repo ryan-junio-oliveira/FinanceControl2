@@ -5,10 +5,12 @@ namespace App\Support;
 use App\Models\Account;
 use App\Models\Asset;
 use App\Models\CardTransaction;
+use App\Models\Category;
 use App\Models\Contribution;
 use App\Models\Portfolio;
 use App\Models\Transaction;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Agregações da dashboard (KPIs + configs dos gráficos ApexCharts).
@@ -304,7 +306,7 @@ final class Dashboard
             return ['type' => 'donut', 'labels' => [], 'series' => [['name' => 'total', 'data' => []]], 'colors' => [], 'yformat' => 'money'];
         }
 
-        $categorias = \App\Models\Category::whereIn('id', $rows->pluck('category_id'))->get()->keyBy('id');
+        $categorias = Category::whereIn('id', $rows->pluck('category_id'))->get()->keyBy('id');
 
         $main = $rows->take(8);
         $outros = (float) $rows->skip(8)->sum('total');
@@ -429,7 +431,7 @@ final class Dashboard
     /** Extrai o dia da data de forma compatível com sqlite/mysql. */
     private static function dayExpr(): string
     {
-        return \Illuminate\Support\Facades\DB::connection()->getDriverName() === 'sqlite'
+        return DB::connection()->getDriverName() === 'sqlite'
             ? "CAST(strftime('%d', occurred_on) AS INTEGER)"
             : 'DAY(occurred_on)';
     }
