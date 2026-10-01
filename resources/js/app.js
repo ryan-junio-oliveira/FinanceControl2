@@ -148,6 +148,52 @@ function animateCount(el) {
 document.querySelectorAll('[data-count]').forEach(animateCount);
 
 /* ════════════════════════════════════════════════════════════
+   PWA — registra o service worker e oferece instalação
+   ════════════════════════════════════════════════════════════ */
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(() => {
+            /* sem SW (ex.: HTTP inseguro fora do localhost): segue online */
+        });
+    });
+}
+
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    if (localStorage.getItem('pwa-dismissed') === '1') return;
+
+    const bar = document.createElement('div');
+    bar.id = 'pwa-install';
+    bar.className = 'fixed bottom-4 inset-x-4 sm:left-auto sm:right-6 sm:w-[340px] z-[90] rounded-2xl border border-emerald-200 bg-white shadow-xl p-4 flex items-center gap-3';
+    bar.innerHTML =
+        '<span class="w-10 h-10 rounded-xl grid place-items-center text-white shrink-0" style="background:linear-gradient(135deg,#059669,#064E3B)">' +
+        '<span class="material-symbols-outlined text-[20px]">install_mobile</span></span>' +
+        '<span class="flex-1 min-w-0"><span class="block text-[13px] font-extrabold text-gray-900">Instalar FinFamília</span>' +
+        '<span class="block text-[11px] text-gray-500">Acesso rápido na tela inicial, até offline.</span></span>' +
+        '<button type="button" data-pwa-install class="h-9 px-4 rounded-lg bg-emerald-600 text-white text-[12px] font-bold hover:bg-emerald-700 transition shrink-0">Instalar</button>' +
+        '<button type="button" data-pwa-close class="w-8 h-8 grid place-items-center rounded-lg text-gray-300 hover:text-gray-500 hover:bg-slate-100 transition shrink-0" title="Agora não">' +
+        '<span class="material-symbols-outlined text-[17px]">close</span></button>';
+    document.body.appendChild(bar);
+
+    bar.querySelector('[data-pwa-install]').addEventListener('click', async () => {
+        bar.remove();
+        try {
+            await e.prompt();
+        } catch {
+            /* usuário ignorou: nada a fazer */
+        }
+    });
+    bar.querySelector('[data-pwa-close]').addEventListener('click', () => {
+        try {
+            localStorage.setItem('pwa-dismissed', '1');
+        } catch {
+            /* storage indisponível: só fecha */
+        }
+        bar.remove();
+    });
+});
+
+/* ════════════════════════════════════════════════════════════
    Three.js — campo de partículas no banner do login
    Carregado sob demanda (só nas telas de acesso).
    ════════════════════════════════════════════════════════════ */

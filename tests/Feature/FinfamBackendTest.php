@@ -41,6 +41,30 @@ class FinfamBackendTest extends TestCase
         $this->get(route('termos'))->assertDontSee('sections');
     }
 
+    public function test_pwa_assets_are_served(): void
+    {
+        // Manifest válido no disco (o servidor web o entrega; nos testes o roteador não serve estáticos).
+        $manifest = public_path('manifest.webmanifest');
+        $this->assertFileExists($manifest);
+        $data = json_decode((string) file_get_contents($manifest), true);
+        $this->assertSame('FinFamília', $data['short_name']);
+        $this->assertSame('standalone', $data['display']);
+
+        // Service worker com cache versionado e fallback offline.
+        $sw = public_path('sw.js');
+        $this->assertFileExists($sw);
+        $this->assertStringContainsString('finfamilia-v1', (string) file_get_contents($sw));
+
+        // Ícones gerados.
+        foreach (['icon-192.png', 'icon-512.png', 'apple-touch-icon.png'] as $icon) {
+            $this->assertFileExists(public_path('icons/'.$icon));
+        }
+
+        // Página offline e link do manifest no HTML.
+        $this->get('/offline')->assertOk()->assertSee('offline');
+        $this->get('/login')->assertSee('manifest.webmanifest', false);
+    }
+
     public function test_admin_logs_are_restricted_and_list_actions(): void
     {
         $this->post('/register', [

@@ -24,6 +24,9 @@ use Illuminate\Support\Facades\Route;
 Route::get('/termos', [LegalController::class, 'terms'])->name('termos');
 Route::get('/privacidade', [LegalController::class, 'privacy'])->name('privacidade');
 
+// Página offline do PWA (pública; o service worker a exibe sem rede).
+Route::view('/offline', 'pages.offline')->name('offline');
+
 // ---------- Guests ----------
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
