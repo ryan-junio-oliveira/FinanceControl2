@@ -14,7 +14,6 @@ return new class extends Migration
             $table->string('name');
             $table->string('type')->default('despesa'); // despesa|receita
             $table->string('icon')->default('tag');
-            $table->decimal('monthly_cap', 12, 2)->nullable();
             $table->boolean('archived')->default(false);
             $table->unsignedInteger('sort')->default(0);
             $table->timestamps();

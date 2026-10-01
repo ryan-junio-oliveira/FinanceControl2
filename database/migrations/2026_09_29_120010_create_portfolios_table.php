@@ -15,6 +15,7 @@ return new class extends Migration
             $table->string('objective')->nullable();
             $table->string('kind')->default('livre'); // reserva|estudos|futuro|livre
             $table->decimal('target_amount', 14, 2)->nullable();
+            $table->date('deadline')->nullable();
             $table->timestamps();
         });
     }

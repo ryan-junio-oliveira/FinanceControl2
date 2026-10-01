@@ -12,6 +12,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('family_id')->constrained('families')->cascadeOnDelete();
             $table->foreignId('portfolio_id')->nullable()->constrained('portfolios')->nullOnDelete();
+            $table->foreignId('asset_id')->nullable()->constrained('assets')->nullOnDelete();
             $table->foreignId('account_id')->nullable()->constrained('accounts')->nullOnDelete();
             $table->string('kind')->default('aporte'); // aporte|rendimento
             $table->decimal('amount', 14, 2);

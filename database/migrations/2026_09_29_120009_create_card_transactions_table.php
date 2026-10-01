@@ -18,9 +18,14 @@ return new class extends Migration
             $table->decimal('amount', 14, 2);
             $table->date('occurred_on');
             $table->string('status')->default('pendente'); // pago|pendente
+            $table->string('kind', 20)->default('compra'); // compra|estorno
+            $table->uuid('installment_group_id')->nullable();
+            $table->unsignedTinyInteger('installment_number')->nullable();
+            $table->unsignedTinyInteger('installments_total')->nullable();
             $table->timestamps();
 
             $table->index(['family_id', 'credit_card_id', 'status']);
+            $table->index('installment_group_id');
         });
     }
 
