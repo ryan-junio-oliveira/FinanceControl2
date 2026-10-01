@@ -3,11 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\SettingsRequest;
+use App\Services\SettingsService;
 use App\Support\Fin;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class SettingsController extends Controller
@@ -20,30 +20,18 @@ class SettingsController extends Controller
         return view('pages.configuracoes', compact('settings'));
     }
 
-    public function update(SettingsRequest $request): RedirectResponse
+    public function update(SettingsRequest $request, SettingsService $service): RedirectResponse
     {
         $family = Fin::family();
-        $data = $request->validated();
-
-        $family->update(['name' => $data['name']]);
-        $family->setting()->update([
-            'currency' => $data['currency'],
-            'timezone' => $data['timezone'],
-            'consolidate_dependent_yield' => $request->boolean('consolidate_dependent_yield'),
-        ]);
+        $service->update($family, $request->validated(), $request->boolean('consolidate_dependent_yield'));
 
         return back()->with('status', 'Configurações salvas.');
     }
 
-    public function updateNotifications(Request $request): RedirectResponse
+    public function updateNotifications(Request $request, SettingsService $service): RedirectResponse
     {
         $family = Fin::family();
-        $keys = ['fatura_vencimento', 'conta_vencimento'];
-        $notifications = [];
-        foreach ($keys as $k) {
-            $notifications[$k] = $request->boolean("notifications.$k");
-        }
-        $family->setting()->update(['notifications' => $notifications]);
+        $service->updateNotifications($family, fn (string $k) => $request->boolean("notifications.$k"));
 
         return back()->with('status', 'Notificações atualizadas.');
     }
