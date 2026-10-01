@@ -41,8 +41,8 @@
                     <option value="{{ $c->id }}" {{ (string)request('categoria')===(string)$c->id?'selected':'' }}>{{ $c->name }}</option>
                 @endforeach
             </select>
-            <select name="membro" onchange="this.form.submit()" class="table-filter" style="max-width:160px" aria-label="Filtrar por pessoa">
-                <option value="">Todas as pessoas</option>
+            <select name="membro" onchange="this.form.submit()" class="table-filter" style="max-width:160px" aria-label="Filtrar por membro">
+                <option value="">Todos os membros</option>
                 @foreach($membros as $m)
                     <option value="{{ $m->id }}" {{ (string)request('membro')===(string)$m->id?'selected':'' }}>{{ $m->name }}</option>
                 @endforeach
