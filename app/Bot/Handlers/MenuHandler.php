@@ -38,7 +38,7 @@ class MenuHandler extends BotHandler
         foreach ($options as $label => $data) {
             $rows[] = [[$label, $data]];
         }
-        $rows[] = [['🔙 Menu' => 'menu']];
+        $rows[] = [['🔙 Menu', 'menu']];
 
         return BotKeyboard::inline($rows);
     }

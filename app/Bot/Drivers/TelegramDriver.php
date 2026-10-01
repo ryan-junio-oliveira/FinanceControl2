@@ -28,19 +28,32 @@ final class TelegramDriver implements BotDriver
 
         $payload = ['chat_id' => $chatId, 'text' => $text, 'parse_mode' => 'HTML'];
         if ($keyboard) {
-            $payload['reply_markup'] = ['inline_keyboard' => array_map(
-                fn ($row) => array_map(
-                    fn ($btn) => ['text' => $btn[0], 'callback_data' => mb_substr($btn[1], 0, 64)],
-                    $row
-                ),
-                $keyboard->rows
-            )];
+            $inline = [];
+            foreach ($keyboard->rows as $row) {
+                $buttons = [];
+                foreach ((array) $row as $btn) {
+                    if (! is_array($btn) || ! isset($btn[0]) || ! isset($btn[1])) {
+                        continue;
+                    }
+                    $buttons[] = ['text' => (string) $btn[0], 'callback_data' => mb_substr((string) $btn[1], 0, 64)];
+                }
+                if ($buttons !== []) {
+                    $inline[] = $buttons;
+                }
+            }
+            if ($inline !== []) {
+                $payload['reply_markup'] = ['inline_keyboard' => $inline];
+            }
         }
 
-        Http::baseUrl(config('bot.telegram.api')."/bot{$token}")
-            ->timeout(10)
-            ->post('/sendMessage', $payload)
-            ->throw(fn ($res, $e) => Log::error('[bot] Falha ao enviar Telegram: '.$e->getMessage()));
+        try {
+            Http::baseUrl(config('bot.telegram.api')."/bot{$token}")
+                ->timeout(10)
+                ->post('/sendMessage', $payload)
+                ->throw();
+        } catch (\Throwable $e) {
+            Log::error('[bot] Falha ao enviar Telegram: '.$e->getMessage());
+        }
     }
 
     public function parseWebhook(Request $request): ?IncomingMessage

@@ -33,9 +33,10 @@ class PopulateDatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        $admin = User::find(1);
+        $admin = User::find((int) env('SEED_USER_ID', 1))
+            ?? User::where('role', 'admin')->whereNotNull('family_id')->orderBy('id')->first();
         if (! $admin) {
-            $this->command?->error('Usuário #1 não existe. Crie sua conta antes de popular.');
+            $this->command?->error('Nenhum usuário admin com família. Crie sua conta antes de popular (ou defina SEED_USER_ID).');
 
             return;
         }
