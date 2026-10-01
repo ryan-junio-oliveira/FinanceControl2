@@ -51,7 +51,13 @@
             <div class="w-full max-w-lg bg-white border border-slate-200 border-t-[3px] border-t-emerald-600 rounded-lg shadow-sm p-7" data-auth-card>
                 @yield('content')
             </div>
-            <p class="text-center text-[11px] text-gray-400 mt-5">FinFamília · Uso restrito aos membros da família</p>
+            <div class="w-full max-w-lg mt-4">
+                <footer class="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[11px]">
+                    <p class="text-gray-400 font-medium">© {{ date('Y') }} <b class="text-gray-500">FinFamília</b></p>
+                    <a href="{{ route('termos') }}" class="text-gray-400 hover:text-emerald-700 transition font-semibold">Termos de Uso</a>
+                    <a href="{{ route('privacidade') }}" class="text-gray-400 hover:text-emerald-700 transition font-semibold">Política de Privacidade (LGPD)</a>
+                </footer>
+            </div>
         </main>
     </div>
 </div>

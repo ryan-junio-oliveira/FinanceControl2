@@ -59,8 +59,8 @@
     </div>
 
     <label class="flex items-start gap-2.5 text-[13px] text-gray-600 cursor-pointer">
-        <input type="checkbox" name="terms" value="1" required class="w-4 h-4 mt-0.5 accent-emerald-700 shrink-0">
-        <span>Li e concordo com os <a href="#" class="text-[13px] font-semibold text-emerald-700 underline decoration-emerald-200 underline-offset-[3px] hover:text-emerald-800">Termos de Uso</a> e a <a href="#" class="text-[13px] font-semibold text-emerald-700 underline decoration-emerald-200 underline-offset-[3px] hover:text-emerald-800">Política de Privacidade</a>.</span>
+        <input type="checkbox" name="terms" value="1" required {{ old('terms') ? 'checked' : '' }} class="w-4 h-4 mt-0.5 accent-emerald-700 shrink-0">
+        <span>Li e concordo com os <a href="{{ route('termos') }}" target="_blank" class="text-[13px] font-semibold text-emerald-700 underline decoration-emerald-200 underline-offset-[3px] hover:text-emerald-800">Termos de Uso</a> e a <a href="{{ route('privacidade') }}" target="_blank" class="text-[13px] font-semibold text-emerald-700 underline decoration-emerald-200 underline-offset-[3px] hover:text-emerald-800">Política de Privacidade</a>.</span>
     </label>
 
     <x-btn-submit icon="person_add" class="w-full">Criar conta</x-btn-submit>

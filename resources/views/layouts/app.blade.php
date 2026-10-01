@@ -51,7 +51,7 @@
                 style="background:linear-gradient(135deg,#8B5CF6,#EC4899)">{{ mb_substr($family->name ?? 'FF', 0, 2) }}</span>
             <div class="min-w-0 flex-1">
                 <p class="text-[13px] font-bold truncate text-gray-800">{{ $family->name ?? '—' }}</p>
-                <p class="text-[11px] text-gray-500">{{ $family?->users()->count() ?? 0 }} pessoa(s) na conta</p>
+                <p class="text-[11px] text-gray-500">{{ $family?->users()->count() ?? 0 }} membro(s) na conta</p>
             </div>
             <span class="material-symbols-outlined text-emerald-500 text-[18px]">chevron_right</span>
         </a>
@@ -68,7 +68,7 @@
                     ['route'=>'cartoes','label'=>'Cartões','icon'=>'credit_card','color'=>'orange'],
                     ['route'=>'contas','label'=>'Contas','icon'=>'account_balance','color'=>'blue'],
                     ['route'=>'categorias','label'=>'Categorias','icon'=>'category','color'=>'violet'],
-                    ['route'=>'familia','label'=>'Pessoas','icon'=>'group','color'=>'rose'],
+                    ['route'=>'familia','label'=>'Membros','icon'=>'group','color'=>'rose'],
                     ['route'=>'perfil','label'=>'Meu Perfil','icon'=>'person'],
                 ];
             @endphp
@@ -94,6 +94,9 @@
                 $sys = [
                     ['route'=>'configuracoes','label'=>'Configurações','icon'=>'settings'],
                 ];
+                if ($user->role === 'admin') {
+                    $sys[] = ['route'=>'admin.logs','label'=>'Logs de Ação','icon'=>'receipt_long'];
+                }
             @endphp
             @foreach($sys as $item)
                 @php $active = request()->routeIs($item['route'], $item['route'].'.*') || ($__env->hasSection('nav-active') && trim($__env->yieldContent('nav-active')) === $item['route']); @endphp
@@ -135,46 +138,15 @@
 
                 <div class="flex-1"></div>
 
-                {{-- Sino de notificações --}}
+                {{-- Sino de notificações (abre a sidebar lateral) --}}
                 @php $naoLidas = $user->unreadNotifications()->count(); @endphp
-                <div class="relative" data-notif-menu>
-                    <button type="button" data-notif-btn title="Notificações"
-                        class="relative w-10 h-10 grid place-items-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:text-slate-800 hover:border-slate-300 transition">
-                        <span class="material-symbols-outlined text-[20px]">notifications</span>
-                        @if($naoLidas > 0)
-                        <span class="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-extrabold grid place-items-center num">{{ $naoLidas > 9 ? '9+' : $naoLidas }}</span>
-                        @endif
-                    </button>
-                    <div data-notif-dropdown
-                        class="hidden absolute right-0 mt-2 w-[min(360px,90vw)] bg-white rounded-2xl shadow-xl border border-slate-200 py-2 overflow-hidden z-50">
-                        <div class="px-4 py-2.5 flex items-center justify-between gap-2 border-b border-slate-100">
-                            <p class="text-[13px] font-extrabold text-gray-800">Notificações</p>
-                            @if($naoLidas > 0)
-                            <form method="POST" action="{{ route('notificacoes.lidas') }}" class="inline">
-                                @csrf
-                                <button class="text-[11px] font-bold text-emerald-600 hover:text-emerald-700">Marcar lidas</button>
-                            </form>
-                            @endif
-                        </div>
-                        <div class="max-h-[320px] overflow-y-auto">
-                            @forelse($user->notifications()->take(10)->get() as $n)
-                            <a href="{{ $n->data['url'] ?? route('dashboard') }}" class="flex items-start gap-3 px-4 py-3 hover:bg-slate-50 transition {{ $n->read_at ? 'opacity-60' : '' }}">
-                                <span class="w-9 h-9 rounded-xl bg-slate-100 grid place-items-center shrink-0">
-                                    <span class="material-symbols-outlined text-[18px] text-slate-500">{{ $n->data['icon'] ?? 'notifications' }}</span>
-                                </span>
-                                <span class="min-w-0">
-                                    <span class="block text-[13px] font-extrabold text-gray-800 leading-snug">{{ $n->data['title'] ?? 'Aviso' }}</span>
-                                    <span class="block text-[12px] text-gray-500 mt-0.5 leading-snug">{{ $n->data['body'] ?? '' }}</span>
-                                    <span class="block text-[10px] text-gray-300 mt-1 num">{{ $n->created_at->diffForHumans() }}</span>
-                                </span>
-                                @if(! $n->read_at)<span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0 mt-1.5"></span>@endif
-                            </a>
-                            @empty
-                            <p class="text-[13px] text-gray-400 text-center py-8">Nenhuma notificação por aqui.</p>
-                            @endforelse
-                        </div>
-                    </div>
-                </div>
+                <button type="button" data-notif-open title="Notificações"
+                    class="relative w-10 h-10 grid place-items-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:text-slate-800 hover:border-slate-300 transition">
+                    <span class="material-symbols-outlined text-[20px]">notifications</span>
+                    @if($naoLidas > 0)
+                    <span class="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-extrabold grid place-items-center num">{{ $naoLidas > 9 ? '9+' : $naoLidas }}</span>
+                    @endif
+                </button>
 
                 {{-- Avatar usuário (dropdown) --}}
                 <div class="relative" data-user-menu>
@@ -235,11 +207,74 @@
         </main>
 
         {{-- Footer discreto --}}
-        <footer class="shrink-0 px-4 lg:px-8 py-3 border-t border-slate-200 text-center">
-            <p class="text-[11px] text-gray-300 font-medium">FinFamília · Gestão financeira familiar segura</p>
+        <footer class="shrink-0 border-t border-slate-200/80 bg-white/60 backdrop-blur">
+            <div class="max-w-[1600px] mx-auto px-4 lg:px-8 py-3.5 flex flex-col sm:flex-row items-center justify-between gap-2.5">
+                <div class="flex items-center gap-2 text-[11px] text-gray-400 font-medium">
+                    <span class="w-6 h-6 rounded-md grid place-items-center text-white shrink-0"
+                        style="background: linear-gradient(135deg, #059669, #064E3B);">
+                        <span class="material-symbols-outlined text-[13px]">savings</span>
+                    </span>
+                    <span>© {{ date('Y') }} <b class="text-gray-500 font-bold">FinFamília</b> · Gestão financeira familiar</span>
+                </div>
+                <nav class="flex items-center gap-4 text-[11px] font-semibold">
+                    <a href="{{ route('termos') }}" class="text-gray-400 hover:text-emerald-600 transition">Termos de Uso</a>
+                    <span class="text-slate-200 select-none">•</span>
+                    <a href="{{ route('privacidade') }}" class="text-gray-400 hover:text-emerald-600 transition">Política de Privacidade (LGPD)</a>
+                </nav>
+            </div>
         </footer>
     </div>
 </div>
+
+{{-- ============ SIDEBAR DE NOTIFICAÇÕES (lateral direita) ============ --}}
+<div data-notif-backdrop class="hidden fixed inset-0 z-40"
+    style="background: rgba(15,23,42,.35); backdrop-filter: blur(4px);"></div>
+<aside data-notif-panel
+    class="fixed z-50 inset-y-0 right-0 w-[min(400px,94vw)] bg-white shadow-2xl border-l border-slate-200 flex flex-col translate-x-full transition-transform duration-300 ease-in-out"
+    aria-label="Notificações">
+    <div class="px-5 py-4 flex items-center gap-3 border-b border-slate-100">
+        <span class="w-9 h-9 rounded-xl grid place-items-center shrink-0"
+            style="background: linear-gradient(135deg, #ECFDF5, #D1FAE5);">
+            <span class="material-symbols-outlined text-emerald-600 text-[20px]">notifications</span>
+        </span>
+        <div class="flex-1 min-w-0">
+            <p class="text-[15px] font-extrabold text-gray-900">Notificações</p>
+            <p class="text-[11px] text-gray-400 font-medium">{{ $naoLidas > 0 ? $naoLidas.' não lida(s)' : 'Tudo em dia' }}</p>
+        </div>
+        @if($naoLidas > 0)
+        <form method="POST" action="{{ route('notificacoes.lidas') }}" class="inline shrink-0">
+            @csrf
+            <button class="text-[11px] font-bold text-emerald-600 hover:text-emerald-700">Marcar todas como lidas</button>
+        </form>
+        @endif
+        <button type="button" data-notif-close title="Fechar"
+            class="w-9 h-9 grid place-items-center rounded-xl text-gray-400 hover:text-gray-700 hover:bg-slate-100 transition shrink-0">
+            <span class="material-symbols-outlined text-[20px]">close</span>
+        </button>
+    </div>
+    <div class="flex-1 overflow-y-auto py-2">
+        @forelse($user->notifications()->latest()->get() as $n)
+        <a href="{{ route('notificacoes.ler', $n) }}"
+            class="flex items-start gap-3 px-5 py-3.5 hover:bg-slate-50 transition border-b border-slate-50 {{ $n->read_at ? '' : 'bg-emerald-50/40' }}">
+            <span class="w-10 h-10 rounded-xl {{ $n->read_at ? 'bg-slate-100' : 'bg-emerald-100' }} grid place-items-center shrink-0">
+                <span class="material-symbols-outlined text-[19px] {{ $n->read_at ? 'text-slate-400' : 'text-emerald-600' }}">{{ $n->data['icon'] ?? 'notifications' }}</span>
+            </span>
+            <span class="min-w-0 flex-1">
+                <span class="block text-[13px] leading-snug text-gray-800 {{ $n->read_at ? 'font-medium' : 'font-extrabold' }}">{{ $n->data['title'] ?? 'Aviso' }}</span>
+                <span class="block text-[12px] text-gray-500 mt-0.5 leading-snug">{{ $n->data['body'] ?? '' }}</span>
+                <span class="block text-[10px] text-gray-300 mt-1 num">{{ $n->created_at->diffForHumans() }}</span>
+            </span>
+            @if(! $n->read_at)<span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0 mt-1.5"></span>@endif
+        </a>
+        @empty
+        <div class="text-center px-6 py-14 text-gray-400">
+            <span class="material-symbols-outlined text-[48px] text-gray-300">notifications_off</span>
+            <p class="text-[13px] font-bold mt-3 text-gray-500">Nenhuma notificação por aqui.</p>
+            <p class="text-[12px] mt-1">Avisos de faturas e contas próximas do vencimento aparecem aqui.</p>
+        </div>
+        @endforelse
+    </div>
+</aside>
 
 {{-- ============ TOASTS ============ --}}
 <div id="toasts" class="fixed top-4 right-4 z-[100] flex flex-col gap-2 w-[min(370px,92vw)]">
@@ -319,23 +354,24 @@ document.querySelectorAll('.kpi-card, .section-card, .hero-card').forEach((el, i
   el.classList.add('fade-up');
 });
 
-// Dropdown de notificações (abrir, fechar fora, Esc)
-const notifMenu = document.querySelector('[data-notif-menu]');
-if (notifMenu) {
-  const btn = notifMenu.querySelector('[data-notif-btn]');
-  const dd = notifMenu.querySelector('[data-notif-dropdown]');
-  const toggle = (show) => dd.classList.toggle('hidden', !show);
-  btn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    toggle(dd.classList.contains('hidden'));
-  });
-  document.addEventListener('click', (e) => {
-    if (!notifMenu.contains(e.target)) toggle(false);
-  });
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') toggle(false);
-  });
+// Sidebar de notificações (lateral direita: abrir, fechar fora, Esc)
+const notifPanel = document.querySelector('[data-notif-panel]');
+const notifBackdrop = document.querySelector('[data-notif-backdrop]');
+function setNotif(open) {
+  if (!notifPanel) return;
+  notifPanel.classList.toggle('translate-x-full', !open);
+  notifBackdrop?.classList.toggle('hidden', !open);
+  document.body.style.overflow = open ? 'hidden' : '';
 }
+document.querySelector('[data-notif-open]')?.addEventListener('click', (e) => {
+  e.stopPropagation();
+  setNotif(true);
+});
+notifPanel?.querySelector('[data-notif-close]')?.addEventListener('click', () => setNotif(false));
+notifBackdrop?.addEventListener('click', () => setNotif(false));
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') setNotif(false);
+});
 
 // Dropdown do usuário (abrir, fechar fora, Esc)
 const userMenu = document.querySelector('[data-user-menu]');
