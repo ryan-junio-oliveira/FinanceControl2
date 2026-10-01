@@ -20,7 +20,7 @@ class ProfileRequest extends FormRequest
             'name.required' => 'Informe seu nome.',
             'email.required' => 'Informe seu e-mail.',
             'email.email' => 'Esse e-mail não parece válido.',
-            'email.unique' => 'Este e-mail já está em uso por outra pessoa.',
+            'email.unique' => 'Este e-mail já está em uso por outro membro.',
             'birthdate.date' => 'Essa data de nascimento não é válida.',
             'birthdate.before' => 'A data de nascimento deve ser anterior a hoje.',
         ];

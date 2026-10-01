@@ -4,9 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfilePasswordRequest;
 use App\Http\Requests\ProfileRequest;
-use App\Models\Transaction;
-use App\Support\Fin;
+use App\Support\Audit;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\View\View;
 
@@ -14,20 +15,7 @@ class ProfileController extends Controller
 {
     public function show(): View
     {
-        $user = request()->user()->load('family');
-        $mes = Fin::month();
-
-        $gastoMes = (float) Transaction::where('family_id', $user->family_id)
-            ->where('user_id', $user->id)
-            ->where('type', 'despesa')
-            ->whereIn('status', ['pago', 'pendente'])
-            ->whereYear('occurred_on', substr($mes, 0, 4))
-            ->whereMonth('occurred_on', substr($mes, 5, 2))
-            ->sum('amount');
-
-        $mesada = $user->allowance()->where('active', true)->first();
-
-        return view('pages.profile.show', compact('user', 'mes', 'gastoMes', 'mesada'));
+        return view('pages.profile.show', ['user' => request()->user()->load('family')]);
     }
 
     public function edit(): View
@@ -52,5 +40,45 @@ class ProfileController extends Controller
         $request->user()->update(['password' => Hash::make($request->validated()['password'])]);
 
         return redirect()->route('perfil')->with('status', 'Senha alterada com sucesso.');
+    }
+
+    /**
+     * Encerra o cadastro: só o administrador principal pode.
+     * Apaga a conta da família inteira (todos os membros e registros).
+     */
+    public function destroy(): RedirectResponse
+    {
+        $user = request()->user();
+        abort_if($user->role !== 'admin', 403, 'Somente o administrador pode encerrar o cadastro.');
+
+        request()->validate(
+            ['password' => ['required', 'current_password']],
+            ['password.required' => 'Informe sua senha para confirmar.', 'password.current_password' => 'Essa senha não confere. Tente de novo.']
+        );
+
+        $family = $user->family()->firstOrFail();
+        $memberIds = $family->users()->pluck('id')->all();
+
+        Audit::silence(function () use ($family, $memberIds) {
+            DB::transaction(function () use ($family, $memberIds) {
+                // Notificações e sessões não têm FK: limpar manualmente.
+                DB::table('notifications')
+                    ->where('notifiable_type', \App\Models\User::class)
+                    ->whereIn('notifiable_id', $memberIds)
+                    ->delete();
+                DB::table('sessions')->whereIn('user_id', $memberIds)->delete();
+
+                // Membros primeiro (lançamentos deles caem por cascata), depois a família (cascata no resto).
+                \App\Models\User::whereIn('id', $memberIds)->delete();
+                $family->delete();
+            });
+
+            // Logout também fica silencioso (a família já não existe p/ gravar trilha).
+            Auth::logout();
+            request()->session()->invalidate();
+            request()->session()->regenerateToken();
+        });
+
+        return redirect()->route('login')->with('status', 'Cadastro encerrado. Até logo!');
     }
 }
