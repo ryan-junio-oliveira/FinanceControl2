@@ -14,7 +14,7 @@ class MemberRoleRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'role.required' => 'Escolha o novo papel da pessoa.',
+            'role.required' => 'Escolha o novo papel do membro.',
             'role.in' => 'Papel inválido.',
         ];
     }

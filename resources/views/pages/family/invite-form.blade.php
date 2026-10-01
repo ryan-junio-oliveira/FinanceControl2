@@ -1,13 +1,13 @@
 @extends('layouts.app')
-@section('title', 'Convidar Pessoa')
-@section('breadcrumb', 'Pessoas / Convidar')
+@section('title', 'Convidar Membro')
+@section('breadcrumb', 'Membros / Convidar')
 @section('nav-active', 'familia')
 
 @section('content')
 <div class="max-w-4xl mx-auto w-full">
     <x-form.header
-        title="Convidar pessoa"
-        subtitle="Geramos um link de primeiro acesso para a pessoa definir a senha."
+        title="Convidar membro"
+        subtitle="Geramos um link de primeiro acesso para o membro definir a senha."
         :backUrl="route('familia')"
         backLabel="Voltar para a família"
         icon="person_add"
@@ -21,7 +21,7 @@
                 <x-form.input id="f-nome" name="name" required value="{{ old('name') }}" placeholder="Ex.: Mariana Silva" />
             </x-form.field>
             <x-form.field label="E-mail" for="f-email" :required="true" :error="$errors->first('email')">
-                <x-form.input id="f-email" name="email" required type="email" value="{{ old('email') }}" placeholder="Ex.: pessoa@email.com" />
+                <x-form.input id="f-email" name="email" required type="email" value="{{ old('email') }}" placeholder="Ex.: membro@email.com" />
             </x-form.field>
             <x-form.field label="Papel" for="f-papel" :required="true" :error="$errors->first('role')">
                 <x-form.select id="f-papel" name="role">

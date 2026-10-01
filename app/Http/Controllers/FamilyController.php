@@ -2,11 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\AllowanceRequest;
 use App\Http\Requests\InviteRequest;
 use App\Http\Requests\MemberRoleRequest;
 use App\Mail\WelcomeEmail;
-use App\Models\Allowance;
 use App\Models\Invitation;
 use App\Models\Transaction;
 use App\Models\User;
@@ -23,20 +21,18 @@ class FamilyController extends Controller
         $family = Fin::family();
         $mes = Fin::month();
 
-        $membros = $family->users()->with('allowance')->orderBy('name')->get()->map(function ($u) use ($family, $mes) {
+        $membros = $family->users()->orderBy('name')->get()->map(function ($u) use ($family, $mes) {
             $gasto = (float) Transaction::where('family_id', $family->id)->where('user_id', $u->id)
                 ->where('type', 'despesa')->whereIn('status', ['pago', 'pendente'])
                 ->whereYear('occurred_on', substr($mes, 0, 4))->whereMonth('occurred_on', substr($mes, 5, 2))->sum('amount');
             $u->gasto_mes = $gasto;
-            $u->mesada = $u->allowance->firstWhere('active', true) ?? $u->allowance->first();
 
             return $u;
         });
 
         $convites = $family->invitations()->whereNull('accepted_at')->orderByDesc('created_at')->get();
-        $mesadas = $family->allowances()->with('member')->where('active', true)->get();
 
-        return view('pages.familia', compact('mes', 'membros', 'convites', 'mesadas'));
+        return view('pages.familia', compact('mes', 'membros', 'convites'));
     }
 
     public function createInvite(): View
@@ -44,7 +40,7 @@ class FamilyController extends Controller
         return view('pages.family.invite-form');
     }
 
-    /** Convida pessoa: cria convite com token de primeiro acesso e envia e-mail. */
+    /** Convida membro: cria convite com token de primeiro acesso e envia e-mail. */
     public function invite(InviteRequest $request): RedirectResponse
     {
         $family = Fin::family();
@@ -65,70 +61,37 @@ class FamilyController extends Controller
         return redirect()->route('familia')->with('status', $status);
     }
 
-    public function revokeInvite(Invitation $convite): RedirectResponse
+    public function revokeInvite(Invitation $invite): RedirectResponse
     {
-        abort_if($convite->family_id !== Fin::familyId(), 404);
-        $convite->delete();
+        abort_if($invite->family_id !== Fin::familyId(), 404);
+        $invite->delete();
 
         return back()->with('status', 'Convite revogado.');
     }
 
-    public function removeMember(User $membro): RedirectResponse
+    public function removeMember(User $member): RedirectResponse
     {
         $family = Fin::family();
-        abort_if($membro->family_id !== $family->id, 404);
-        abort_if($membro->id === request()->user()->id, 422, 'Você não pode remover a si mesmo.');
-        abort_if($membro->role === 'admin', 422, 'O administrador principal não pode ser removido.');
-        abort_if($membro->transactions()->exists(), 422, 'Membro com lançamentos não pode ser removido.');
-        abort_if($membro->cardTransactions()->exists(), 422, 'Membro com compras no cartão não pode ser removido.');
+        abort_if($member->family_id !== $family->id, 404);
+        abort_if($member->id === request()->user()->id, 422, 'Você não pode remover a si mesmo.');
+        abort_if($member->role === 'admin', 422, 'O administrador principal não pode ser removido.');
+        abort_if($member->transactions()->exists(), 422, 'Membro com lançamentos não pode ser removido.');
+        abort_if($member->cardTransactions()->exists(), 422, 'Membro com compras no cartão não pode ser removido.');
 
-        $membro->allowance()->delete();
-        $membro->delete();
+        $member->delete();
 
-        return back()->with('status', 'Pessoa removida.');
+        return back()->with('status', 'Membro removido.');
     }
 
-    public function updateRole(MemberRoleRequest $request, User $membro): RedirectResponse
+    public function updateRole(MemberRoleRequest $request, User $member): RedirectResponse
     {
         $family = Fin::family();
-        abort_if($membro->family_id !== $family->id, 404);
-        abort_if($membro->role === 'admin', 422, 'O papel do administrador principal não pode mudar.');
+        abort_if($member->family_id !== $family->id, 404);
+        abort_if($member->role === 'admin', 422, 'O papel do administrador principal não pode mudar.');
 
         $data = $request->validated();
-        $membro->update($data);
+        $member->update($data);
 
         return back()->with('status', 'Papel atualizado.');
-    }
-
-    public function createAllowance(): View
-    {
-        $family = Fin::family();
-
-        return view('pages.family.allowance-form', [
-            'membros' => $family->users()->orderBy('name')->get(),
-            'selected' => request()->query('membro'),
-        ]);
-    }
-
-    public function storeAllowance(AllowanceRequest $request): RedirectResponse
-    {
-        $family = Fin::family();
-        $data = $request->validated();
-        $family->users()->findOrFail($data['user_id']);
-
-        $family->allowances()->updateOrCreate(
-            ['user_id' => $data['user_id']],
-            $data + ['active' => true]
-        );
-
-        return redirect()->route('familia')->with('status', 'Mesada configurada.');
-    }
-
-    public function destroyAllowance(Allowance $allowance): RedirectResponse
-    {
-        abort_if($allowance->family_id !== Fin::familyId(), 404);
-        $allowance->delete();
-
-        return back()->with('status', 'Mesada removida.');
     }
 }
