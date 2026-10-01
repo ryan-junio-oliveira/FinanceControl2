@@ -22,6 +22,7 @@ abstract class BotHandler
             '4️⃣ Cartões' => 'menu:cartoes',
             '5️⃣ Contas' => 'menu:contas',
             '6️⃣ Investimentos' => 'menu:investimentos',
+            '7️⃣ Mercado' => 'menu:mercado',
         ]);
     }
 

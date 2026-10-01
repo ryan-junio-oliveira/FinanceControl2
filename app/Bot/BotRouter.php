@@ -114,6 +114,7 @@ final class BotRouter
             'cartoes' => ['4', 'cartao', 'cartão', 'cartoes', 'cartões', 'menu:cartoes'],
             'contas' => ['5', 'conta', 'contas', 'menu:contas'],
             'investimentos' => ['6', 'investimento', 'investimentos', 'menu:investimentos'],
+            'mercado' => ['7', 'mercado', 'bolsa', 'acoes', 'ações', 'menu:mercado'],
         ];
         foreach ($map as $option => $keys) {
             if (in_array($low, $keys, true)) {

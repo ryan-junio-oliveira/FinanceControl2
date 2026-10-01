@@ -204,6 +204,19 @@ final class MarketData
         return self::yahooBatch(self::IBOV);
     }
 
+    /**
+     * Maiores altas e quedas do Ibovespa.
+     *
+     * @return array{up: array, down: array}
+     */
+    public static function movers(int $n = 5): array
+    {
+        $stocks = array_filter(self::ibovStocks(), fn ($s) => $s['change'] !== null);
+        usort($stocks, fn ($a, $b) => $b['change'] <=> $a['change']);
+
+        return ['up' => array_slice($stocks, 0, $n), 'down' => array_slice(array_reverse($stocks), 0, $n)];
+    }
+
     /** FIIs via Brapi paginado (100); fallback Yahoo curado. */
     public static function fiiList(): array
     {

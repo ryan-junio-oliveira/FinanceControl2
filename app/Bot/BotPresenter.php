@@ -31,6 +31,23 @@ final class BotPresenter
         return "✦ <b>{$title}</b>\n".self::divider();
     }
 
+    /** Variação com seta: ▲ +1,25% · ▼ −0,50% · —. */
+    public static function change(?float $value, string $suffix = '%'): string
+    {
+        if ($value === null) {
+            return '—';
+        }
+        $num = number_format(abs($value), 2, ',', '.');
+        if ($value > 0) {
+            return "▲ +{$num}{$suffix}";
+        }
+        if ($value < 0) {
+            return "▼ −{$num}{$suffix}";
+        }
+
+        return "0,00{$suffix}";
+    }
+
     /** Barra de progresso em blocos: ▰▰▰▱▱ 45%. */
     public static function bar(float $pct, int $width = 10): string
     {

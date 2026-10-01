@@ -161,4 +161,40 @@ class BotTest extends TestCase
         $this->assertSame('null', BotManager::driver()->name());
         $this->assertSame('telegram', BotManager::driver('telegram')->name());
     }
+
+    public function test_market_menu(): void
+    {
+        [, $admin] = $this->familyWithLinkedUser();
+        \App\Models\BotIdentity::create(['user_id' => $admin->id, 'channel' => 'telegram', 'external_id' => '99']);
+
+        // Sem rede: snapshot vazio + ações vazias → mostra "indisponível" sem quebrar.
+        \Illuminate\Support\Facades\Http::fake([
+            'query1.finance.yahoo.com/*' => \Illuminate\Support\Facades\Http::response(['chart' => ['result' => []]]),
+            '*' => \Illuminate\Support\Facades\Http::response(null, 500),
+        ]);
+
+        $this->send('7');
+        $text = (string) NullDriver::lastText();
+        $this->assertStringContainsString('Mercado', $text);
+        $this->assertStringContainsString('Selic', $text);
+        $this->assertStringContainsString('Bitcoin', $text);
+    }
+
+    public function test_market_movers_sorting(): void
+    {
+        \Illuminate\Support\Facades\Http::fake(function ($request) {
+            $url = (string) $request->url();
+            $change = str_contains($url, 'PETR4') ? 3.5 : (str_contains($url, 'VALE3') ? -2.25 : 0.5);
+
+            return \Illuminate\Support\Facades\Http::response([
+                'chart' => ['result' => [[
+                    'meta' => ['regularMarketPrice' => 10, 'regularMarketChangePercent' => $change, 'shortName' => 'X'],
+                ]]],
+            ]);
+        });
+
+        $movers = \App\Support\MarketData::movers(5);
+        $this->assertSame('PETR4', $movers['up'][0]['code']);
+        $this->assertSame('VALE3', $movers['down'][0]['code']);
+    }
 }

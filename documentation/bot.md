@@ -38,6 +38,7 @@ Trocar de canal = implementar `BotDriver` + `BOT_DRIVER=whatsapp`. As conversas 
 4. **Cartões** — faturas em aberto + lançar compra
 5. **Contas** — saldos por conta
 6. **Investimentos** — patrimônio e metas (leitura)
+7. **Mercado** — Selic, CDI, Ibovespa, dólar, Bitcoin + maiores altas/quedas
 
 ## Comprovantes (foto/PDF)
 
