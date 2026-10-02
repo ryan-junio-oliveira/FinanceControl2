@@ -60,9 +60,10 @@ class LinkHandler extends BotHandler
 
         $user = $code !== '' ? User::where('bot_code', $code)->first() : null;
 
-        if (! $user) {
+        // Código de uso único com validade: sem expiração futura, não vincula.
+        if (! $user || ! $user->bot_code_expires_at || $user->bot_code_expires_at->isPast()) {
             Cache::put($key, (int) Cache::get($key, 0) + 1, now()->addMinutes(10));
-            $driver->sendText($msg->chatId, '❌ Código inválido. Confira no seu perfil e tente de novo.', $this->cancelKeyboard());
+            $driver->sendText($msg->chatId, '❌ Código inválido ou expirado. Gere um novo no seu perfil e tente de novo.', $this->cancelKeyboard());
             ConversationState::put($msg->channel, $msg->chatId, static::class, 'code');
 
             return false;
@@ -74,6 +75,8 @@ class LinkHandler extends BotHandler
             ['channel' => $msg->channel, 'external_id' => $msg->chatId],
             ['user_id' => $user->id]
         );
+        // Uso único: o código morre após vincular.
+        $user->update(['bot_code' => null, 'bot_code_expires_at' => null]);
         Auth::setUser($user);
         $driver->sendText($msg->chatId, '✅ <b>Conta vinculada!</b> Bem-vindo(a), '.e(explode(' ', $user->name)[0]).'.');
         $this->showMenu($driver, $msg, $user);

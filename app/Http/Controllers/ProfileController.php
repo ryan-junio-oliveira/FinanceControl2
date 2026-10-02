@@ -51,9 +51,10 @@ class ProfileController extends Controller
         do {
             $code = (string) random_int(100000, 999999);
         } while (User::where('bot_code', $code)->exists());
-        $user->update(['bot_code' => $code]);
+        // Código de uso único, válido por 15 minutos.
+        $user->update(['bot_code' => $code, 'bot_code_expires_at' => now()->addMinutes(15)]);
 
-        return redirect()->route('perfil')->with('status', 'Código do bot gerado.');
+        return redirect()->route('perfil')->with('status', 'Código do bot gerado (vale por 15 minutos).');
     }
 
     /** Portabilidade (LGPD, art. 18): baixa todos os dados da família em JSON. */

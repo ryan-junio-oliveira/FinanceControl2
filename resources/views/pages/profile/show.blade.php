@@ -68,7 +68,14 @@
             <div class="flex-1 min-w-0">
                 <p class="text-[11px] font-bold uppercase tracking-widest text-emerald-700">Seu código</p>
                 <p class="text-[22px] font-extrabold num tracking-widest text-gray-900">{{ $user->bot_code }}</p>
-                <p class="text-[12px] text-gray-500 mt-0.5">No Telegram, envie <b>/start {{ $user->bot_code }}</b> para o bot.</p>
+                <p class="text-[12px] text-gray-500 mt-0.5">
+                    No Telegram, envie <b>/start {{ $user->bot_code }}</b> para o bot.
+                    @if($user->bot_code_expires_at && $user->bot_code_expires_at->isPast())
+                        <b class="text-red-500">Expirado — gere outro.</b>
+                    @elseif($user->bot_code_expires_at)
+                        Válido até <b>{{ $user->bot_code_expires_at->format('H:i') }}</b> · uso único.
+                    @endif
+                </p>
             </div>
         </div>
         @else

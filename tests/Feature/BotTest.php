@@ -35,7 +35,7 @@ class BotTest extends TestCase
         $family = Family::create(['name' => 'Família Bot']);
         $admin = User::create([
             'name' => 'Admin', 'email' => 'admin@bot.com', 'password' => bcrypt('Senha@123'),
-            'family_id' => $family->id, 'role' => 'admin', 'bot_code' => '123456',
+            'family_id' => $family->id, 'role' => 'admin', 'bot_code' => '123456', 'bot_code_expires_at' => now()->addMinutes(15),
         ]);
         CategoryCatalog::seedForFamily($family);
         Bank::create(['code' => '341', 'name' => 'Itaú', 'color' => '#EC7000']);
@@ -104,6 +104,32 @@ class BotTest extends TestCase
         }
         $this->assertStringContainsString('Muitas tentativas', (string) NullDriver::lastText());
         $this->assertDatabaseMissing('bot_identities', ['external_id' => '98']);
+    }
+
+    public function test_link_code_expired_is_rejected(): void
+    {
+        [$family, $admin] = $this->familyWithLinkedUser();
+        $admin->update(['bot_code_expires_at' => now()->subMinute()]);
+
+        NullDriver::flush();
+        $this->send('/start 123456');
+        $texts = implode("\n", array_column(NullDriver::$sent, 'text'));
+        $this->assertStringContainsString('expirado', $texts);
+        $this->assertDatabaseMissing('bot_identities', ['user_id' => $admin->id]);
+    }
+
+    public function test_link_code_is_single_use(): void
+    {
+        [$family, $admin] = $this->familyWithLinkedUser();
+
+        $this->send('/start 123456', '97');
+        $this->assertDatabaseHas('bot_identities', ['user_id' => $admin->id, 'external_id' => '97']);
+        $this->assertNull($admin->fresh()->bot_code);
+
+        // O mesmo código não vincula outro chat depois de usado.
+        NullDriver::flush();
+        $this->send('/start 123456', '96');
+        $this->assertDatabaseMissing('bot_identities', ['external_id' => '96']);
     }
 
     public function test_link_and_menu(): void
