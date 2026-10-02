@@ -11,8 +11,9 @@ return [
     'reader' => env('RECEIPT_READER', 'tesseract'),
 
     'tesseract' => [
-        'binary' => env('TESSERACT_BIN', base_path('bin/tesseract/tesseract.exe')),
-        'tessdata_dir' => env('TESSDATA_DIR', base_path('bin/tesseract/tessdata')),
+        // Windows: usa o binário portátil do repo. Linux: usa o tesseract do sistema.
+        'binary' => env('TESSERACT_BIN', PHP_OS_FAMILY === 'Windows' ? base_path('bin/tesseract/tesseract.exe') : 'tesseract'),
+        'tessdata_dir' => env('TESSDATA_DIR', PHP_OS_FAMILY === 'Windows' ? base_path('bin/tesseract/tessdata') : ''),
         'lang' => 'por',
     ],
 

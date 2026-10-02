@@ -26,15 +26,6 @@ final class AccountService
         return $contas;
     }
 
-    /** Extrato integrado (todas as movimentações da família). */
-    public function statement(Family $family, int $perPage = 15)
-    {
-        return Transaction::ofFamily($family->id)
-            ->with(['member', 'category', 'account'])
-            ->orderByDesc('occurred_on')->orderByDesc('id')
-            ->paginate($perPage);
-    }
-
     /** Extrato de uma conta específica (entradas e saídas, incluindo transferências). */
     public function statementForAccount(Account $account, int $perPage = 25)
     {

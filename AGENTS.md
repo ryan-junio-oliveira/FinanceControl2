@@ -13,6 +13,15 @@ composer -V
 
 ## Setup
 
+Setup automático (recomendado — o script sobe para a raiz do projeto sozinho):
+
+```sh
+bash scripts/setup-linux.sh      # VPS Ubuntu/Debian (instala PHP 8.3, Tesseract + por, Composer, Node)
+scripts\setup-windows.bat        # Windows (duplo clique; Tesseract portátil já vem em bin/)
+```
+
+Manual:
+
 ```sh
 composer install
 cp .env.example .env

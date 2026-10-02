@@ -55,34 +55,8 @@ class Fin
         return $mes;
     }
 
-    /** Semanas do mês para o gráfico de fluxo: [rótulo, início, fim]. */
-    public static function weeksOfMonth(string $month): array
-    {
-        if (! preg_match('/^(\d{4})-(\d{2})$/', $month, $m) || (int) $m[2] < 1 || (int) $m[2] > 12) {
-            $month = Carbon::now(self::timezone())->format('Y-m');
-            [$y, $mm] = explode('-', $month);
-        } else {
-            [$y, $mm] = explode('-', $month);
-        }
-        $last = Carbon::create((int) $y, (int) $mm, 1, 0, 0, 0, self::timezone())->daysInMonth;
-
-        return [
-            ['Sem 1 (01-07)', 1, min(7, $last)],
-            ['Sem 2 (08-14)', 8, min(14, $last)],
-            ['Sem 3 (15-21)', 15, min(21, $last)],
-            ['Sem 4 (22-'.$last.')', 22, $last],
-        ];
-    }
-
     public static function money(?float $value): string
     {
         return 'R$ '.number_format((float) $value, 2, ',', '.');
-    }
-
-    public static function signedMoney(float $value, string $type): string
-    {
-        $prefix = $type === 'receita' ? '+' : '−';
-
-        return $prefix.self::money($value);
     }
 }

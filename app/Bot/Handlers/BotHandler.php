@@ -91,16 +91,6 @@ abstract class BotHandler
         return (int) $text;
     }
 
-    protected function numberedList(array $lines): string
-    {
-        $out = [];
-        foreach ($lines as $i => $line) {
-            $out[] = '<b>'.($i + 1).'</b> '.e($line);
-        }
-
-        return implode("\n", $out);
-    }
-
     protected function presenter(): BotPresenter
     {
         return new BotPresenter;

@@ -42,7 +42,10 @@ final class TesseractReader implements ReceiptReader
     private function ocr(string $path): string
     {
         try {
-            putenv('TESSDATA_PREFIX='.(string) config('receipts.tesseract.tessdata_dir'));
+            $tessdata = (string) config('receipts.tesseract.tessdata_dir');
+            if ($tessdata !== '') {
+                putenv('TESSDATA_PREFIX='.$tessdata);
+            }
             $text = (new TesseractOCR($path))
                 ->executable((string) config('receipts.tesseract.binary', 'tesseract'))
                 ->lang((string) config('receipts.tesseract.lang', 'por'))
