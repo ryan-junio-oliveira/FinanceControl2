@@ -12,6 +12,7 @@ use App\Models\Transaction;
 use App\Models\User;
 use App\Support\CategoryCatalog;
 use App\Support\MarketData;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
@@ -105,6 +106,11 @@ class BotTest extends TestCase
         $cats = $family->categories()->where('type', 'despesa')->where('archived', false)->orderBy('name')->get();
         $num = $cats->search(fn ($c) => $c->id === $cat->id) + 1;
         $this->send((string) $num);
+
+        // Agora pergunta se é fixa/recorrente.
+        $this->assertStringContainsString('fixa', (string) NullDriver::lastText());
+        $this->assertSame('fixed', ConversationState::get('telegram', '99')['step']);
+        $this->send('nao');
         $this->assertStringContainsString('Confirmar', (string) NullDriver::lastText());
 
         $this->send('sim');
@@ -113,6 +119,45 @@ class BotTest extends TestCase
         ]);
         $tx = Transaction::where('description', 'Mercado semanal')->first();
         $this->assertEquals(350.75, (float) $tx->amount);
+        $this->assertFalse((bool) $tx->is_fixed);
+        $this->assertStringContainsString('registrada', (string) NullDriver::lastText());
+    }
+
+    public function test_expense_fixed_flow(): void
+    {
+        [$family, $admin] = $this->familyWithLinkedUser();
+        BotIdentity::create(['user_id' => $admin->id, 'channel' => 'telegram', 'external_id' => '99']);
+        $conta = $admin->family->accounts()->create([
+            'bank_id' => Bank::where('code', '341')->first()->id,
+            'name' => 'Conta', 'kind' => 'corrente', 'initial_balance' => 0,
+        ]);
+        $cat = $family->categories()->where('type', 'despesa')->firstOrFail();
+
+        $this->send('2');
+        $this->send('despesa:new');
+        $this->send('Aluguel');
+        $this->send('1200');
+        $this->send('hoje');
+        $this->send('1'); // Conta (só 1) → categoria.
+
+        $cats = $family->categories()->where('type', 'despesa')->where('archived', false)->orderBy('name')->get();
+        $num = $cats->search(fn ($c) => $c->id === $cat->id) + 1;
+        $this->send((string) $num);
+
+        // É fixa → sim → pergunta o dia do pagamento.
+        $this->send('sim');
+        $this->assertSame('dueday', ConversationState::get('telegram', '99')['step']);
+        $this->assertStringContainsString('dia', (string) NullDriver::lastText());
+
+        $this->send('10');
+        $this->assertStringContainsString('Fixa', (string) NullDriver::lastText());
+        $this->assertStringContainsString('dia 10', (string) NullDriver::lastText());
+        $this->send('sim');
+
+        $tx = Transaction::where('description', 'Aluguel')->first();
+        $this->assertNotNull($tx);
+        $this->assertTrue((bool) $tx->is_fixed);
+        $this->assertSame(10, (int) Carbon::parse($tx->due_on)->day);
         $this->assertStringContainsString('registrada', (string) NullDriver::lastText());
     }
 

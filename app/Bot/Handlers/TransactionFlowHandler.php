@@ -5,6 +5,7 @@ namespace App\Bot\Handlers;
 use App\Bot\BotPresenter;
 use App\Bot\Contracts\BotDriver;
 use App\Bot\ConversationState;
+use App\Bot\ValueObjects\BotKeyboard;
 use App\Bot\ValueObjects\IncomingMessage;
 use App\Models\Transaction;
 use App\Models\User;
@@ -63,7 +64,9 @@ abstract class TransactionFlowHandler extends BotHandler
             'date' => $this->stepMember($driver, $msg, $data, $text, $user),
             'member' => $this->stepAccount($driver, $msg, $data, $text, $user),
             'account' => $this->stepCategory($driver, $msg, $data, $text, $user),
-            'category' => $this->stepConfirm($driver, $msg, $data, $text, $user),
+            'category' => $this->stepCategoryChosen($driver, $msg, $data, $text, $user),
+            'fixed' => $this->stepFixedAnswer($driver, $msg, $data, $text, $user),
+            'dueday' => $this->stepDueDay($driver, $msg, $data, $text, $user),
             'confirm' => $this->stepSave($driver, $msg, $data, $text, $user),
             default => $this->menu($driver, $msg, $user),
         };
@@ -172,7 +175,7 @@ abstract class TransactionFlowHandler extends BotHandler
         $this->ask($driver, $msg, 'category', $data + ['_categories' => $cats->pluck('id')->all()], "🏷️ Qual a categoria?\n".$this->numberedList($lines), $this->cancelKeyboard());
     }
 
-    private function stepConfirm(BotDriver $driver, IncomingMessage $msg, array $data, string $text, ?User $user): void
+    private function stepCategoryChosen(BotDriver $driver, IncomingMessage $msg, array $data, string $text, ?User $user): void
     {
         $ids = $data['_categories'] ?? [];
         $num = self::num($text);
@@ -185,16 +188,80 @@ abstract class TransactionFlowHandler extends BotHandler
         unset($data['_categories']);
         $data['status'] = 'pago';
 
+        $this->ask(
+            $driver,
+            $msg,
+            'fixed',
+            $data,
+            '🔁 É '.$this->typeLabel().' fixa (se repete todo mês)?',
+            $this->fixedKeyboard()
+        );
+    }
+
+    private function stepFixedAnswer(BotDriver $driver, IncomingMessage $msg, array $data, string $text, ?User $user): void
+    {
+        if (self::isNo($text)) {
+            $data['is_fixed'] = false;
+            $this->stepConfirm($driver, $msg, $data, $text, $user);
+
+            return;
+        }
+        if (self::isYes($text)) {
+            $this->ask(
+                $driver,
+                $msg,
+                'dueday',
+                $data,
+                '📅 Qual o dia do '.$this->paymentLabel().'? (1-31)',
+                $this->cancelKeyboard()
+            );
+
+            return;
+        }
+        $this->ask($driver, $msg, 'fixed', $data, 'Responda ✅ Sim ou ❌ Não:', $this->fixedKeyboard());
+    }
+
+    private function stepDueDay(BotDriver $driver, IncomingMessage $msg, array $data, string $text, ?User $user): void
+    {
+        $text = trim($text);
+        if (! preg_match('/^\d{1,2}$/', $text) || (int) $text < 1 || (int) $text > 31) {
+            $this->ask($driver, $msg, 'dueday', $data, '❌ Dia inválido. Digite um número de 1 a 31:', $this->cancelKeyboard());
+
+            return;
+        }
+        $day = (int) $text;
+        $base = Carbon::parse($data['occurred_on']);
+        $data['is_fixed'] = true;
+        $data['due_on'] = $base->copy()->setDay(min($day, $base->daysInMonth))->toDateString();
+        $this->stepConfirm($driver, $msg, $data, $text, $user);
+    }
+
+    private function stepConfirm(BotDriver $driver, IncomingMessage $msg, array $data, string $text, ?User $user): void
+    {
         $member = $user->family->users()->find($data['user_id']);
         $account = $user->family->accounts()->find($data['account_id']);
         $cat = $user->family->categories()->find($data['category_id']);
+        $fixedLine = ! empty($data['is_fixed'])
+            ? "\n🔁 Fixa · ".$this->paymentLabel().' todo dia '.Carbon::parse($data['due_on'])->format('j')
+            : "\n🔁 Eventual";
         $summary = '🧾 <b>Confirmar '.strtolower($this->typeLabel(true)).'?</b>'."\n"
             .BotPresenter::divider()."\n"
             .'📝 '.$data['description']."\n"
             .'💵 <b>'.BotPresenter::money($data['amount']).'</b> · '.Carbon::parse($data['occurred_on'])->format('d/m/Y')."\n"
             .'👤 '.($member->name ?? '—').' · 🏦 '.($account->name ?? '—')."\n"
-            .'🏷️ '.($cat->name ?? '—');
+            .'🏷️ '.($cat->name ?? '—')
+            .$fixedLine;
         $this->ask($driver, $msg, 'confirm', $data, $summary, $this->confirmKeyboard());
+    }
+
+    private function fixedKeyboard(): BotKeyboard
+    {
+        return BotKeyboard::menu(['✅ Sim' => 'sim', '❌ Não' => 'nao']);
+    }
+
+    private function paymentLabel(): string
+    {
+        return $this->type() === 'despesa' ? 'pagamento' : 'recebimento';
     }
 
     private function stepSave(BotDriver $driver, IncomingMessage $msg, array $data, string $text, ?User $user): void
@@ -215,6 +282,7 @@ abstract class TransactionFlowHandler extends BotHandler
             'amount' => $data['amount'],
             'occurred_on' => $data['occurred_on'],
             'due_on' => $data['due_on'],
+            'is_fixed' => $data['is_fixed'] ?? false,
             'status' => 'pago',
             'user_id' => $data['user_id'],
             'account_id' => $data['account_id'] ?? null,
