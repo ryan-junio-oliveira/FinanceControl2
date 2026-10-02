@@ -132,6 +132,19 @@ class BotTest extends TestCase
         $this->assertDatabaseMissing('bot_identities', ['external_id' => '96']);
     }
 
+    public function test_expense_invalid_amount_reasks(): void
+    {
+        [$family, $admin] = $this->familyWithLinkedUser();
+        BotIdentity::create(['user_id' => $admin->id, 'channel' => 'telegram', 'external_id' => '99']);
+
+        $this->send('2');
+        $this->send('despesa:new');
+        $this->send('Teste');
+        $this->send('abc');
+        $this->assertStringContainsString('Valor inválido', (string) NullDriver::lastText());
+        $this->assertSame('amount', ConversationState::get('telegram', '99')['step']);
+    }
+
     public function test_link_and_menu(): void
     {
         [, $admin] = $this->familyWithLinkedUser();

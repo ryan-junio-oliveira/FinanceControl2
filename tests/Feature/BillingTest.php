@@ -151,6 +151,38 @@ class BillingTest extends TestCase
         ])->assertSessionHasErrors('email');
     }
 
+    public function test_checkout_invalid_plan_returns_422(): void
+    {
+        config(['billing.enabled' => true, 'billing.mercado_pago.access_token' => 'TEST-TOKEN']);
+        $family = $this->familyWith('pro_trial', 'ativo');
+        $admin = $this->member($family);
+
+        $this->actingAs($admin)->post('/plans/checkout', ['plano' => 'semanal'])->assertStatus(422);
+    }
+
+    public function test_cancel_without_subscription_ok(): void
+    {
+        config(['billing.enabled' => true]);
+        $family = $this->familyWith('pro', null, now()->addMonth()->toDateString());
+        $admin = $this->member($family);
+
+        $this->actingAs($admin)->post('/plans/cancel')->assertRedirect(route('plans'));
+        $this->assertSame('free', $family->fresh()->plan);
+        $this->assertNull($family->fresh()->plan_paid_until);
+    }
+
+    public function test_webhook_unknown_preapproval_ignored(): void
+    {
+        config(['billing.mercado_pago.access_token' => 'TEST']);
+        $family = Family::create([
+            'name' => 'Família MP', 'plan' => 'free', 'trial_ends_at' => null, 'mp_preapproval_id' => 'PRE1',
+        ]);
+        Http::fake(['api.mercadopago.com/preapproval/NOPE' => Http::response(null, 404)]);
+
+        $this->postJson('/webhooks/mercadopago', ['type' => 'preapproval', 'data' => ['id' => 'NOPE']])->assertOk();
+        $this->assertSame('free', $family->fresh()->plan);
+    }
+
     public function test_webhook_validates_signature(): void
     {
         $secret = 'segredo-teste';
