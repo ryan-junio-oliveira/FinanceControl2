@@ -156,6 +156,52 @@ class ReceiptTest extends TestCase
         $this->assertStringContainsString('registrado', (string) NullDriver::lastText());
     }
 
+    public function test_receipt_auto_selects_account_by_bank(): void
+    {
+        [$family, $admin] = $this->linkedFamily();
+        $nubank = Bank::create(['code' => '260', 'name' => 'Nubank', 'color' => '#820AD1']);
+        $contaNubank = $family->accounts()->create([
+            'bank_id' => $nubank->id, 'name' => 'Nubank Conta', 'kind' => 'digital', 'initial_balance' => 0,
+        ]);
+
+        $fixture = tempnam(sys_get_temp_dir(), 'rcp').'.png';
+        file_put_contents($fixture, 'fake-bytes');
+        NullDriver::$fixturePath = $fixture;
+        app()->instance(ReceiptReader::class, new FakeReceiptReader(
+            "Nubank\nComprovante de Pix\nPix recebido\nValor: R$ 100,00\nData: 05/10/2026\n"
+        ));
+
+        $this->photo();
+        $this->send('ok'); // mantém a descrição
+
+        $state = ConversationState::get('telegram', '99');
+        $this->assertSame('category', $state['step']);
+        $this->assertEquals($contaNubank->id, $state['data']['account_id']);
+    }
+
+    public function test_receipt_bank_with_multiple_accounts_asks_choice(): void
+    {
+        [$family, $admin] = $this->linkedFamily();
+        $nubank = Bank::create(['code' => '260', 'name' => 'Nubank', 'color' => '#820AD1']);
+        $family->accounts()->create(['bank_id' => $nubank->id, 'name' => 'Nubank A', 'kind' => 'digital', 'initial_balance' => 0]);
+        $family->accounts()->create(['bank_id' => $nubank->id, 'name' => 'Nubank B', 'kind' => 'digital', 'initial_balance' => 0]);
+
+        $fixture = tempnam(sys_get_temp_dir(), 'rcp').'.png';
+        file_put_contents($fixture, 'fake-bytes');
+        NullDriver::$fixturePath = $fixture;
+        app()->instance(ReceiptReader::class, new FakeReceiptReader(
+            "Nubank\nComprovante de Pix\nPix recebido\nValor: R$ 100,00\nData: 05/10/2026\n"
+        ));
+
+        $this->photo();
+        $this->send('ok');
+
+        $state = ConversationState::get('telegram', '99');
+        $this->assertSame('account', $state['step']);
+        $this->assertCount(2, $state['data']['_accounts']);
+        $this->assertStringContainsString('Nubank', (string) NullDriver::lastText());
+    }
+
     public function test_unreadable_receipt_falls_back_to_manual(): void
     {
         [$family, $admin] = $this->linkedFamily();

@@ -180,14 +180,46 @@ class ReceiptHandler extends BotHandler
             return;
         }
 
-        $accounts = app(AccountService::class)->list($user->family)->values();
-        if ($accounts->isEmpty()) {
+        $this->askAccount($driver, $msg, $data, $user);
+    }
+
+    /**
+     * Conta do comprovante: se o banco foi identificado e existe 1 conta dele,
+     * usa direto; se há várias, pede para escolher; sem banco, lista todas.
+     */
+    private function askAccount(BotDriver $driver, IncomingMessage $msg, array $data, ?User $user): void
+    {
+        $contas = app(AccountService::class)->list($user->family)->values();
+        $bank = $data['bank'] ?? null;
+
+        if ($bank) {
+            $match = $contas->filter(fn ($a) => ($a->bank->name ?? '') === $bank)->values();
+            if ($match->count() === 1) {
+                $data['account_id'] = $match->first()->id;
+                $this->askCategory($driver, $msg, $data, $user);
+
+                return;
+            }
+            if ($match->count() > 1) {
+                $this->ask(
+                    $driver,
+                    $msg,
+                    'account',
+                    $data + ['_accounts' => $match->pluck('id')->all()],
+                    '🏦 Encontrei '.$match->count().' contas no '.$bank.'. Qual é?',
+                    $this->selectKeyboard($match->map(fn ($a) => $a->name)->all())
+                );
+
+                return;
+            }
+        }
+
+        if ($contas->isEmpty()) {
             $this->done($driver, $msg, $user, '❌ Você ainda não tem contas. Crie uma no sistema primeiro.');
 
             return;
         }
-        $lines = $accounts->map(fn ($a) => $a->name)->all();
-        $this->ask($driver, $msg, 'account', $data + ['_accounts' => $accounts->pluck('id')->all()], '🏦 Qual a conta?', $this->selectKeyboard($lines));
+        $this->ask($driver, $msg, 'account', $data + ['_accounts' => $contas->pluck('id')->all()], '🏦 Qual a conta?', $this->selectKeyboard($contas->map(fn ($a) => $a->name)->all()));
     }
 
     private function stepAccount(BotDriver $driver, IncomingMessage $msg, array $data, string $text, ?User $user): void
@@ -201,7 +233,11 @@ class ReceiptHandler extends BotHandler
         }
         $data['account_id'] = $ids[$num - 1];
         unset($data['_accounts']);
+        $this->askCategory($driver, $msg, $data, $user);
+    }
 
+    private function askCategory(BotDriver $driver, IncomingMessage $msg, array $data, ?User $user): void
+    {
         $type = $data['type'] ?? 'despesa';
         $cats = app(CategoryService::class)->list($user->family, ['tipo' => $type], 100);
         $suggested = CategoryKeywords::guessName($data['description'] ?? '');

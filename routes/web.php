@@ -79,6 +79,7 @@ Route::middleware('auth')->group(function () {
         // Accounts
         Route::get('/accounts', [AccountController::class, 'index'])->name('contas');
         Route::get('/accounts/transfer', [AccountController::class, 'createTransfer'])->name('contas.transfer.create');
+        Route::get('/accounts/{account}', [AccountController::class, 'show'])->whereNumber('account')->name('contas.extrato');
 
         // Cards (invoice for everyone)
         Route::get('/cards', [CardController::class, 'index'])->name('cartoes');

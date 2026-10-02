@@ -8,7 +8,7 @@
 <div class="flex flex-wrap items-end justify-between gap-3">
     <div>
         <h1 class="text-[24px] font-extrabold tracking-tight text-gray-900">Contas Bancárias &amp; Saldos</h1>
-        <p class="text-[13px] text-gray-400 mt-0.5 font-medium">Saldos calculados a partir dos lançamentos pagos + saldo inicial.</p>
+        <p class="text-[13px] text-gray-400 mt-0.5 font-medium">Toque em um card para ver o extrato completo da conta.</p>
     </div>
     @if($isGestor)
     <div class="flex gap-2 flex-wrap">
@@ -18,28 +18,50 @@
     @endif
 </div>
 
-{{-- Cards de contas --}}
+{{-- Cards de contas (estilo cartão de banco) --}}
 <div class="grid sm:grid-cols-2 xl:grid-cols-4 gap-4">
     @forelse($contas as $c)
-    <div class="section-card hover:-translate-y-1 hover:shadow-[var(--shadow-lift)] transition-all duration-200">
-        <div class="flex items-center gap-3 mb-3">
-            <span class="w-11 h-11 rounded-lg grid place-items-center text-white text-[13px] font-extrabold shadow-sm"
-                style="background:{{ $c->display_color }}">{{ mb_strtoupper(mb_substr($c->name, 0, 2)) }}</span>
-            <div class="flex-1 min-w-0">
-                <p class="font-extrabold text-[14px] truncate text-gray-800">{{ $c->name }}</p>
-                <p class="text-[11px] text-gray-400">{{ $c->bank->name ?? '—' }} · {{ ucfirst($c->kind) }}</p>
+    <div class="relative">
+        <a href="{{ route('contas.extrato', $c) }}"
+            class="group relative overflow-hidden rounded-2xl p-5 text-white block transition-all duration-200 hover:-translate-y-1 hover:shadow-[var(--shadow-lift)]"
+            style="background: {{ $c->display_color }}">
+            <div class="absolute -right-8 -top-8 w-32 h-32 rounded-full bg-white/10"></div>
+            <div class="absolute -right-2 -bottom-10 w-24 h-24 rounded-full bg-white/10"></div>
+
+            <div class="flex items-start justify-between gap-2 relative">
+                <div class="min-w-0">
+                    <p class="text-[10px] font-extrabold uppercase tracking-widest text-white/70 truncate">{{ $c->bank->name ?? 'Sem banco' }}</p>
+                    <p class="font-extrabold text-[15px] truncate mt-0.5">{{ $c->name }}</p>
+                </div>
+                <span class="material-symbols-outlined text-white/80 text-[22px] shrink-0">credit_card</span>
             </div>
-            @if(!$c->active)<x-badge type="warning">Inativa</x-badge>@endif
-        </div>
-        <p class="num text-[24px] font-extrabold text-gray-900">{{ Fin::money($c->balance) }}</p>
-        <p class="text-[12px] text-gray-400 num mt-0.5">Inicial: {{ Fin::money($c->initial_balance) }}</p>
+
+            <div class="mt-6 relative">
+                <p class="num text-[26px] leading-8 font-extrabold drop-shadow-sm">{{ Fin::money($c->balance) }}</p>
+                <p class="text-[11px] text-white/70 num mt-0.5">Inicial: {{ Fin::money($c->initial_balance) }}</p>
+            </div>
+
+            <div class="mt-5 pt-3 border-t border-white/20 flex items-center justify-between relative">
+                <span class="text-[10px] font-extrabold uppercase tracking-wider text-white/75">{{ ucfirst($c->kind) }}</span>
+                <span class="inline-flex items-center gap-0.5 text-[12px] font-extrabold text-white/90 group-hover:gap-1.5 transition-all">
+                    Ver extrato <span class="material-symbols-outlined text-[15px]">chevron_right</span>
+                </span>
+            </div>
+        </a>
+
         @if($isGestor)
-        <div class="mt-4 pt-3 border-t border-slate-200 flex items-center gap-1.5">
-            <x-btn-link :href="route('contas.edit', $c)" iconOnly icon="edit" title="Editar conta" />
+        <div class="absolute top-2.5 right-2.5 flex gap-1">
+            <a href="{{ route('contas.edit', $c) }}" title="Editar conta"
+                class="w-8 h-8 rounded-lg grid place-items-center text-white bg-black/15 hover:bg-black/30 transition backdrop-blur-sm">
+                <span class="material-symbols-outlined text-[17px]">edit</span>
+            </a>
             <form method="POST" action="{{ route('contas.destroy', $c) }}"
                 onsubmit="return confirm('Excluir esta conta? Só é possível sem movimentações.')" class="inline">
                 @csrf @method('DELETE')
-                <x-btn-submit color="danger" iconOnly icon="delete" title="Excluir conta" />
+                <button type="submit" title="Excluir conta"
+                    class="w-8 h-8 rounded-lg grid place-items-center text-white bg-black/15 hover:bg-red-500/70 transition backdrop-blur-sm">
+                    <span class="material-symbols-outlined text-[17px]">delete</span>
+                </button>
             </form>
         </div>
         @endif
@@ -51,45 +73,4 @@
     </div>
     @endforelse
 </div>
-
-{{-- Extrato integrado --}}
-<x-section-card title="Extrato Integrado" :subtitle="$extrato->total().' movimentação(ões)'">
-    <div class="overflow-x-auto -mx-5 lg:-mx-6 px-5 lg:px-6">
-        <table class="w-full text-left min-w-[900px] table-modern">
-            <thead>
-                <tr>
-                    <th>Data</th>
-                    <th>Operação</th>
-                    <th>Conta</th>
-                    <th>Responsável</th>
-                    <th>Natureza</th>
-                    <th class="text-right">Valor</th>
-                    <th class="text-right">Status</th>
-                </tr>
-            </thead>
-            <tbody class="text-[13px]">
-                @forelse($extrato as $e)
-                <tr data-ledger-row>
-                    <td class="num text-gray-400 whitespace-nowrap text-[12px]">{{ $e->occurred_on->format('d/m/Y') }}</td>
-                    <td class="font-bold text-gray-800">{{ $e->description }}</td>
-                    <td class="text-gray-500 text-[12px]">{{ $e->account->name ?? '—' }}</td>
-                    <td class="text-gray-600">{{ $e->member->name ?? '—' }}</td>
-                    <td><x-badge :type="$e->type === 'receita' ? 'success' : 'neutral'">{{ ucfirst($e->type) }}</x-badge></td>
-                    <td class="text-right font-extrabold num {{ $e->type === 'receita' ? 'text-emerald-600' : 'text-gray-800' }}">
-                        {{ $e->type === 'receita' ? '+' : '−' }}{{ Fin::money($e->amount) }}
-                    </td>
-                    <td class="text-right"><x-badge :type="$e->display_status_type">{{ $e->display_status }}</x-badge></td>
-                </tr>
-                @empty
-                <tr>
-                    <td colspan="7" class="text-center text-gray-400">
-                        <x-empty-state icon="receipt_long" title="Nenhuma movimentação registrada" />
-                    </td>
-                </tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
-    <div class="mt-5">{{ $extrato->links() }}</div>
-</x-section-card>
 @endsection

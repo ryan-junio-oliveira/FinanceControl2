@@ -18,7 +18,18 @@ class AccountController extends Controller
 
         return view('pages.contas', [
             'contas' => $service->list($family),
-            'extrato' => $service->statement($family),
+        ]);
+    }
+
+    /** Extrato detalhado de uma conta específica. */
+    public function show(Account $account, AccountService $service): View
+    {
+        abort_if($account->family_id !== Fin::familyId(), 404);
+
+        return view('pages.accounts.extrato', [
+            'conta' => $account->load('bank'),
+            'movs' => $service->statementForAccount($account),
+            'totais' => $service->totalsForAccount($account),
         ]);
     }
 

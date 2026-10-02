@@ -35,6 +35,32 @@ final class AccountService
             ->paginate($perPage);
     }
 
+    /** Extrato de uma conta específica (entradas e saídas, incluindo transferências). */
+    public function statementForAccount(Account $account, int $perPage = 25)
+    {
+        return Transaction::where(function ($q) use ($account) {
+            $q->where('account_id', $account->id)->orWhere('transfer_to_account_id', $account->id);
+        })
+            ->with(['member', 'category'])
+            ->orderByDesc('occurred_on')->orderByDesc('id')
+            ->paginate($perPage);
+    }
+
+    /** Totais pagos de entradas e saídas de uma conta. */
+    public function totalsForAccount(Account $account): array
+    {
+        $fid = $account->family_id;
+        $entradas = (float) Transaction::where('family_id', $fid)->where('status', 'pago')
+            ->where(function ($q) use ($account) {
+                $q->where('account_id', $account->id)->where('type', 'receita')
+                    ->orWhere('transfer_to_account_id', $account->id);
+            })->sum('amount');
+        $saidas = (float) Transaction::where('family_id', $fid)->where('account_id', $account->id)->where('status', 'pago')
+            ->whereIn('type', ['despesa', 'aporte', 'transferencia'])->sum('amount');
+
+        return ['entradas' => $entradas, 'saidas' => $saidas];
+    }
+
     /** Bancos ativos para o formulário. */
     public function activeBanks(): Collection
     {
