@@ -44,6 +44,16 @@ final class Dashboard
 
         $saldos = Account::balancesForFamily($fid);
         $saldoContas = array_sum($saldos);
+        $kinds = Account::where('family_id', $fid)->pluck('kind', 'id')->all();
+        $saldoFisico = 0.0;
+        $saldoDigital = 0.0;
+        foreach ($saldos as $accountId => $v) {
+            if (($kinds[$accountId] ?? '') === 'carteira') {
+                $saldoFisico += $v;
+            } else {
+                $saldoDigital += $v;
+            }
+        }
         $investido = (float) Asset::where('family_id', $fid)->sum('current_value');
         $faturaAberto = (float) CardTransaction::where('family_id', $fid)->where('status', 'pendente')->sum('amount');
         $patrimonio = $saldoContas + $investido - $faturaAberto;
@@ -66,7 +76,7 @@ final class Dashboard
 
         return compact(
             'mes', 'y', 'm', 'isMesCorrente',
-            'kpi', 'saldoContas', 'investido', 'faturaAberto', 'patrimonio',
+            'kpi', 'saldoContas', 'saldoFisico', 'saldoDigital', 'investido', 'faturaAberto', 'patrimonio',
             'aPagar', 'cartoes', 'inv', 'membros', 'charts',
         );
     }

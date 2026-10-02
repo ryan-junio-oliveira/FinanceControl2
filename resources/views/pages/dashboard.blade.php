@@ -19,7 +19,8 @@
 
 {{-- ══════════════ VISÃO GERAL ══════════════ --}}
 <div class="grid sm:grid-cols-2 xl:grid-cols-6 gap-4">
-    <x-kpi-card label="Saldo em Contas" :value="$money($saldoContas)" icon="account_balance_wallet" accent="blue" />
+    <x-kpi-card label="Saldo em Contas" :value="$money($saldoContas)" icon="account_balance_wallet" accent="blue"
+        bottom="<span class='text-[11px] text-gray-400 font-medium'>Digital: <b class='num text-emerald-600'>{{ $money($saldoDigital) }}</b> · Físico: <b class='num text-amber-600'>{{ $money($saldoFisico) }}</b></span>" />
     <x-kpi-card label="Receitas no Mês" :value="$money($kpi['receitas_mes'])" icon="trending_up" accent="green" />
     <x-kpi-card label="Despesas no Mês (sem faturas)" :value="$money($kpi['despesas_cash_mes'])" icon="payments" accent="red" />
     <x-kpi-card label="Despesas no Mês (com faturas)" :value="$money($kpi['despesas_total_mes'])" icon="trending_down" accent="red" />
