@@ -55,7 +55,7 @@
         </nav>
         <div class="flex items-center gap-2">
             <a href="{{ route('login') }}" class="h-10 px-4 hidden sm:inline-flex items-center text-[13px] font-extrabold text-slate-700 hover:text-slate-900 transition">Entrar</a>
-            <a href="{{ route('cadastro') }}" class="h-10 px-5 inline-flex items-center gap-1.5 text-[13px] font-extrabold text-white bg-slate-900 hover:bg-emerald-700 rounded-xl transition shadow-sm">
+            <a href="{{ route('cadastro') }}" class="h-10 px-5 inline-flex items-center gap-1.5 text-[13px] font-extrabold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition shadow-sm shadow-emerald-600/25">
                 Testar grátis <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
             </a>
         </div>
@@ -336,7 +336,7 @@
     <div class="reveal relative overflow-hidden rounded-[28px] bg-slate-900 p-10 md:p-16 text-center text-white">
         <div class="absolute -top-28 left-1/2 -translate-x-1/2 w-[560px] h-[280px] rounded-full bg-emerald-500/25 blur-3xl"></div>
         <div class="absolute inset-0 hero-grid-bg opacity-40"></div>
-        <h2 class="relative text-[26px] md:text-[36px] font-black tracking-tight max-w-2xl mx-auto leading-tight">Feche o mês no azul — começando hoje, de graça</h2>
+        <h2 class="relative text-[26px] md:text-[36px] font-black tracking-tight max-w-2xl mx-auto leading-tight">Feche o mês no verde — começando hoje, de graça</h2>
         <p class="relative text-[14px] text-slate-300 mt-3 max-w-lg mx-auto">Junte a família, organize as contas e veja o dinheiro render. Leva menos de 2 minutos.</p>
         <a href="{{ route('cadastro') }}" class="relative mt-8 inline-flex items-center gap-2 px-9 py-4 text-[15px] font-extrabold text-slate-900 bg-white hover:bg-emerald-50 rounded-2xl transition shadow-xl">
             Criar minha conta grátis <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
