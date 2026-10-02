@@ -123,8 +123,8 @@ class AccountHandler extends BotHandler
                 $msg,
                 'bankchoice',
                 $data + ['_banks' => $banks->pluck('id')->all()],
-                'Encontrei vários bancos. Escolha pelo número:'."\n".$this->numberedList($banks->pluck('name')->all()),
-                $this->cancelKeyboard()
+                'Encontrei vários bancos. Escolha:',
+                $this->selectKeyboard($banks->pluck('name')->all())
             );
 
             return;
@@ -160,8 +160,8 @@ class AccountHandler extends BotHandler
             $msg,
             'kind',
             $data + ['_kinds' => array_keys(self::KINDS)],
-            '📁 Qual o tipo da conta?'."\n".$this->numberedList(array_values(self::KINDS)),
-            $this->cancelKeyboard()
+            '📁 Qual o tipo da conta?',
+            $this->selectKeyboard(array_values(self::KINDS))
         );
     }
 

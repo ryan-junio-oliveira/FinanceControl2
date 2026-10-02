@@ -96,7 +96,7 @@ class CardHandler extends BotHandler
             return;
         }
         $lines = $cards->map(fn ($c) => $c->name)->all();
-        $this->ask($driver, $msg, 'card', ['_cards' => $cards->pluck('id')->all()], "💳 Em qual cartão?\n".$this->numberedList($lines), $this->cancelKeyboard());
+        $this->ask($driver, $msg, 'card', ['_cards' => $cards->pluck('id')->all()], '💳 Em qual cartão?', $this->selectKeyboard($lines));
     }
 
     private function stepDesc(BotDriver $driver, IncomingMessage $msg, array $data, string $text): void
@@ -142,7 +142,7 @@ class CardHandler extends BotHandler
             return;
         }
         $lines = $cats->map(fn ($c) => $c->name)->all();
-        $this->ask($driver, $msg, 'category', $data + ['_categories' => $cats->pluck('id')->all()], "🏷️ Qual a categoria?\n".$this->numberedList($lines), $this->cancelKeyboard());
+        $this->ask($driver, $msg, 'category', $data + ['_categories' => $cats->pluck('id')->all()], '🏷️ Qual a categoria?', $this->selectKeyboard($lines));
     }
 
     private function stepConfirm(BotDriver $driver, IncomingMessage $msg, array $data, string $text, ?User $user): void
@@ -209,7 +209,7 @@ class CardHandler extends BotHandler
         $data['name'] = mb_substr($name, 0, 255);
 
         $brands = CardBrand::options();
-        $this->ask($driver, $msg, 'brand', $data + ['_brands' => array_keys($brands)], '💳 Qual a bandeira?'."\n".$this->numberedList(array_values($brands)), $this->cancelKeyboard());
+        $this->ask($driver, $msg, 'brand', $data + ['_brands' => array_keys($brands)], '💳 Qual a bandeira?', $this->selectKeyboard(array_values($brands)));
     }
 
     private function stepHolder(BotDriver $driver, IncomingMessage $msg, array $data, string $text, ?User $user): void
@@ -235,7 +235,7 @@ class CardHandler extends BotHandler
         foreach ($members as $i => $m) {
             $lines[] = ($m->id === $user->id ? $m->name.' (você)' : $m->name);
         }
-        $this->ask($driver, $msg, 'holder', $data + ['_members' => $members->pluck('id')->all()], "👤 Quem é o titular?\n".$this->numberedList($lines), $this->cancelKeyboard());
+        $this->ask($driver, $msg, 'holder', $data + ['_members' => $members->pluck('id')->all()], '👤 Quem é o titular?', $this->selectKeyboard($lines));
     }
 
     private function stepAccountLink(BotDriver $driver, IncomingMessage $msg, array $data, string $text, ?User $user): void
@@ -270,8 +270,8 @@ class CardHandler extends BotHandler
             $msg,
             'linkaccount',
             $data + ['_accounts' => $accounts->pluck('id')->all()],
-            "🏦 Conta para pagar a fatura?\n".$this->numberedList($lines),
-            $this->cancelKeyboard()
+            '🏦 Conta para pagar a fatura?',
+            $this->selectKeyboard($lines)
         );
     }
 

@@ -134,7 +134,7 @@ abstract class TransactionFlowHandler extends BotHandler
         foreach ($members as $i => $m) {
             $lines[] = ($m->id === $user->id ? $m->name.' (você)' : $m->name);
         }
-        $this->ask($driver, $msg, 'member', $data + ['_members' => $members->pluck('id')->all()], "👤 Responsável?\n".$this->numberedList($lines), $this->cancelKeyboard());
+        $this->ask($driver, $msg, 'member', $data + ['_members' => $members->pluck('id')->all()], '👤 Responsável?', $this->selectKeyboard($lines));
     }
 
     private function stepAccount(BotDriver $driver, IncomingMessage $msg, array $data, string $text, ?User $user): void
@@ -164,7 +164,8 @@ abstract class TransactionFlowHandler extends BotHandler
 
     private function askPayment(BotDriver $driver, IncomingMessage $msg, array $data): void
     {
-        $this->ask($driver, $msg, 'payment', $data, '💳 Como você pagou?', $this->paymentKeyboard());
+        $pergunta = $this->type() === 'despesa' ? '💳 Como você pagou?' : '💵 Como você recebeu?';
+        $this->ask($driver, $msg, 'payment', $data, $pergunta, $this->paymentKeyboard());
     }
 
     private function paymentKeyboard(): BotKeyboard
@@ -173,7 +174,6 @@ abstract class TransactionFlowHandler extends BotHandler
             '💸 Pix' => 'pix',
             '🏦 TED' => 'ted',
             '💵 Dinheiro físico' => 'dinheiro_fisico',
-            '📱 Dinheiro digital' => 'dinheiro_digital',
         ];
         if ($this->type() === 'despesa') {
             $options['💳 Cartão'] = 'cartao';
@@ -194,14 +194,14 @@ abstract class TransactionFlowHandler extends BotHandler
 
                 return;
             }
-            $this->ask($driver, $msg, 'paymentcard', $data + ['_cards' => $cards->pluck('id')->all()], "💳 Em qual cartão?\n".$this->numberedList($cards->map(fn ($c) => $c->name)->all()), $this->cancelKeyboard());
+            $this->ask($driver, $msg, 'paymentcard', $data + ['_cards' => $cards->pluck('id')->all()], '💳 Em qual cartão?', $this->selectKeyboard($cards->map(fn ($c) => $c->name)->all()));
 
             return;
         }
 
         // "Dinheiro" genérico: pede para escolher físico ou digital.
         if (in_array($low, ['dinheiro', 'cash'], true)) {
-            $this->ask($driver, $msg, 'payment', $data, '💵 Físico (espécie) ou 📱 digital?', $this->paymentKeyboard());
+            $this->ask($driver, $msg, 'payment', $data, '💵 Físico (espécie) ou digital (Pix/TED)?', $this->paymentKeyboard());
 
             return;
         }
@@ -210,7 +210,6 @@ abstract class TransactionFlowHandler extends BotHandler
             'pix' => 'pix',
             'ted', 'doc', 'transferencia', 'transferência' => 'ted',
             'dinheiro_fisico', 'fisico', 'físico', 'especie', 'espécie', 'carteira' => 'dinheiro_fisico',
-            'dinheiro_digital', 'digital' => 'dinheiro_digital',
             default => null,
         };
         if ($method === null) {
@@ -257,7 +256,7 @@ abstract class TransactionFlowHandler extends BotHandler
             return;
         }
         $lines = $accounts->map(fn ($a) => $a->name)->all();
-        $this->ask($driver, $msg, 'account', $data + ['_accounts' => $accounts->pluck('id')->all()], "🏦 Qual a conta?\n".$this->numberedList($lines), $this->cancelKeyboard());
+        $this->ask($driver, $msg, 'account', $data + ['_accounts' => $accounts->pluck('id')->all()], '🏦 Qual a conta?', $this->selectKeyboard($lines));
     }
 
     private function stepCategory(BotDriver $driver, IncomingMessage $msg, array $data, string $text, ?User $user): void
@@ -282,7 +281,7 @@ abstract class TransactionFlowHandler extends BotHandler
 
             return;
         }
-        $this->ask($driver, $msg, 'category', $data + ['_categories' => $cats->pluck('id')->all()], "🏷️ Qual a categoria?\n".$this->numberedList($cats->map(fn ($c) => $c->name)->all()), $this->cancelKeyboard());
+        $this->ask($driver, $msg, 'category', $data + ['_categories' => $cats->pluck('id')->all()], '🏷️ Qual a categoria?', $this->selectKeyboard($cats->map(fn ($c) => $c->name)->all()));
     }
 
     private function stepCategoryChosen(BotDriver $driver, IncomingMessage $msg, array $data, string $text, ?User $user): void

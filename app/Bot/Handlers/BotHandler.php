@@ -57,6 +57,20 @@ abstract class BotHandler
         return BotKeyboard::menu(['✅ Confirmar' => 'sim', '❌ Cancelar' => 'nao']);
     }
 
+    /** Teclado clicável para listas de seleção (envia o número, sem digitar). */
+    protected function selectKeyboard(array $labels, bool $withCancel = true): BotKeyboard
+    {
+        $rows = [];
+        foreach (array_values($labels) as $i => $label) {
+            $rows[] = [[(string) $label, (string) ($i + 1)]];
+        }
+        if ($withCancel) {
+            $rows[] = [['❌ Cancelar', 'cancelar']];
+        }
+
+        return BotKeyboard::inline($rows);
+    }
+
     protected static function isYes(string $text): bool
     {
         return in_array(mb_strtolower(trim($text)), ['sim', 's', 'yes', 'y', '1', 'confirmar', 'confirmo', 'ok'], true);

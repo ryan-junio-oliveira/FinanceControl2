@@ -187,7 +187,7 @@ class ReceiptHandler extends BotHandler
             return;
         }
         $lines = $accounts->map(fn ($a) => $a->name)->all();
-        $this->ask($driver, $msg, 'account', $data + ['_accounts' => $accounts->pluck('id')->all()], "🏦 Qual a conta?\n".$this->numberedList($lines), $this->cancelKeyboard());
+        $this->ask($driver, $msg, 'account', $data + ['_accounts' => $accounts->pluck('id')->all()], '🏦 Qual a conta?', $this->selectKeyboard($lines));
     }
 
     private function stepAccount(BotDriver $driver, IncomingMessage $msg, array $data, string $text, ?User $user): void
@@ -213,7 +213,7 @@ class ReceiptHandler extends BotHandler
         foreach ($cats as $c) {
             $lines[] = $c->name.($suggestedId && (int) $c->id === (int) $suggestedId ? ' ⭐' : '');
         }
-        $this->ask($driver, $msg, 'category', $data + ['_categories' => $cats->pluck('id')->all()], "🏷️ Qual a categoria?\n".$this->numberedList($lines), $this->cancelKeyboard());
+        $this->ask($driver, $msg, 'category', $data + ['_categories' => $cats->pluck('id')->all()], '🏷️ Qual a categoria?', $this->selectKeyboard($lines));
     }
 
     private function stepCategory(BotDriver $driver, IncomingMessage $msg, array $data, string $text, ?User $user): void
