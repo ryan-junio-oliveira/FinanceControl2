@@ -9,6 +9,11 @@ class IncomeHandler extends TransactionFlowHandler
         return 'receita';
     }
 
+    protected function asksPaymentMethod(): bool
+    {
+        return true;
+    }
+
     protected function typeLabel(bool $singular = false): string
     {
         return $singular ? 'receita' : 'Receitas';

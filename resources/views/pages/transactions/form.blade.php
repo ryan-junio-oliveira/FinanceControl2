@@ -38,15 +38,13 @@
                     <x-form.money id="f-valor" name="amount" required value="{{ $val('amount') }}" placeholder="0,00" :error="$errors->has('amount')" />
                 </x-form.field>
 
-                @if($isDespesa)
-                <x-form.field label="Forma de pagamento" for="f-pagamento" :error="$errors->first('payment_method')">
+                <x-form.field label="{{ $isDespesa ? 'Forma de pagamento' : 'Forma de recebimento' }}" for="f-pagamento" :error="$errors->first('payment_method')">
                     <x-form.select id="f-pagamento" name="payment_method">
-                        @foreach(['pix' => 'Pix', 'ted' => 'TED', 'dinheiro' => 'Dinheiro', 'cartao' => 'Cartão'] as $v => $l)
+                        @foreach(['pix' => 'Pix', 'ted' => 'TED', 'dinheiro_fisico' => 'Dinheiro físico', 'dinheiro_digital' => 'Dinheiro digital'] + ($isDespesa ? ['cartao' => 'Cartão'] : []) as $v => $l)
                             <option value="{{ $v }}" {{ $val('payment_method', 'pix') === $v ? 'selected' : '' }}>{{ $l }}</option>
                         @endforeach
                     </x-form.select>
                 </x-form.field>
-                @endif
             </div>
 
             <div class="form-grid form-grid-2">
@@ -59,11 +57,11 @@
                     </x-form.select>
                 </x-form.field>
 
-                <x-form.field label="Conta" for="f-conta" :error="$errors->first('account_id')">
+                <x-form.field id="f-conta-wrap" label="Conta" for="f-conta" :error="$errors->first('account_id')">
                     <x-form.select id="f-conta" name="account_id">
                         <option value="">Selecione a conta</option>
                         @foreach($contas as $c)
-                            <option value="{{ $c->id }}" {{ (string)$val('account_id') === (string)$c->id ? 'selected' : '' }}>{{ $c->label }}</option>
+                            <option value="{{ $c->id }}" data-kind="{{ $c->kind }}" {{ (string)$val('account_id') === (string)$c->id ? 'selected' : '' }}>{{ $c->label }}</option>
                         @endforeach
                     </x-form.select>
                 </x-form.field>
@@ -183,16 +181,27 @@
     @endif
 </div>
 
-@if($isDespesa)
 <script>
 (function () {
     const pag = document.getElementById('f-pagamento');
+    if (!pag) return;
     const seg = document.getElementById('f-pagseg');
-    if (!pag || !seg) return;
-    const toggle = () => seg.classList.toggle('hidden', pag.value !== 'cartao');
+    const contaWrap = document.getElementById('f-conta-wrap');
+    const contaSel = document.getElementById('f-conta');
+    const allOpts = contaSel ? Array.from(contaSel.options) : [];
+
+    const toggle = () => {
+        const v = pag.value;
+        if (seg) seg.classList.toggle('hidden', v !== 'cartao');
+        if (contaWrap) contaWrap.classList.toggle('hidden', v === 'dinheiro_fisico' || v === 'cartao');
+        if (contaSel) {
+            allOpts.forEach((o) => {
+                o.hidden = v === 'dinheiro_digital' && o.dataset.kind === 'carteira';
+            });
+        }
+    };
     pag.addEventListener('change', toggle);
     toggle();
 })();
 </script>
-@endif
 @endsection

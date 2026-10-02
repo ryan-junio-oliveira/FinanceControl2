@@ -193,6 +193,36 @@ class BotTest extends TestCase
         $this->assertStringContainsString('fatura do', (string) NullDriver::lastText());
     }
 
+    public function test_income_dinheiro_fisico_uses_carteira(): void
+    {
+        [$family, $admin] = $this->familyWithLinkedUser();
+        BotIdentity::create(['user_id' => $admin->id, 'channel' => 'telegram', 'external_id' => '99']);
+        $family->accounts()->create([
+            'bank_id' => Bank::where('code', '341')->first()->id,
+            'name' => 'Corrente', 'kind' => 'corrente', 'initial_balance' => 0,
+        ]);
+
+        $this->send('3'); // Receitas
+        $this->send('receita:new');
+        $this->send('Venda de garagem');
+        $this->send('120');
+        $this->send('hoje');
+        $this->send('dinheiro_fisico'); // Não pergunta conta → direto à categoria.
+
+        $this->assertStringContainsString('categoria', (string) NullDriver::lastText());
+        $this->send('1');
+        $this->send('nao'); // não é fixa
+        $this->assertStringContainsString('Confirmar', (string) NullDriver::lastText());
+        $this->send('sim');
+
+        $tx = Transaction::where('description', 'Venda de garagem')->first();
+        $this->assertNotNull($tx);
+        $this->assertSame('dinheiro_fisico', $tx->payment_method);
+        $carteira = $family->accounts()->where('kind', 'carteira')->first();
+        $this->assertNotNull($carteira);
+        $this->assertSame($carteira->id, $tx->account_id);
+    }
+
     public function test_account_create_flow(): void
     {
         [, $admin] = $this->familyWithLinkedUser();

@@ -25,7 +25,7 @@ class TransactionRequest extends FormRequest
             'user_id' => ['nullable', Rule::exists('users', 'id')->where('family_id', $fid)],
             'account_id' => ['nullable', Rule::exists('accounts', 'id')->where('family_id', $fid)],
             'category_id' => ['nullable', Rule::exists('categories', 'id')->where('family_id', $fid)],
-            'payment_method' => ['nullable', Rule::in(['pix', 'ted', 'dinheiro', 'cartao'])],
+            'payment_method' => ['nullable', Rule::in(['pix', 'ted', 'dinheiro_fisico', 'dinheiro_digital', 'cartao'])],
             'credit_card_id' => ['nullable', Rule::exists('credit_cards', 'id')->where('family_id', $fid)],
             'is_fixed' => ['sometimes', 'boolean'],
             'installments_total' => ['sometimes', 'nullable', 'integer', 'min:1', 'max:48'],

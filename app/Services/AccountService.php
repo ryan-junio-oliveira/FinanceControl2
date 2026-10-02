@@ -50,6 +50,25 @@ final class AccountService
         ];
     }
 
+    /**
+     * Conta de "dinheiro físico" (tipo carteira). Cria automaticamente se a
+     * família ainda não tiver — separa espécie de dinheiro digital.
+     */
+    public function dinheiroFisico(Family $family): Account
+    {
+        $carteira = $family->accounts()->where('active', true)->where('kind', 'carteira')->first();
+        if ($carteira) {
+            return $carteira;
+        }
+
+        return $family->accounts()->create([
+            'name' => 'Dinheiro físico',
+            'kind' => 'carteira',
+            'initial_balance' => 0,
+            'active' => true,
+        ]);
+    }
+
     public function create(Family $family, array $data): Account
     {
         if (! empty($data['bank_id'])) {

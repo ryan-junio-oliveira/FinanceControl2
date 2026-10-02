@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\TransactionRequest;
 use App\Models\Attachment;
 use App\Models\Transaction;
+use App\Services\AccountService;
 use App\Services\CardService;
 use App\Services\TransactionService;
 use App\Support\Fin;
@@ -103,6 +104,19 @@ class TransactionController extends Controller
             ]);
 
             return redirect()->route('cartoes', ['mes' => Fin::month()])->with('status', $item['parcelas'] > 1 ? "Compra parcelada em {$item['parcelas']}x na fatura." : 'Compra lançada na fatura do cartão.');
+        }
+
+        // Dinheiro físico: sempre na conta "carteira" (não se mistura com o digital).
+        if (($dados['payment_method'] ?? null) === 'dinheiro_fisico') {
+            $dados['account_id'] = app(AccountService::class)->dinheiroFisico($family)->id;
+        }
+
+        // Dinheiro digital: exige conta digital/corrente (não-carteira).
+        if (($dados['payment_method'] ?? null) === 'dinheiro_digital') {
+            $conta = $family->accounts()->where('active', true)->where('kind', '!=', 'carteira')->find($dados['account_id'] ?? null)
+                ?? $family->accounts()->where('active', true)->where('kind', '!=', 'carteira')->orderBy('name')->first();
+            abort_if(! $conta, 422, 'Crie uma conta corrente/digital para lançar dinheiro digital.');
+            $dados['account_id'] = $conta->id;
         }
 
         $criados = $service->create(

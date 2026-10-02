@@ -169,13 +169,24 @@ abstract class TransactionFlowHandler extends BotHandler
 
     private function paymentKeyboard(): BotKeyboard
     {
-        return BotKeyboard::menu(['💸 Pix' => 'pix', '🏦 TED' => 'ted', '💵 Dinheiro' => 'dinheiro', '💳 Cartão' => 'cartao']);
+        $options = [
+            '💸 Pix' => 'pix',
+            '🏦 TED' => 'ted',
+            '💵 Dinheiro físico' => 'dinheiro_fisico',
+            '📱 Dinheiro digital' => 'dinheiro_digital',
+        ];
+        if ($this->type() === 'despesa') {
+            $options['💳 Cartão'] = 'cartao';
+        }
+
+        return BotKeyboard::menu($options);
     }
 
     private function stepPayment(BotDriver $driver, IncomingMessage $msg, array $data, string $text, ?User $user): void
     {
         $low = mb_strtolower(trim($text));
-        if (in_array($low, ['cartao', 'cartão', 'credito', 'crédito', '3'], true)) {
+
+        if ($this->type() === 'despesa' && in_array($low, ['cartao', 'cartão', 'credito', 'crédito'], true)) {
             $data['payment_method'] = 'cartao';
             $cards = app(CardService::class)->list($user->family);
             if ($cards->isEmpty()) {
@@ -188,10 +199,18 @@ abstract class TransactionFlowHandler extends BotHandler
             return;
         }
 
+        // "Dinheiro" genérico: pede para escolher físico ou digital.
+        if (in_array($low, ['dinheiro', 'cash'], true)) {
+            $this->ask($driver, $msg, 'payment', $data, '💵 Físico (espécie) ou 📱 digital?', $this->paymentKeyboard());
+
+            return;
+        }
+
         $method = match ($low) {
-            'pix' => 'Pix',
-            'ted', 'doc', 'transferencia', 'transferência' => 'TED',
-            'dinheiro', 'cash', 'especie', 'espécie' => 'Dinheiro',
+            'pix' => 'pix',
+            'ted', 'doc', 'transferencia', 'transferência' => 'ted',
+            'dinheiro_fisico', 'fisico', 'físico', 'especie', 'espécie', 'carteira' => 'dinheiro_fisico',
+            'dinheiro_digital', 'digital' => 'dinheiro_digital',
             default => null,
         };
         if ($method === null) {
@@ -200,6 +219,14 @@ abstract class TransactionFlowHandler extends BotHandler
             return;
         }
         $data['payment_method'] = $method;
+
+        // Dinheiro físico: vai para a conta "carteira" (espécie), sem escolher conta.
+        if ($method === 'dinheiro_fisico') {
+            $data['account_id'] = app(AccountService::class)->dinheiroFisico($user->family)->id;
+            $this->askCategory($driver, $msg, $data, $user);
+
+            return;
+        }
         $this->askAccount($driver, $msg, $data, $user);
     }
 
@@ -215,21 +242,17 @@ abstract class TransactionFlowHandler extends BotHandler
         $data['credit_card_id'] = $ids[$num - 1];
         unset($data['_cards']);
         $data['_via_cartao'] = true;
-
-        $cats = app(CategoryService::class)->list($user->family, ['tipo' => $this->type()], 100);
-        if ($cats->isEmpty()) {
-            $this->done($driver, $msg, $user, '❌ Sem categorias cadastradas. Crie no sistema primeiro.');
-
-            return;
-        }
-        $this->ask($driver, $msg, 'category', $data + ['_categories' => $cats->pluck('id')->all()], "🏷️ Qual a categoria?\n".$this->numberedList($cats->map(fn ($c) => $c->name)->all()), $this->cancelKeyboard());
+        $this->askCategory($driver, $msg, $data, $user);
     }
 
     private function askAccount(BotDriver $driver, IncomingMessage $msg, array $data, ?User $user): void
     {
         $accounts = app(AccountService::class)->list($user->family)->values();
+        if (($data['payment_method'] ?? null) === 'dinheiro_digital') {
+            $accounts = $accounts->filter(fn ($a) => $a->kind !== 'carteira')->values();
+        }
         if ($accounts->isEmpty()) {
-            $this->done($driver, $msg, $user, '❌ Você ainda não tem contas. Crie uma no sistema primeiro.');
+            $this->done($driver, $msg, $user, '❌ Você ainda não tem contas compatíveis. Crie uma no sistema primeiro.');
 
             return;
         }
@@ -248,15 +271,18 @@ abstract class TransactionFlowHandler extends BotHandler
         }
         $data['account_id'] = $ids[$num - 1];
         unset($data['_accounts']);
+        $this->askCategory($driver, $msg, $data, $user);
+    }
 
+    private function askCategory(BotDriver $driver, IncomingMessage $msg, array $data, ?User $user): void
+    {
         $cats = app(CategoryService::class)->list($user->family, ['tipo' => $this->type()], 100);
         if ($cats->isEmpty()) {
             $this->done($driver, $msg, $user, '❌ Sem categorias cadastradas. Crie no sistema primeiro.');
 
             return;
         }
-        $lines = $cats->map(fn ($c) => $c->name)->all();
-        $this->ask($driver, $msg, 'category', $data + ['_categories' => $cats->pluck('id')->all()], "🏷️ Qual a categoria?\n".$this->numberedList($lines), $this->cancelKeyboard());
+        $this->ask($driver, $msg, 'category', $data + ['_categories' => $cats->pluck('id')->all()], "🏷️ Qual a categoria?\n".$this->numberedList($cats->map(fn ($c) => $c->name)->all()), $this->cancelKeyboard());
     }
 
     private function stepCategoryChosen(BotDriver $driver, IncomingMessage $msg, array $data, string $text, ?User $user): void

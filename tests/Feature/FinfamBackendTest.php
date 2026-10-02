@@ -126,6 +126,27 @@ class FinfamBackendTest extends TestCase
         $this->get('/admin/logs')->assertOk()->assertSee('Criou Lançamento')->assertSee('127.0.0.1');
     }
 
+    public function test_expense_dinheiro_fisico_uses_carteira(): void
+    {
+        $this->post('/register', [
+            'manager_name' => 'Bia Lima', 'email' => 'bia@email.com', 'family_name' => 'Família Bia',
+            'password' => 'Senha@123', 'password_confirmation' => 'Senha@123', 'terms' => '1',
+        ]);
+        $admin = User::where('email', 'bia@email.com')->first();
+        $cat = $admin->family->categories()->where('type', 'despesa')->first();
+
+        $this->post('/expenses', [
+            'description' => 'Feira', 'amount' => '45,50', 'occurred_on' => now()->toDateString(),
+            'status' => 'pago', 'category_id' => $cat->id, 'payment_method' => 'dinheiro_fisico',
+        ])->assertSessionHasNoErrors();
+
+        $carteira = Account::where('family_id', $admin->family_id)->where('kind', 'carteira')->first();
+        $this->assertNotNull($carteira);
+        $this->assertDatabaseHas('transactions', [
+            'description' => 'Feira', 'payment_method' => 'dinheiro_fisico', 'account_id' => $carteira->id,
+        ]);
+    }
+
     public function test_expense_via_card_creates_invoice_item(): void
     {
         $this->post('/register', [
