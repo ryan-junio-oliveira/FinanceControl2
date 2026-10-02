@@ -13,12 +13,13 @@ class BillingTest extends TestCase
 {
     use RefreshDatabase;
 
-    private function familyWith(string $plan, ?string $trial): Family
+    private function familyWith(string $plan, ?string $trial, ?string $paidUntil = null): Family
     {
         return Family::create([
             'name' => 'Família Billing',
             'plan' => $plan,
             'trial_ends_at' => $trial ? now()->addDays(5) : now()->subDay(),
+            'plan_paid_until' => $paidUntil,
         ]);
     }
 
@@ -44,8 +45,15 @@ class BillingTest extends TestCase
         $trial = $this->familyWith('pro_trial', 'ativo');
         $this->actingAs($this->member($trial))->get('/expenses')->assertOk();
 
-        $pro = $this->familyWith('pro', null);
+        $pro = $this->familyWith('pro', null, now()->addMonth()->toDateString());
         $this->actingAs($this->member($pro))->get('/expenses')->assertOk();
+    }
+
+    public function test_middleware_blocks_when_paid_until_expired(): void
+    {
+        config(['billing.enabled' => true]);
+        $family = $this->familyWith('pro', null, now()->subDay()->toDateString());
+        $this->actingAs($this->member($family))->get('/expenses')->assertRedirect(route('plans'));
     }
 
     public function test_billing_disabled_never_blocks(): void
@@ -76,9 +84,29 @@ class BillingTest extends TestCase
             'name' => 'Família MP', 'plan' => 'free', 'trial_ends_at' => null, 'mp_preapproval_id' => 'PRE1',
         ]);
 
-        Http::fake(['api.mercadopago.com/preapproval/PRE1' => Http::response(['status' => 'authorized'])]);
+        Http::fake(['api.mercadopago.com/preapproval/PRE1' => Http::response(['status' => 'authorized', 'next_payment_date' => now()->addMonth()->toIso8601String()])]);
         app(BillingService::class)->handleWebhook(['type' => 'preapproval', 'data' => ['id' => 'PRE1']]);
-        $this->assertSame('pro', $family->fresh()->plan);
+        $fresh = $family->fresh();
+        $this->assertSame('pro', $fresh->plan);
+        $this->assertNotNull($fresh->plan_paid_until);
+    }
+
+    public function test_webhook_payment_renews_paid_until(): void
+    {
+        config(['billing.mercado_pago.access_token' => 'TEST-TOKEN']);
+        $family = Family::create([
+            'name' => 'Família MP', 'plan' => 'free', 'trial_ends_at' => null, 'mp_preapproval_id' => 'PRE1',
+        ]);
+
+        Http::fake([
+            'api.mercadopago.com/v1/payments/PAY1' => Http::response(['status' => 'approved', 'preapproval_id' => 'PRE1']),
+            'api.mercadopago.com/preapproval/PRE1' => Http::response(['auto_recurring' => ['frequency' => 1]]),
+        ]);
+        app(BillingService::class)->handleWebhook(['type' => 'payment', 'data' => ['id' => 'PAY1']]);
+
+        $fresh = $family->fresh();
+        $this->assertSame('pro', $fresh->plan);
+        $this->assertTrue($fresh->plan_paid_until->isFuture());
     }
 
     public function test_webhook_cancels_plan(): void

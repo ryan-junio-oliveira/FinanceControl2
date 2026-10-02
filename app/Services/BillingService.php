@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Family;
+use Carbon\Carbon;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
 
@@ -10,8 +11,8 @@ use Illuminate\Support\Facades\Http;
  * Assinatura e cobrança via Mercado Pago (preapproval = recorrência).
  *
  * - checkoutUrl(): gera o link de pagamento da assinatura.
- * - handleWebhook(): eventos do MP ativam/desativam o plano Pro.
- * - isActive(): trial ativo OU plano Pro pago.
+ * - handleWebhook(): eventos de preapproval e payment mantêm o plano em dia.
+ * - isActive(): trial em vigor OU plano pago até plan_paid_until.
  */
 final class BillingService
 {
@@ -22,14 +23,19 @@ final class BillingService
             && config('billing.mercado_pago.access_token') !== '';
     }
 
-    /** Família com acesso liberado (trial em vigor ou Pro). */
+    /** Família com acesso liberado (trial em vigor ou Pro pago até hoje). */
     public function isActive(Family $family): bool
     {
         if (! config('billing.enabled')) {
             return true;
         }
+        if ($family->trial_ends_at?->isFuture()) {
+            return true;
+        }
 
-        return $family->trial_ends_at?->isFuture() || $family->plan === 'pro';
+        return $family->plan === 'pro'
+            && $family->plan_paid_until
+            && now()->startOfDay()->lte(Carbon::parse($family->plan_paid_until));
     }
 
     /** Dados para a tela de planos. */
@@ -38,7 +44,8 @@ final class BillingService
         return [
             'trial_ativo' => (bool) $family->trial_ends_at?->isFuture(),
             'trial_ends_at' => $family->trial_ends_at?->toDateString(),
-            'pro' => $family->plan === 'pro',
+            'pro' => $this->isActive($family),
+            'paid_until' => $family->plan_paid_until?->toDateString(),
             'preapproval' => $family->mp_preapproval_id,
             'plans' => config('billing.plans'),
             'enabled' => $this->enabled(),
@@ -79,32 +86,80 @@ final class BillingService
         if ($id = $family->mp_preapproval_id) {
             $this->http()->put("/preapproval/{$id}", ['status' => 'cancelled']);
         }
-        $family->update(['plan' => 'free']);
+        $family->update(['plan' => 'free', 'plan_paid_until' => null]);
     }
 
-    /**
-     * Processa o evento do webhook (topic=preapproval).
-     * 'authorized' => Pro ativo; qualquer outro estado => free.
-     */
+    /** Processa o evento do webhook: preapproval (status) ou payment (renovação). */
     public function handleWebhook(array $payload): void
     {
         $topic = $payload['type'] ?? $payload['topic'] ?? null;
         $id = $payload['data']['id'] ?? null;
-        if ($topic !== 'preapproval' || ! $id) {
+        if (! $id) {
             return;
         }
 
+        match ($topic) {
+            'preapproval' => $this->handlePreapproval($id),
+            'payment' => $this->handlePayment($id),
+            default => null,
+        };
+    }
+
+    private function handlePreapproval(string $id): void
+    {
         $resp = $this->http()->get("/preapproval/{$id}");
         if (! $resp->successful()) {
             return;
         }
-
+        $data = $resp->json();
         $family = Family::where('mp_preapproval_id', $id)->first();
         if (! $family) {
             return;
         }
 
-        $family->update(['plan' => $resp->json('status') === 'authorized' ? 'pro' : 'free']);
+        if (($data['status'] ?? '') === 'authorized') {
+            $until = $data['next_payment_date'] ?? now()->addMonth()->toDateString();
+            $family->update([
+                'plan' => 'pro',
+                'plan_paid_until' => Carbon::parse($until)->toDateString(),
+            ]);
+        } else {
+            $family->update(['plan' => 'free', 'plan_paid_until' => null]);
+        }
+    }
+
+    private function handlePayment(string $id): void
+    {
+        $resp = $this->http()->get("/v1/payments/{$id}");
+        if (! $resp->successful()) {
+            return;
+        }
+        $data = $resp->json();
+        if (($data['status'] ?? '') !== 'approved') {
+            return;
+        }
+        $preId = $data['preapproval_id'] ?? null;
+        $family = $preId ? Family::where('mp_preapproval_id', $preId)->first() : null;
+        if (! $family) {
+            return;
+        }
+
+        $months = $this->monthsOfPreapproval($preId);
+        $family->update([
+            'plan' => 'pro',
+            'plan_paid_until' => now()->addMonths($months)->toDateString(),
+        ]);
+    }
+
+    /** Período da recorrência (1 = mensal, 12 = anual). */
+    private function monthsOfPreapproval(string $id): int
+    {
+        $resp = $this->http()->get("/preapproval/{$id}");
+        if ($resp->successful()) {
+            return max(1, (int) ($resp->json('auto_recurring.frequency') ?? 1));
+        }
+
+        return 1;
     }
 
     private function http(): PendingRequest

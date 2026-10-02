@@ -8,11 +8,11 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Family extends Model
 {
-    protected $fillable = ['name', 'plan', 'trial_ends_at', 'mp_preapproval_id'];
+    protected $fillable = ['name', 'plan', 'trial_ends_at', 'mp_preapproval_id', 'plan_paid_until'];
 
     protected function casts(): array
     {
-        return ['trial_ends_at' => 'datetime'];
+        return ['trial_ends_at' => 'datetime', 'plan_paid_until' => 'date'];
     }
 
     public function users(): HasMany

@@ -21,7 +21,7 @@
             <span class="w-11 h-11 rounded-xl bg-emerald-500 grid place-items-center text-white shrink-0"><span class="material-symbols-outlined">verified</span></span>
             <div>
                 <p class="font-extrabold text-gray-900">Plano Pro ativo 🎉</p>
-                <p class="text-[13px] text-gray-500 mt-0.5">Sua assinatura está ativa. Aproveite todos os recursos.</p>
+                <p class="text-[13px] text-gray-500 mt-0.5">Sua assinatura está em dia até <b class="text-gray-800">{{ \Carbon\Carbon::parse($s['paid_until'])->format('d/m/Y') }}</b>.</p>
             </div>
         </div>
         @elseif($s['trial_ativo'])
