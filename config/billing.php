@@ -50,4 +50,8 @@ return [
 
     // Trial em dias concedido no cadastro.
     'trial_days' => (int) env('PLAN_TRIAL_DAYS', 14),
+
+    // Lista negra de trials: além do e-mail, marca o IP de quem criou a conta
+    // (impede a mesma pessoa criar trial de novo com outro e-mail).
+    'blacklist_ip' => (bool) env('BLACKLIST_IP', false),
 ];

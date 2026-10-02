@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Family;
+use App\Models\TrialBlacklist;
 use App\Models\User;
 use App\Services\BillingService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -118,6 +119,36 @@ class BillingTest extends TestCase
         $fresh = $family->fresh();
         $this->assertSame('pro', $fresh->plan);
         $this->assertTrue($fresh->plan_paid_until->isFuture());
+    }
+
+    public function test_register_marks_email_on_blacklist(): void
+    {
+        $this->post('/register', [
+            'manager_name' => 'Ana', 'email' => 'ana@email.com', 'family_name' => 'Família Ana',
+            'password' => 'Senha@123', 'password_confirmation' => 'Senha@123', 'terms' => '1',
+        ])->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('trial_blacklist', ['identifier' => 'ana@email.com', 'type' => 'email']);
+    }
+
+    public function test_register_blocks_blacklisted_email(): void
+    {
+        TrialBlacklist::create(['identifier' => 'ana@email.com', 'type' => 'email']);
+
+        $this->post('/register', [
+            'manager_name' => 'Ana', 'email' => 'ana@email.com', 'family_name' => 'Família Ana',
+            'password' => 'Senha@123', 'password_confirmation' => 'Senha@123', 'terms' => '1',
+        ])->assertSessionHasErrors('email');
+    }
+
+    public function test_register_blocks_blacklisted_ip_when_enabled(): void
+    {
+        config(['billing.blacklist_ip' => true]);
+        TrialBlacklist::create(['identifier' => '127.0.0.1', 'type' => 'ip']);
+
+        $this->post('/register', [
+            'manager_name' => 'Bia', 'email' => 'bia@email.com', 'family_name' => 'Família Bia',
+            'password' => 'Senha@123', 'password_confirmation' => 'Senha@123', 'terms' => '1',
+        ])->assertSessionHasErrors('email');
     }
 
     public function test_webhook_validates_signature(): void

@@ -4,10 +4,12 @@ namespace App\Services;
 
 use App\Models\Family;
 use App\Models\Invitation;
+use App\Models\TrialBlacklist;
 use App\Models\User;
 use App\Support\CategoryCatalog;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Regras de domínio da autenticação e do cadastro.
@@ -18,11 +20,14 @@ final class AuthService
 {
     public function register(array $data): User
     {
-        return DB::transaction(function () use ($data) {
+        $ip = (string) request()->ip();
+        $this->assertTrialAllowed($data['email'], $ip);
+
+        $user = DB::transaction(function () use ($data) {
             $family = Family::create([
                 'name' => $data['family_name'],
                 'plan' => 'pro_trial',
-                'trial_ends_at' => now()->addDays(14),
+                'trial_ends_at' => now()->addDays((int) config('billing.trial_days', 14)),
             ]);
             $family->settings()->create([]);
 
@@ -37,6 +42,10 @@ final class AuthService
                 'role' => 'admin',
             ]);
         });
+
+        $this->rememberTrial($data['email'], $ip);
+
+        return $user;
     }
 
     /** Ativa o acesso de um convite pendente (primeiro acesso). */
@@ -44,7 +53,7 @@ final class AuthService
     {
         abort_if(User::where('email', $invitation->email)->exists(), 422, 'Este e-mail já possui acesso. Use o login.');
 
-        return DB::transaction(function () use ($invitation, $password) {
+        $user = DB::transaction(function () use ($invitation, $password) {
             $user = User::create([
                 'name' => $invitation->name,
                 'email' => $invitation->email,
@@ -56,5 +65,41 @@ final class AuthService
 
             return $user;
         });
+
+        // Membro da família também fica marcado: não pode criar trial próprio depois.
+        TrialBlacklist::firstOrCreate(
+            ['identifier' => $invitation->email, 'type' => 'email'],
+            ['created_at' => now()]
+        );
+
+        return $user;
+    }
+
+    /** Bloqueia cadastro se o e-mail (ou IP) já usou o período de teste. */
+    private function assertTrialAllowed(string $email, string $ip): void
+    {
+        $blocked = TrialBlacklist::where('type', 'email')->where('identifier', $email)->exists();
+        if (! $blocked && config('billing.blacklist_ip')) {
+            $blocked = TrialBlacklist::where('type', 'ip')->where('identifier', $ip)->exists();
+        }
+        if ($blocked) {
+            throw ValidationException::withMessages([
+                'email' => 'Este e-mail já utilizou o período de teste gratuito do Prumo. É preciso assinar para continuar.',
+            ]);
+        }
+    }
+
+    private function rememberTrial(string $email, string $ip): void
+    {
+        TrialBlacklist::firstOrCreate(
+            ['identifier' => $email, 'type' => 'email'],
+            ['created_at' => now()]
+        );
+        if (config('billing.blacklist_ip')) {
+            TrialBlacklist::firstOrCreate(
+                ['identifier' => $ip, 'type' => 'ip'],
+                ['created_at' => now()]
+            );
+        }
     }
 }
