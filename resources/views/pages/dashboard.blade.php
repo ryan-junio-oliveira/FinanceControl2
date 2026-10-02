@@ -18,13 +18,12 @@
 </div>
 
 {{-- ══════════════ VISÃO GERAL ══════════════ --}}
-<div class="grid sm:grid-cols-2 xl:grid-cols-5 gap-4">
+<div class="grid sm:grid-cols-2 xl:grid-cols-4 gap-4">
     <x-kpi-card label="Saldo em Contas" :value="$money($saldoContas)" icon="account_balance_wallet" accent="blue"
         bottom="<span class='text-[11px] text-gray-400 font-medium'>Digital: <b class='num text-emerald-600'>{{ $money($saldoDigital) }}</b> · Físico: <b class='num text-amber-600'>{{ $money($saldoFisico) }}</b></span>" />
     <x-kpi-card label="Receitas no Mês" :value="$money($kpi['receitas_mes'])" icon="trending_up" accent="green" />
     <x-kpi-card label="Despesas no Mês" :value="$money($kpi['despesas_total_mes'])" icon="payments" accent="red"
-        bottom="<span class='text-[11px] text-gray-400 font-medium'>Sem faturas: <b class='num text-red-500'>{{ $money($kpi['despesas_cash_mes']) }}</b> · Faturas: <b class='num text-orange-500'>{{ $money($kpi['despesas_total_mes'] - $kpi['despesas_cash_mes']) }}</b></span>" />
-    <x-kpi-card label="Faturas em Aberto" :value="$money($faturaAberto)" icon="credit_card" accent="orange" />
+        bottom="<span class='text-[11px] text-gray-400 font-medium'>Sem faturas: <b class='num text-red-500'>{{ $money($kpi['despesas_cash_mes']) }}</b> · Faturas: <b class='num text-orange-500'>{{ $money($kpi['despesas_total_mes'] - $kpi['despesas_cash_mes']) }}</b><br>Em aberto: <b class='num text-amber-600'>{{ $money($faturaAberto) }}</b></span>" />
     <x-kpi-card label="Investimentos" :value="$money($investido)" icon="savings" accent="cyan"
         bottom="<span class='text-[11px] text-gray-400 font-medium'>Rendimentos no mês: <b class='num {{ $inv['rendMes'] >= 0 ? 'text-emerald-600' : 'text-red-500' }}'>{{ $money($inv['rendMes']) }}</b></span>" />
 </div>
