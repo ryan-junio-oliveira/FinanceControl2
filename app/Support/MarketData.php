@@ -205,16 +205,41 @@ final class MarketData
     }
 
     /**
-     * Maiores altas e quedas do Ibovespa.
+     * Maiores altas e quedas combinando ações (IBOV) e FIIs.
+     * Cada item tem `kind`: 'acao' | 'fii'.
      *
      * @return array{up: array, down: array}
      */
     public static function movers(int $n = 5): array
     {
-        $stocks = array_filter(self::ibovStocks(), fn ($s) => $s['change'] !== null);
-        usort($stocks, fn ($a, $b) => $b['change'] <=> $a['change']);
+        return Cache::remember('market:movers:v1', self::STOCKS_TTL, function () use ($n) {
+            $items = [];
 
-        return ['up' => array_slice($stocks, 0, $n), 'down' => array_slice(array_reverse($stocks), 0, $n)];
+            foreach (self::ibovStocks() as $s) {
+                $items[] = [
+                    'code' => $s['code'],
+                    'label' => $s['label'] ?? $s['code'],
+                    'change' => $s['change'] ?? null,
+                    'kind' => 'acao',
+                ];
+            }
+            foreach (self::fiiList() as $f) {
+                $items[] = [
+                    'code' => $f['code'],
+                    'label' => $f['label'] ?? $f['code'],
+                    'change' => $f['change'] ?? null,
+                    'kind' => 'fii',
+                ];
+            }
+
+            $items = array_values(array_filter($items, fn ($i) => $i['change'] !== null));
+            usort($items, fn ($a, $b) => $b['change'] <=> $a['change']);
+
+            return [
+                'up' => array_slice($items, 0, $n),
+                'down' => array_slice(array_reverse($items), 0, $n),
+            ];
+        });
     }
 
     /** FIIs via Brapi paginado (100); fallback Yahoo curado. */

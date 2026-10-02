@@ -68,7 +68,7 @@ class MarketHandler extends BotHandler
         return '<b>'.BotPresenter::money((float) $item['value']).'</b>'.$change;
     }
 
-    /** @param array<int, array{code: string, change: ?float}> $stocks */
+    /** @param array<int, array{code: string, change: ?float, kind: string}> $stocks */
     private static function stocks(array $stocks, string $empty): string
     {
         if ($stocks === []) {
@@ -76,7 +76,8 @@ class MarketHandler extends BotHandler
         }
         $lines = [];
         foreach ($stocks as $s) {
-            $lines[] = '• <b>'.$s['code'].'</b> '.BotPresenter::change($s['change'] ?? null);
+            $tipo = $s['kind'] === 'fii' ? '🏢' : '📈';
+            $lines[] = '• '.$tipo.' <b>'.$s['code'].'</b> '.BotPresenter::change($s['change'] ?? null).' · '.($s['kind'] === 'fii' ? 'FII' : 'Ação');
         }
 
         return implode("\n", $lines);

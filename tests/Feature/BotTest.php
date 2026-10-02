@@ -11,7 +11,9 @@ use App\Models\Family;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Support\CategoryCatalog;
+use App\Support\MarketData;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class BotTest extends TestCase
@@ -165,12 +167,12 @@ class BotTest extends TestCase
     public function test_market_menu(): void
     {
         [, $admin] = $this->familyWithLinkedUser();
-        \App\Models\BotIdentity::create(['user_id' => $admin->id, 'channel' => 'telegram', 'external_id' => '99']);
+        BotIdentity::create(['user_id' => $admin->id, 'channel' => 'telegram', 'external_id' => '99']);
 
         // Sem rede: snapshot vazio + ações vazias → mostra "indisponível" sem quebrar.
-        \Illuminate\Support\Facades\Http::fake([
-            'query1.finance.yahoo.com/*' => \Illuminate\Support\Facades\Http::response(['chart' => ['result' => []]]),
-            '*' => \Illuminate\Support\Facades\Http::response(null, 500),
+        Http::fake([
+            'query1.finance.yahoo.com/*' => Http::response(['chart' => ['result' => []]]),
+            '*' => Http::response(null, 500),
         ]);
 
         $this->send('7');
@@ -182,19 +184,28 @@ class BotTest extends TestCase
 
     public function test_market_movers_sorting(): void
     {
-        \Illuminate\Support\Facades\Http::fake(function ($request) {
+        Http::fake(function ($request) {
             $url = (string) $request->url();
-            $change = str_contains($url, 'PETR4') ? 3.5 : (str_contains($url, 'VALE3') ? -2.25 : 0.5);
+            if (str_contains($url, 'brapi')) {
+                return Http::response(['stocks' => [], 'hasNextPage' => false]);
+            }
+            $change = str_contains($url, 'PETR4') ? 3.5 : (str_contains($url, 'VALE3') ? -2.25 : (str_contains($url, 'HGLG11') ? 1.5 : 0.5));
 
-            return \Illuminate\Support\Facades\Http::response([
+            return Http::response([
                 'chart' => ['result' => [[
                     'meta' => ['regularMarketPrice' => 10, 'regularMarketChangePercent' => $change, 'shortName' => 'X'],
                 ]]],
             ]);
         });
 
-        $movers = \App\Support\MarketData::movers(5);
+        $movers = MarketData::movers(5);
         $this->assertSame('PETR4', $movers['up'][0]['code']);
+        $this->assertSame('acao', $movers['up'][0]['kind']);
         $this->assertSame('VALE3', $movers['down'][0]['code']);
+
+        // FIIs aparecem junto, rotulados.
+        $fii = collect(array_merge($movers['up'], $movers['down']))->firstWhere('code', 'HGLG11');
+        $this->assertNotNull($fii);
+        $this->assertSame('fii', $fii['kind']);
     }
 }
