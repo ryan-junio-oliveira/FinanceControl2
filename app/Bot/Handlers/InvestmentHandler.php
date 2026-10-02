@@ -185,7 +185,7 @@ class InvestmentHandler extends BotHandler
         $data['occurred_on'] = $date;
 
         $isAporte = $data['kind'] === 'aporte';
-        $conta = $user->family->accounts()->find($data['account_id']);
+        $conta = $user->family->accounts()->find($data['account_id'] ?? null);
         $ativo = Asset::where('family_id', $user->family_id)->find($data['asset_id'] ?? 0);
         $summary = '🧾 <b>Confirmar '.($isAporte ? 'aporte' : 'rendimento').'?</b>'."\n"
             .BotPresenter::divider()."\n"
