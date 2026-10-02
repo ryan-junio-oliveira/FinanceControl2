@@ -105,7 +105,7 @@ final class BotPresenter
             self::divider(),
             '🏦 Contas: <b>'.self::money($dados['saldoContas']).'</b>',
             '💳 Faturas: <b>'.self::money($dados['faturaAberto']).'</b>',
-            '🧾 A pagar (30d): <b>'.self::money($dados['aPagar']['s30']['valor']).'</b> · '.$dados['aPagar']['s30']['qtd'].' contas',
+            '🧾 A pagar (15d): <b>'.self::money($dados['aPagar']['s15']['valor']).'</b> · '.$dados['aPagar']['s15']['qtd'].' contas',
         ];
 
         return implode("\n", $lines);
