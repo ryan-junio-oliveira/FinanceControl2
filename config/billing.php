@@ -29,14 +29,14 @@ return [
     'plans' => [
         'mensal' => [
             'label' => 'Mensal',
-            'price' => (float) env('PLAN_MENSAL_PRICE', 19.90),
+            'price' => (float) env('PLAN_MENSAL_PRICE', 1.00),
             'frequencia' => 1,
             'tipo' => 'months',
             'destaque' => false,
         ],
         'anual' => [
             'label' => 'Anual',
-            'price' => (float) env('PLAN_ANUAL_PRICE', 199.00),
+            'price' => (float) env('PLAN_ANUAL_PRICE', 10.00),
             'frequencia' => 12,
             'tipo' => 'months',
             'destaque' => true,
