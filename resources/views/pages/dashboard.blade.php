@@ -66,6 +66,12 @@
     </x-section-card>
 </div>
 
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+    <x-section-card class="lg:col-span-5" title="Investimentos por Categoria" :subtitle="'Distribuição do valor investido por classe'">
+        <div id="chart-alocacao" class="w-full"></div>
+    </x-section-card>
+</div>
+
 {{-- ══════════════ POR MEMBRO ══════════════ --}}
 <x-section-card title="Detalhes por Membro" :subtitle="'Receitas, despesas e gastos no cartão em '.$mesLabel">
     <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -110,6 +116,7 @@ window.DashboardCharts = {
     'chart-fluxo': @json($charts['fluxo']),
     'chart-categorias': @json($charts['categorias']),
     'chart-receitas': @json($charts['receitasCat']),
+    'chart-alocacao': @json($charts['alocacao']),
 };
 </script>
 @endsection
