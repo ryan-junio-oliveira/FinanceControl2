@@ -53,7 +53,6 @@ final class Dashboard
         $cartoes = self::cartoes($family, $hoje);
         $inv = self::investimentos($fid, $mes, $y);
         $membros = self::membros($family, $mes);
-        $proximos = self::proximos($fid, $hoje);
 
         $charts = [
             'fluxo' => self::chartFluxo($fid, $y),
@@ -69,7 +68,7 @@ final class Dashboard
         return compact(
             'mes', 'y', 'm', 'isMesCorrente',
             'kpi', 'saldoContas', 'investido', 'faturaAberto', 'patrimonio',
-            'aPagar', 'cartoes', 'inv', 'membros', 'proximos', 'charts',
+            'aPagar', 'cartoes', 'inv', 'membros', 'charts',
         );
     }
 
@@ -139,8 +138,11 @@ final class Dashboard
                 'limite' => (float) $c->credit_limit,
                 'cor' => $c->display_color,
                 'vencimento' => $c->nextDueDate($hoje)->format('d/m/Y'),
+                'dias' => $hoje->diffInDays($c->nextDueDate($hoje)->startOfDay(), false),
             ];
         }
+
+        usort($lista, fn ($a, $b) => $a['dias'] <=> $b['dias']);
 
         return [
             'fatura_atual' => round($faturaAtual, 2),
@@ -223,21 +225,6 @@ final class Dashboard
                 'pct' => $maxDes > 0 ? round($despesa / $maxDes * 100) : 0,
             ];
         })->sortByDesc('despesas')->values()->all();
-    }
-
-    private static function proximos(int $fid, Carbon $hoje): array
-    {
-        return Transaction::where('family_id', $fid)
-            ->where('type', 'despesa')->where('status', 'pendente')->whereNotNull('due_on')
-            ->whereBetween('due_on', [$hoje->toDateString(), $hoje->copy()->addDays(30)->toDateString()])
-            ->with('category')->orderBy('due_on')->take(8)
-            ->get()->map(fn ($t) => [
-                'descricao' => $t->description,
-                'categoria' => $t->category?->name ?? '—',
-                'valor' => (float) $t->amount,
-                'vencimento' => $t->due_on->format('d/m/Y'),
-                'dias' => $hoje->diffInDays($t->due_on, false),
-            ])->all();
     }
 
     // ──────────────────────────── Gráficos ────────────────────────────

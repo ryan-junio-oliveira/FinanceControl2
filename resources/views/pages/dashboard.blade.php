@@ -45,23 +45,23 @@
         <div id="chart-receitas" class="w-full"></div>
     </x-section-card>
 
-    <x-section-card class="lg:col-span-5" title="Próximos Vencimentos" subtitle="Contas pendentes nos próximos 30 dias">
-        @forelse($proximos as $v)
+    <x-section-card class="lg:col-span-5" title="Faturas a Vencer" subtitle="Faturas dos cartões nos próximos 30 dias">
+        @forelse(collect($cartoes['lista'])->filter(fn($c) => $c['aberto'] > 0 && $c['dias'] <= 30) as $c)
         <div class="flex items-center gap-3 p-3.5 rounded-xl border border-slate-100 hover:border-slate-200 bg-slate-50/40 mb-2.5 transition">
-            <span class="w-10 h-10 rounded-lg grid place-items-center shrink-0 bg-amber-50 text-amber-500">
-                <span class="material-symbols-outlined text-[19px]">event</span>
+            <span class="w-10 h-10 rounded-lg grid place-items-center shrink-0 text-white" style="background:{{ $c['cor'] }}">
+                <span class="material-symbols-outlined text-[18px]">credit_card</span>
             </span>
             <div class="flex-1 min-w-0">
-                <p class="text-[13px] font-bold text-gray-800 truncate">{{ $v['descricao'] }}</p>
-                <p class="text-[11px] text-gray-400">{{ $v['categoria'] }} · vence {{ $v['vencimento'] }}</p>
+                <p class="text-[13px] font-bold text-gray-800 truncate">{{ $c['nome'] }}</p>
+                <p class="text-[11px] text-gray-400">{{ $c['bandeira'] }} · vence {{ $c['vencimento'] }}</p>
             </div>
-            <strong class="num text-[13px] text-gray-800 shrink-0">{{ $money($v['valor']) }}</strong>
-            <x-badge :type="$v['dias'] <= 1 ? 'critical' : 'warning'">{{ $v['dias'] <= 0 ? 'Hoje' : ($v['dias'] === 1 ? 'Amanhã' : $v['dias'].' dias') }}</x-badge>
+            <strong class="num text-[13px] text-gray-800 shrink-0">{{ $money($c['aberto']) }}</strong>
+            <x-badge :type="$c['dias'] <= 1 ? 'critical' : 'warning'">{{ $c['dias'] <= 0 ? 'Hoje' : ($c['dias'] === 1 ? 'Amanhã' : $c['dias'].' dias') }}</x-badge>
         </div>
         @empty
         <div class="text-center py-10 text-gray-400">
-            <span class="material-symbols-outlined text-[44px] text-gray-300">event_available</span>
-            <p class="text-[13px] font-bold mt-2 text-gray-500">Nada vencendo nos próximos 30 dias.</p>
+            <span class="material-symbols-outlined text-[44px] text-gray-300">credit_card_off</span>
+            <p class="text-[13px] font-bold mt-2 text-gray-500">Nenhuma fatura vencendo nos próximos 30 dias.</p>
         </div>
         @endforelse
     </x-section-card>
