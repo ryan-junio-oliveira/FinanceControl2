@@ -9,7 +9,7 @@ if curl -s -o /dev/null --max-time 2 http://localhost:8000/login; then
   echo "[1/3] Servidor já rodando na porta 8000."
 else
   echo "[1/3] Iniciando php artisan serve..."
-  (nohup php artisan serve --host=127.0.0.1 --port=8000 > storage/logs/serve.log 2>&1 &)
+  (nohup php artisan serve --host=0.0.0.0 --port=8000 > storage/logs/serve.log 2>&1 &)
   sleep 6
 fi
 

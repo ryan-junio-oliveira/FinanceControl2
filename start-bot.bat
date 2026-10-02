@@ -13,7 +13,7 @@ if %errorlevel% equ 0 (
     echo [1/3] Servidor ja rodando na porta 8000.
 ) else (
     echo [1/3] Iniciando php artisan serve...
-    start "FinFamilia-Server" cmd /k "cd /d %~dp0 && php artisan serve --host=127.0.0.1 --port=8000"
+    start "FinFamilia-Server" cmd /k "cd /d %~dp0 && php artisan serve --host=0.0.0.0 --port=8000"
     timeout /t 6 /nobreak >nul
 )
 
