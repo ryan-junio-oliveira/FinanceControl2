@@ -73,6 +73,20 @@ class ReceiptTest extends TestCase
         $this->assertContains('date', $out['missing']);
     }
 
+    public function test_parser_does_not_use_bank_name_as_description(): void
+    {
+        $out = ReceiptParser::parse("Nubank\nComprovante de Pix\nPix enviado\nValor: R$ 50,00\nData: 05/10/2026\n");
+        $this->assertSame('Nubank', $out['bank']);
+        $this->assertNotSame('Nubank', $out['description']);
+        $this->assertNotSame('Comprovante de Pix', $out['description']);
+    }
+
+    public function test_parser_uses_structured_description_field(): void
+    {
+        $out = ReceiptParser::parse("Banco Inter\nPix recebido\nDescrição: Salário de outubro\nValor: R$ 5.000,00\nData: 05/10/2026\n");
+        $this->assertSame('Salário de outubro', $out['description']);
+    }
+
     private function linkedFamily(): array
     {
         $family = Family::create(['name' => 'Família Bot']);

@@ -183,27 +183,76 @@ final class ReceiptParser
 
     private static function description(array $lines, string $channel): string
     {
-        // Tenta linhas de favorecido/beneficiário/parceiro.
-        foreach ($lines as $i => $line) {
-            $low = mb_strtolower($line);
-            if (preg_match('/(favorecido|beneficiario|para|destinatario|estabelecimento|loja)\s*:?\s*(.+)/ui', $line, $m) && trim($m[2]) !== '') {
-                unset($lines[$i]);
+        // 1) Campo estruturado explícito ("descrição:", "mensagem:", "narrativa:"...).
+        foreach ($lines as $line) {
+            if (preg_match('/(descricao|descrição|mensagem|narrativa|referencia|referência|texto|informacoes|informações|transacao|transação)\s*:?\s*(.+)/ui', $line, $m)) {
                 $candidate = trim($m[2]);
-                if (mb_strlen($candidate) > 2) {
+                if (self::isUseful($candidate)) {
                     return mb_substr($candidate, 0, 120);
                 }
             }
-            unset($low);
         }
-        // Senão, a primeira linha relevante que não seja título/valor.
+
+        // 2) Favorecido/beneficiário/para (de quem veio ou onde gastou).
         foreach ($lines as $line) {
-            if (mb_strlen($line) < 3 || preg_match('/R\$|comprovante|recibo|\d{2}\/\d{2}\/\d{2,4}/ui', $line)) {
+            if (preg_match('/(favorecido|beneficiario|beneficiário|para|destinatario|destinatário|estabelecimento|loja)\s*:?\s*(.+)/ui', $line, $m) && trim($m[2]) !== '') {
+                $candidate = trim($m[2]);
+                if (mb_strlen($candidate) > 2 && self::isUseful($candidate)) {
+                    return mb_substr($candidate, 0, 120);
+                }
+            }
+        }
+
+        // 3) Primeira linha útil (ignora banco, títulos, valores, datas, códigos).
+        foreach ($lines as $line) {
+            $trim = trim($line);
+            if (! self::isUseful($trim)) {
                 continue;
             }
 
-            return mb_substr($line, 0, 120);
+            return mb_substr($trim, 0, 120);
         }
 
         return $channel === 'pix' ? 'Pix' : 'Comprovante';
+    }
+
+    /** Linha aproveitável como descrição (não é banco, título, valor, data ou código). */
+    private static function isUseful(string $line): bool
+    {
+        if (mb_strlen($line) < 3) {
+            return false;
+        }
+        $low = mb_strtolower($line);
+
+        // Cabeçalhos/títulos do comprovante.
+        foreach (['comprovante', 'recibo de', 'recibo do', 'autenticacao', 'autenticação', 'extrato', 'nota fiscal', 'fatura'] as $w) {
+            if (str_starts_with($low, $w)) {
+                return false;
+            }
+        }
+        // Linha que é só o meio (pix, ted, boleto, etc.).
+        if (preg_match('/^(pix|ted|doc|boleto|transferencia|transferência|pagamento|compra|venda|estorno|estorno pix)\b/i', $low)) {
+            return false;
+        }
+        // Campos técnicos (rotulados).
+        if (preg_match('/^(autenticacao|codigo|código|protocolo|identificador|id |data|horario|hora|valor|nome\b|cpf|cnpj|agencia|agência|conta|banco|instituicao|instituição)\b/i', $low)) {
+            return false;
+        }
+
+        // Nome de banco conhecido (linha inteira ou como rótulo "Banco: ...").
+        foreach (self::BANKS as $words) {
+            foreach ($words as $w) {
+                $w = trim($w);
+                if ($w !== '' && ($low === $w || str_starts_with($low, $w.':') || str_contains($low, $w.' '))) {
+                    return false;
+                }
+            }
+        }
+
+        if (preg_match('/R\$|^\d{1,2}\/\d{1,2}\/\d{2,4}|^\d{1,2}:\d{2}/u', $line)) {
+            return false;
+        }
+
+        return true;
     }
 }
