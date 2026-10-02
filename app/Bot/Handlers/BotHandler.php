@@ -29,7 +29,7 @@ abstract class BotHandler
     protected function showMenu(BotDriver $driver, IncomingMessage $msg, ?User $user, bool $unknown = false): void
     {
         ConversationState::clear($msg->channel, $msg->chatId);
-        $hello = $user ? ', '.explode(' ', $user->name)[0] : '';
+        $hello = $user ? ', '.e(explode(' ', $user->name)[0]) : '';
         $prefix = $unknown ? "🤔 Não entendi. Escolha uma opção:\n\n" : '';
         $text = $prefix.'🏠 <b>Prumo</b>'.$hello."\n".BotPresenter::divider()."\nEscolha uma opção:";
         $driver->sendText($msg->chatId, $text, $this->menuKeyboard());
@@ -95,7 +95,7 @@ abstract class BotHandler
     {
         $out = [];
         foreach ($lines as $i => $line) {
-            $out[] = '<b>'.($i + 1).'</b> '.$line;
+            $out[] = '<b>'.($i + 1).'</b> '.e($line);
         }
 
         return implode("\n", $out);

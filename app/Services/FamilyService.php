@@ -59,7 +59,7 @@ final class FamilyService
         abort_if($family->users()->where('email', $data['email'])->exists(), 422, 'Este e-mail já pertence à sua conta.');
         abort_if($family->invitations()->where('email', $data['email'])->whereNull('accepted_at')->exists(), 422, 'Já existe um convite pendente para este e-mail.');
 
-        $invitation = $family->invitations()->create($data + ['token' => Str::random(48)]);
+        $invitation = $family->invitations()->create($data + ['token' => Str::random(48), 'expires_at' => now()->addDays(7)]);
 
         try {
             Mail::to($data['email'])->queue(new WelcomeEmail($invitation));

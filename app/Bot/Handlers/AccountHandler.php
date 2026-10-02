@@ -68,7 +68,7 @@ class AccountHandler extends BotHandler
         $lines = [BotPresenter::header('Contas'), ''];
         foreach ($contas as $c) {
             $total += (float) $c->balance;
-            $lines[] = '🏦 <b>'.$c->name.'</b>';
+            $lines[] = '🏦 <b>'.e($c->name).'</b>';
             $lines[] = '   '.($c->bank->name ?? '—').' · <b>'.BotPresenter::money((float) $c->balance).'</b>';
         }
         $lines[] = '';
@@ -134,7 +134,7 @@ class AccountHandler extends BotHandler
             $msg,
             'bank',
             $data,
-            '❌ Nenhum banco com "'.$q.'". Tente outra parte do nome ou o código (ex.: 341):',
+            '❌ Nenhum banco com "'.e($q).'". Tente outra parte do nome ou o código (ex.: 341):',
             $this->cancelKeyboard()
         );
     }
@@ -193,7 +193,7 @@ class AccountHandler extends BotHandler
         $bank = Bank::find($data['bank_id']);
         $summary = '🧾 <b>Confirmar nova conta?</b>'."\n"
             .BotPresenter::divider()."\n"
-            .'🏦 '.$data['name']."\n"
+            .'🏦 '.e($data['name'])."\n"
             .'🏛️ '.($bank->name ?? '—').' · '.self::KINDS[$data['kind']]."\n"
             .'💵 Saldo inicial: <b>'.BotPresenter::money($amount).'</b>';
         $this->ask($driver, $msg, 'confirm', $data, $summary, $this->confirmKeyboard());
@@ -220,6 +220,6 @@ class AccountHandler extends BotHandler
             'active' => true,
         ]);
 
-        $this->done($driver, $msg, $user, '✅ Conta <b>'.$data['name'].'</b> cadastrada!');
+        $this->done($driver, $msg, $user, '✅ Conta <b>'.e($data['name']).'</b> cadastrada!');
     }
 }

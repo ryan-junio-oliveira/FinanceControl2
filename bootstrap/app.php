@@ -4,6 +4,7 @@ use App\Http\Middleware\EnsureActivePlan;
 use App\Http\Middleware\EnsureFamilyOwnership;
 use App\Http\Middleware\EnsureFamilyRole;
 use App\Http\Middleware\NoStoreHtml;
+use App\Http\Middleware\SecurityHeaders;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -24,6 +25,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
         $middleware->web(append: [
             NoStoreHtml::class,
+            SecurityHeaders::class,
         ]);
 
         // Webhook do Mercado Pago chega sem token CSRF.

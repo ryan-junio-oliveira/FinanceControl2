@@ -14,7 +14,8 @@ class UserObserver
     {
         $changes = [];
         foreach ($user->getChanges() as $field => $new) {
-            if (in_array($field, ['updated_at', 'remember_token'], true)) {
+            // Nunca persistir segredos no log de auditoria.
+            if (in_array($field, ['updated_at', 'remember_token', 'password', 'bot_code'], true)) {
                 continue;
             }
             $changes[$field] = ['de' => $user->getOriginal($field), 'para' => $new];

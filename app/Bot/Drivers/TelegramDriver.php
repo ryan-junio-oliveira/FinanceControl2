@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 /** Driver do Telegram (Bot API — grátis e ilimitada). */
 final class TelegramDriver implements BotDriver
@@ -78,8 +79,12 @@ final class TelegramDriver implements BotDriver
             if (! $bytes->successful()) {
                 return null;
             }
-            $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION) ?: 'bin');
-            $local = 'receipts/'.date('Y/m').'/'.uniqid('rcp_', true).'.'.$ext;
+            $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION) ?: '');
+            // Só aceita os formatos que o leitor de comprovantes suporta.
+            if (! in_array($ext, ['jpg', 'jpeg', 'png', 'webp', 'pdf'], true)) {
+                return null;
+            }
+            $local = 'receipts/'.date('Y/m').'/'.Str::random(32).'.'.$ext;
             Storage::disk('local')->put($local, $bytes->body());
 
             return Storage::disk('local')->path($local);

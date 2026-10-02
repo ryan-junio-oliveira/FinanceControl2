@@ -275,9 +275,9 @@ class ReceiptHandler extends BotHandler
         }
         $summary = '🧾 <b>Confirmar '.($data['type'] === 'receita' ? 'receita' : 'despesa')."?</b>\n"
             .BotPresenter::divider()."\n"
-            .'📝 '.$data['description']."\n"
+            .'📝 '.e($data['description'])."\n"
             .'💵 <b>'.BotPresenter::money((float) $data['amount']).'</b> · '.Carbon::parse($data['date'])->format('d/m/Y')."\n"
-            .'🏦 '.($account->name ?? '—').' · 🏷️ '.($cat->name ?? '—')
+            .'🏦 '.e($account->name ?? '—').' · 🏷️ '.e($cat->name ?? '—')
             .($extra ? "\n".implode(' · ', $extra) : '')
             ."\n📎 Comprovante anexado.";
         $this->ask($driver, $msg, 'confirm', $data, $summary, $this->confirmKeyboard());

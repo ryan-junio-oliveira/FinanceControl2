@@ -324,7 +324,7 @@ abstract class TransactionFlowHandler extends BotHandler
         $summary = '🧾 <b>Confirmar compra no cartão?</b>'."\n"
             .BotPresenter::divider()."\n"
             .'💳 '.($card->name ?? '—')."\n"
-            .'🛒 '.$data['description']."\n"
+            .'🛒 '.e($data['description'])."\n"
             .'💵 <b>'.BotPresenter::money($data['amount']).'</b> · '.Carbon::parse($data['occurred_on'])->format('d/m/Y')."\n"
             .'🏷️ '.($cat->name ?? '—').' · 👤 '.($member->name ?? '—');
         $this->ask($driver, $msg, 'confirmcard', $data, $summary, $this->confirmKeyboard());
@@ -353,7 +353,7 @@ abstract class TransactionFlowHandler extends BotHandler
         ]);
 
         $card = $user->family->creditCards()->find($data['credit_card_id']);
-        $this->done($driver, $msg, $user, '✅ Compra lançada na fatura do <b>'.($card->name ?? 'cartão').'</b>: <b>'.$data['description'].'</b> ('.BotPresenter::money($data['amount']).').');
+        $this->done($driver, $msg, $user, '✅ Compra lançada na fatura do <b>'.e($card->name ?? 'cartão').'</b>: <b>'.e($data['description']).'</b> ('.BotPresenter::money($data['amount']).').');
     }
 
     private function stepFixedAnswer(BotDriver $driver, IncomingMessage $msg, array $data, string $text, ?User $user): void
@@ -402,17 +402,17 @@ abstract class TransactionFlowHandler extends BotHandler
         $isDeposito = ($data['payment_method'] ?? null) === 'deposito';
         $titulo = $isDeposito ? 'Depósito' : strtolower($this->typeLabel(true));
         $contaLinha = $isDeposito
-            ? '💵 Carteira → 🏦 '.($account->name ?? '—')
-            : '👤 '.($member->name ?? '—').' · 🏦 '.($account->name ?? '—');
+            ? '💵 Carteira → 🏦 '.e($account->name ?? '—')
+            : '👤 '.e($member->name ?? '—').' · 🏦 '.e($account->name ?? '—');
         $fixedLine = ! empty($data['is_fixed'])
             ? "\n🔁 Fixa · ".$this->paymentLabel().' todo dia '.Carbon::parse($data['due_on'])->format('j')
             : "\n🔁 Eventual";
         $summary = '🧾 <b>Confirmar '.$titulo.'?</b>'."\n"
             .BotPresenter::divider()."\n"
-            .'📝 '.$data['description']."\n"
+            .'📝 '.e($data['description'])."\n"
             .'💵 <b>'.BotPresenter::money($data['amount']).'</b> · '.Carbon::parse($data['occurred_on'])->format('d/m/Y')."\n"
             .$contaLinha."\n"
-            .'🏷️ '.($cat->name ?? '—')
+            .'🏷️ '.e($cat->name ?? '—')
             .$fixedLine;
         $this->ask($driver, $msg, 'confirm', $data, $summary, $this->confirmKeyboard());
     }
@@ -450,7 +450,7 @@ abstract class TransactionFlowHandler extends BotHandler
                 'occurred_on' => $data['occurred_on'],
                 'description' => $data['description'] ?: 'Depósito (dinheiro físico → conta)',
             ]);
-            $this->done($driver, $msg, $user, '✅ Depósito registrado: <b>'.$data['description'].'</b> ('.BotPresenter::money($data['amount']).').');
+            $this->done($driver, $msg, $user, '✅ Depósito registrado: <b>'.e($data['description']).'</b> ('.BotPresenter::money($data['amount']).').');
 
             return;
         }
@@ -468,7 +468,7 @@ abstract class TransactionFlowHandler extends BotHandler
             'category_id' => $data['category_id'] ?? null,
         ], null, $user->id);
 
-        $this->done($driver, $msg, $user, '✅ '.ucfirst($this->typeLabel(true)).' registrada: <b>'.$data['description'].'</b> ('.BotPresenter::money($data['amount']).').');
+        $this->done($driver, $msg, $user, '✅ '.ucfirst($this->typeLabel(true)).' registrada: <b>'.e($data['description']).'</b> ('.BotPresenter::money($data['amount']).').');
     }
 
     public function list(BotDriver $driver, IncomingMessage $msg, ?User $user): void
@@ -485,7 +485,7 @@ abstract class TransactionFlowHandler extends BotHandler
             '',
         ];
         foreach ($items as $t) {
-            $lines[] = '• '.$t->description.' — <b>'.BotPresenter::money((float) $t->amount).'</b> · '.Carbon::parse($t->occurred_on)->format('d/m');
+            $lines[] = '• '.e($t->description).' — <b>'.BotPresenter::money((float) $t->amount).'</b> · '.Carbon::parse($t->occurred_on)->format('d/m');
         }
         if ($items->isEmpty()) {
             $lines[] = 'Nenhum lançamento no mês.';

@@ -95,6 +95,17 @@ class BotTest extends TestCase
         $this->assertStringContainsString('abacaxi e laranja', (string) NullDriver::lastText());
     }
 
+    public function test_link_code_brute_force_blocked(): void
+    {
+        [$family, $admin] = $this->familyWithLinkedUser();
+
+        for ($i = 0; $i < 11; $i++) {
+            $this->send('000000', '98');
+        }
+        $this->assertStringContainsString('Muitas tentativas', (string) NullDriver::lastText());
+        $this->assertDatabaseMissing('bot_identities', ['external_id' => '98']);
+    }
+
     public function test_link_and_menu(): void
     {
         [, $admin] = $this->familyWithLinkedUser();

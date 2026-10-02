@@ -78,7 +78,7 @@ class CardHandler extends BotHandler
         $lines = [BotPresenter::header('Faturas em aberto'), ''];
         foreach ($cards as $c) {
             $open = (float) $c->open_invoice;
-            $lines[] = '💳 <b>'.$c->name.'</b>';
+            $lines[] = '💳 <b>'.e($c->name).'</b>';
             $lines[] = '   '.BotPresenter::money($open).' · vence '.$c->nextDueDate()->format('d/m');
         }
         if ($cards->isEmpty()) {
@@ -162,7 +162,7 @@ class CardHandler extends BotHandler
         $summary = "🧾 <b>Confirmar compra?</b>\n"
             .BotPresenter::divider()."\n"
             .'💳 '.($card->name ?? '—')."\n"
-            .'🛒 '.$data['description']."\n"
+            .'🛒 '.e($data['description'])."\n"
             .'💵 <b>'.BotPresenter::money($data['amount']).'</b>'."\n"
             .'🏷️ '.($cat->name ?? '—');
         $this->ask($driver, $msg, 'confirm', $data, $summary, $this->confirmKeyboard());
@@ -190,7 +190,7 @@ class CardHandler extends BotHandler
             'category_id' => $data['category_id'] ?? null,
         ]);
 
-        $this->done($driver, $msg, $user, '✅ Compra lançada na fatura: <b>'.$data['description'].'</b> ('.BotPresenter::money($data['amount']).').');
+        $this->done($driver, $msg, $user, '✅ Compra lançada na fatura: <b>'.e($data['description']).'</b> ('.BotPresenter::money($data['amount']).').');
     }
 
     public function startCardFlow(BotDriver $driver, IncomingMessage $msg): void
@@ -332,9 +332,9 @@ class CardHandler extends BotHandler
         $brand = CardBrand::tryFrom($data['brand'])->label();
         $summary = '🧾 <b>Confirmar novo cartão?</b>'."\n"
             .BotPresenter::divider()."\n"
-            .'💳 '.$data['name']."\n"
-            .'🏷️ '.$brand.' · 👤 '.($holder->name ?? '—')."\n"
-            .'🏦 '.($account->name ?? 'Sem conta vinculada')."\n"
+            .'💳 '.e($data['name'])."\n"
+            .'🏷️ '.$brand.' · 👤 '.e($holder->name ?? '—')."\n"
+            .'🏦 '.e($account->name ?? 'Sem conta vinculada')."\n"
             .'💵 Limite: <b>'.BotPresenter::money($data['credit_limit']).'</b>'."\n"
             .'📅 Fecha dia '.$data['closing_day'].' · vence dia '.$data['due_day'];
         $this->ask($driver, $msg, 'confirmcard', $data, $summary, $this->confirmKeyboard());
@@ -364,7 +364,7 @@ class CardHandler extends BotHandler
             'active' => true,
         ]);
 
-        $this->done($driver, $msg, $user, '✅ Cartão <b>'.$data['name'].'</b> cadastrado!');
+        $this->done($driver, $msg, $user, '✅ Cartão <b>'.e($data['name']).'</b> cadastrado!');
     }
 
     private static function parseDay(string $text): ?int

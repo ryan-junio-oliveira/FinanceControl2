@@ -68,12 +68,13 @@ return [
             'oauth2_callback' => 'api/oauth2-callback',
 
             /*
-             * Middleware allows to prevent unexpected access to API documentation
+             * Middleware allows to prevent unexpected access to API documentation.
+             * Fora de local/testing, o JSON e a UI exigem login.
              */
             'middleware' => [
-                'api' => [],
+                'api' => in_array(env('APP_ENV', 'local'), ['local', 'testing'], true) ? [] : ['auth'],
                 'asset' => [],
-                'docs' => [],
+                'docs' => in_array(env('APP_ENV', 'local'), ['local', 'testing'], true) ? [] : ['auth'],
                 'oauth2_callback' => [],
             ],
 

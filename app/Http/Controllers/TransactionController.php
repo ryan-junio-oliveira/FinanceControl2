@@ -12,6 +12,7 @@ use App\Support\Fin;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -198,7 +199,14 @@ class TransactionController extends Controller
         abort_if($attachment->family_id !== Fin::familyId(), 404);
         abort_if(! Storage::disk('local')->exists($attachment->path), 404);
 
-        return Storage::disk('local')->download($attachment->path, $attachment->original_name);
+        // Nome original vem do usuário: higieniza para o Content-Disposition.
+        $safe = Str::ascii($attachment->original_name);
+        $safe = trim(preg_replace('/[^A-Za-z0-9._-]+/', '_', (string) $safe) ?? 'anexo', '._');
+        if ($safe === '') {
+            $safe = 'anexo';
+        }
+
+        return Storage::disk('local')->download($attachment->path, $safe);
     }
 
     /** Remove o anexo (dono do envio ou gestor). */

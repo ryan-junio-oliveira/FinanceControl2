@@ -25,6 +25,8 @@ class TelegramWebhook extends Command
         $secret = (string) config('bot.telegram.secret');
         if ($secret !== '') {
             $payload['secret_token'] = $secret;
+        } else {
+            $this->warn('BOT_TELEGRAM_SECRET vazio: qualquer um pode forjar chamadas ao webhook. Defina um segredo.');
         }
 
         $res = Http::baseUrl(config('bot.telegram.api')."/bot{$token}")->post('/setWebhook', $payload);

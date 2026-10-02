@@ -198,7 +198,7 @@
                 + '<span class="material-symbols-outlined text-[14px]" style="font-variation-settings:\'FILL\' 1,\'wght\' 600,\'GRAD\' 0,\'opsz\' 20">' + (up ? 'trending_up' : 'trending_down') + '</span>'
                 + ch + '</span>';
         }
-        if (d.date) body += '<span class="text-[10px] text-gray-400 num">' + d.date + '</span>';
+        if (d.date) body += '<span class="text-[10px] text-gray-400 num">' + esc(d.date) + '</span>';
         body += '</div>';
         if (def.nota) body += '<p class="text-[10px] text-gray-300 mt-1">' + def.nota + '</p>';
         return '<div class="rounded-xl border border-slate-200 bg-white p-3.5">' + head + body + '</div>';
@@ -216,13 +216,23 @@
         return 'R$ ' + Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
 
+    // Dados vêm de APIs externas: escapa antes de montar HTML.
+    function esc(v) {
+        return String(v === null || v === undefined ? '' : v)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
     function topHtml(s) {
         var up = s.change !== null && s.change !== undefined ? s.change >= 0 : true;
         var tone = s.change !== null && s.change !== undefined && !up ? 'bg-red-50 text-red-500' : 'bg-emerald-50 text-emerald-600';
         return '<div class="flex items-center gap-3 p-3 rounded-xl border border-slate-200">'
-            + '<span class="w-9 h-9 rounded-lg grid place-items-center shrink-0 font-extrabold text-[12px] ' + tone + '">' + s.code.replace(/[0-9]+$/, '') + '</span>'
-            + '<div class="flex-1 min-w-0"><p class="text-[13px] font-extrabold text-gray-800 truncate">' + s.code + '</p>'
-            + '<p class="text-[11px] text-gray-400 truncate">' + (s.label || '') + '</p></div>'
+            + '<span class="w-9 h-9 rounded-lg grid place-items-center shrink-0 font-extrabold text-[12px] ' + tone + '">' + esc(String(s.code).replace(/[0-9]+$/, '')) + '</span>'
+            + '<div class="flex-1 min-w-0"><p class="text-[13px] font-extrabold text-gray-800 truncate">' + esc(s.code) + '</p>'
+            + '<p class="text-[11px] text-gray-400 truncate">' + esc(s.label || '') + '</p></div>'
             + '<div class="text-right shrink-0"><p class="num text-[14px] font-extrabold text-gray-900">' + priceHtml(s.price) + '</p>' + changeHtml(s.change) + '</div></div>';
     }
 
@@ -301,16 +311,16 @@
     var DATA = { acoes: [], fiis: [], indicators: {} };
 
     function acaoRow(s) {
-        return '<tr><td><span class="font-bold text-gray-800">' + s.code + '</span>'
-            + '<span class="block text-[11px] font-medium text-gray-400">' + (s.label || '') + '</span></td>'
+        return '<tr><td><span class="font-bold text-gray-800">' + esc(s.code) + '</span>'
+            + '<span class="block text-[11px] font-medium text-gray-400">' + esc(s.label || '') + '</span></td>'
             + '<td class="text-right font-extrabold num text-gray-800">' + priceHtml(s.price) + '</td>'
             + '<td class="text-right">' + changeHtml(s.change) + '</td></tr>';
     }
 
     function fiiRow(s) {
-        return '<tr><td><span class="font-bold text-gray-800">' + s.code + '</span>'
-            + '<span class="block text-[11px] font-medium text-gray-400">' + (s.label || '') + '</span></td>'
-            + '<td class="text-gray-500 text-[12px]">' + (s.segment || '—') + '</td>'
+        return '<tr><td><span class="font-bold text-gray-800">' + esc(s.code) + '</span>'
+            + '<span class="block text-[11px] font-medium text-gray-400">' + esc(s.label || '') + '</span></td>'
+            + '<td class="text-gray-500 text-[12px]">' + esc(s.segment || '—') + '</td>'
             + '<td class="text-right font-extrabold num text-gray-800">' + priceHtml(s.price) + '</td>'
             + '<td class="text-right">' + changeHtml(s.change) + '</td></tr>';
     }
@@ -411,7 +421,7 @@
                 + '<span class="material-symbols-outlined text-[14px]" style="font-variation-settings:\'FILL\' 1,\'wght\' 600,\'GRAD\' 0,\'opsz\' 20">' + (up ? 'trending_up' : 'trending_down') + '</span>'
                 + ch + '</span>';
         }
-        if (d.date) body += '<span class="text-[10px] text-gray-400 num">' + d.date + '</span>';
+        if (d.date) body += '<span class="text-[10px] text-gray-400 num">' + esc(d.date) + '</span>';
         body += '</div>';
         if (def.nota) body += '<p class="text-[10px] text-gray-300 mt-1">' + def.nota + '</p>';
         return '<div class="rounded-xl border border-slate-200 bg-white p-3.5">' + head + body + '</div>';

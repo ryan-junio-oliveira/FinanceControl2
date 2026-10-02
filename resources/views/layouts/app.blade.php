@@ -261,8 +261,10 @@
     </div>
     <div class="flex-1 overflow-y-auto py-2">
         @forelse($user->notifications()->latest()->get() as $n)
-        <a href="{{ route('notificacoes.ler', $n) }}"
-            class="flex items-start gap-3 px-5 py-3.5 hover:bg-slate-50 transition border-b border-slate-50 {{ $n->read_at ? '' : 'bg-emerald-50/40' }}">
+        <form method="POST" action="{{ route('notificacoes.ler', $n) }}" class="border-b border-slate-50">
+            @csrf
+            <button type="submit"
+            class="w-full text-left flex items-start gap-3 px-5 py-3.5 hover:bg-slate-50 transition {{ $n->read_at ? '' : 'bg-emerald-50/40' }}">
             <span class="w-10 h-10 rounded-xl {{ $n->read_at ? 'bg-slate-100' : 'bg-emerald-100' }} grid place-items-center shrink-0">
                 <span class="material-symbols-outlined text-[19px] {{ $n->read_at ? 'text-slate-400' : 'text-emerald-600' }}">{{ $n->data['icon'] ?? 'notifications' }}</span>
             </span>
@@ -272,7 +274,8 @@
                 <span class="block text-[10px] text-gray-300 mt-1 num">{{ $n->created_at->diffForHumans() }}</span>
             </span>
             @if(! $n->read_at)<span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0 mt-1.5"></span>@endif
-        </a>
+        </button>
+        </form>
         @empty
         <div class="text-center px-6 py-14 text-gray-400">
             <span class="material-symbols-outlined text-[48px] text-gray-300">notifications_off</span>

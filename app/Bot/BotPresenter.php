@@ -25,10 +25,16 @@ final class BotPresenter
         return '──────────────────';
     }
 
+    /** Escape para mensagens com parse_mode HTML do Telegram. */
+    public static function esc(?string $value): string
+    {
+        return e((string) $value);
+    }
+
     /** Cabeçalho padrão: ✦ Título + divisória. */
     public static function header(string $title): string
     {
-        return "✦ <b>{$title}</b>\n".self::divider();
+        return '✦ <b>'.self::esc($title)."</b>\n".self::divider();
     }
 
     /** Variação com seta: ▲ +1,25% · ▼ −0,50% · —. */

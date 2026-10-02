@@ -191,7 +191,7 @@ class InvestmentHandler extends BotHandler
             .BotPresenter::divider()."\n"
             .($isAporte ? '💰 Aporte' : '📈 Rendimento').' · <b>'.BotPresenter::money($data['amount']).'</b>'."\n"
             .'📅 '.Carbon::parse($date)->format('d/m/Y')."\n"
-            .($isAporte ? '🏦 '.($conta->name ?? '—') : '🏷️ '.($ativo->name ?? '—'));
+            .($isAporte ? '🏦 '.e($conta->name ?? '—') : '🏷️ '.e($ativo->name ?? '—'));
         $this->ask($driver, $msg, 'confirm', $data, $summary, $this->confirmKeyboard());
     }
 

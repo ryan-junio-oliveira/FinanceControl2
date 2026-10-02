@@ -9,6 +9,7 @@ use App\Bot\ValueObjects\IncomingMessage;
 use App\Models\BotIdentity;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 
 class LinkHandler extends BotHandler
 {
@@ -48,21 +49,33 @@ class LinkHandler extends BotHandler
     private function tryLink(BotDriver $driver, IncomingMessage $msg, string $code): bool
     {
         $code = preg_replace('/\D/', '', $code);
+
+        // Anti-força-bruta: 10 tentativas erradas em 10 min bloqueiam temporariamente.
+        $key = 'bot:link:'.$msg->channel.':'.$msg->chatId;
+        if ((int) Cache::get($key, 0) >= 10) {
+            $driver->sendText($msg->chatId, '⏳ Muitas tentativas. Aguarde alguns minutos e tente de novo.', $this->cancelKeyboard());
+
+            return false;
+        }
+
         $user = $code !== '' ? User::where('bot_code', $code)->first() : null;
 
         if (! $user) {
+            Cache::put($key, (int) Cache::get($key, 0) + 1, now()->addMinutes(10));
             $driver->sendText($msg->chatId, '❌ Código inválido. Confira no seu perfil e tente de novo.', $this->cancelKeyboard());
             ConversationState::put($msg->channel, $msg->chatId, static::class, 'code');
 
             return false;
         }
 
+        Cache::forget($key);
+
         BotIdentity::updateOrCreate(
             ['channel' => $msg->channel, 'external_id' => $msg->chatId],
             ['user_id' => $user->id]
         );
         Auth::setUser($user);
-        $driver->sendText($msg->chatId, '✅ <b>Conta vinculada!</b> Bem-vindo(a), '.explode(' ', $user->name)[0].'.');
+        $driver->sendText($msg->chatId, '✅ <b>Conta vinculada!</b> Bem-vindo(a), '.e(explode(' ', $user->name)[0]).'.');
         $this->showMenu($driver, $msg, $user);
 
         return true;

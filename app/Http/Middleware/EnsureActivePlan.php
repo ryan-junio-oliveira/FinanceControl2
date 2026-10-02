@@ -25,6 +25,10 @@ class EnsureActivePlan
             return $next($request);
         }
 
+        if ($request->expectsJson()) {
+            abort(403, 'Assinatura expirada. Renove o plano para continuar.');
+        }
+
         return redirect()->route('plans');
     }
 }

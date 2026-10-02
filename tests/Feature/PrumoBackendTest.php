@@ -629,7 +629,7 @@ class PrumoBackendTest extends TestCase
         $admin->notify(new FaturaVencimento('Teste', 10.0, now()->format('d/m/Y'), 1));
         $n = $admin->notifications()->first();
         $this->assertNull($n->read_at);
-        $this->get(route('notificacoes.ler', $n))->assertRedirect(route('despesas', ['status' => 'pendente']));
+        $this->post(route('notificacoes.ler', $n))->assertRedirect(route('despesas', ['status' => 'pendente']));
         $this->assertNotNull($n->fresh()->read_at);
 
         // --- membro comum não pode encerrar o cadastro ---

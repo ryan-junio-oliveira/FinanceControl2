@@ -18,6 +18,12 @@ class ApiTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        config(['billing.enabled' => false]);
+    }
+
     private function familyWithAdmin(): array
     {
         $family = Family::create(['name' => 'Família API']);

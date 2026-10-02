@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 class Attachment extends Model
 {
     protected $fillable = [
-        'family_id', 'user_id', 'path', 'original_name', 'mime', 'size',
+        'family_id', 'user_id', 'attachable_type', 'attachable_id', 'path', 'original_name', 'mime', 'size',
     ];
 
     public function attachable(): MorphTo

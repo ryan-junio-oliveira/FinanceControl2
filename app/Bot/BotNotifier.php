@@ -37,7 +37,7 @@ final class BotNotifier
                     $dias = $today->diffInDays(Carbon::parse($t->due_on)->startOfDay(), false);
                     $linha = self::linha(
                         $dias,
-                        $t->description.' — <b>'.BotPresenter::money((float) $t->amount).'</b> · '.Carbon::parse($t->due_on)->format('d/m')
+                        e($t->description).' — <b>'.BotPresenter::money((float) $t->amount).'</b> · '.Carbon::parse($t->due_on)->format('d/m')
                     );
                     foreach (self::destinatarios($family, $t->user_id) as $uid) {
                         $itens[$uid][] = $linha;
@@ -59,7 +59,7 @@ final class BotNotifier
                     $dias = $today->diffInDays($venc, false);
                     $linha = self::linha(
                         $dias,
-                        'Fatura '.$cartao->name.' — <b>'.BotPresenter::money($aberto).'</b> · '.$venc->format('d/m')
+                        'Fatura '.e($cartao->name).' — <b>'.BotPresenter::money($aberto).'</b> · '.$venc->format('d/m')
                     );
                     foreach (self::destinatarios($family, $cartao->holder_user_id) as $uid) {
                         $itens[$uid][] = $linha;

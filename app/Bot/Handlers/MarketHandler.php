@@ -77,7 +77,7 @@ class MarketHandler extends BotHandler
         $lines = [];
         foreach ($stocks as $s) {
             $tipo = $s['kind'] === 'fii' ? '🏢' : '📈';
-            $lines[] = '• '.$tipo.' <b>'.$s['code'].'</b> '.BotPresenter::change($s['change'] ?? null).' · '.($s['kind'] === 'fii' ? 'FII' : 'Ação');
+            $lines[] = '• '.$tipo.' <b>'.e($s['code']).'</b> '.BotPresenter::change($s['change'] ?? null).' · '.($s['kind'] === 'fii' ? 'FII' : 'Ação');
         }
 
         return implode("\n", $lines);

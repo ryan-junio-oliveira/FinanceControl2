@@ -7,6 +7,7 @@ use App\Support\Fin;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 
 class BillingController extends Controller
@@ -38,6 +39,9 @@ class BillingController extends Controller
 
     public function webhook(Request $request, BillingService $billing): JsonResponse
     {
+        if ($billing->enabled() && config('billing.mercado_pago.webhook_secret') === '') {
+            Log::warning('[billing] Webhook do Mercado Pago sem secret configurado.');
+        }
         if (! $this->validSignature($request)) {
             return response()->json(['error' => 'invalid signature'], 401);
         }

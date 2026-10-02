@@ -15,6 +15,7 @@ class FirstAccessController extends Controller
     public function show(string $token): View
     {
         $invitation = Invitation::where('token', $token)->whereNull('accepted_at')->firstOrFail();
+        abort_if($invitation->expires_at && $invitation->expires_at->isPast(), 410, 'Este convite expirou. Peça um novo convite ao administrador.');
 
         return view('pages.auth.primeiro-acesso', [
             'invitation' => $invitation,
@@ -25,6 +26,7 @@ class FirstAccessController extends Controller
     public function store(FirstAccessRequest $request, string $token, AuthService $service): RedirectResponse
     {
         $invitation = Invitation::where('token', $token)->whereNull('accepted_at')->firstOrFail();
+        abort_if($invitation->expires_at && $invitation->expires_at->isPast(), 410, 'Este convite expirou. Peça um novo convite ao administrador.');
 
         $user = $service->acceptInvite($invitation, $request->validated()['password']);
 
