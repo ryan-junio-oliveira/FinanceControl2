@@ -45,8 +45,8 @@
         <div id="chart-receitas" class="w-full"></div>
     </x-section-card>
 
-    <x-section-card class="lg:col-span-5" title="Faturas a Vencer" subtitle="Faturas dos cartões nos próximos 30 dias">
-        @forelse(collect($cartoes['lista'])->filter(fn($c) => $c['aberto'] > 0 && $c['dias'] <= 30) as $c)
+    <x-section-card class="lg:col-span-5" title="Faturas a Vencer" subtitle="Faturas dos cartões nos próximos 15 dias">
+        @forelse(collect($cartoes['lista'])->filter(fn($c) => $c['aberto'] > 0 && $c['dias'] <= 15) as $c)
         <div class="flex items-center gap-3 p-3.5 rounded-xl border border-slate-100 hover:border-slate-200 bg-slate-50/40 mb-2.5 transition">
             <span class="w-10 h-10 rounded-lg grid place-items-center shrink-0 text-white" style="background:{{ $c['cor'] }}">
                 <span class="material-symbols-outlined text-[18px]">credit_card</span>
@@ -61,7 +61,7 @@
         @empty
         <div class="text-center py-10 text-gray-400">
             <span class="material-symbols-outlined text-[44px] text-gray-300">credit_card_off</span>
-            <p class="text-[13px] font-bold mt-2 text-gray-500">Nenhuma fatura vencendo nos próximos 30 dias.</p>
+            <p class="text-[13px] font-bold mt-2 text-gray-500">Nenhuma fatura vencendo nos próximos 15 dias.</p>
         </div>
         @endforelse
     </x-section-card>
