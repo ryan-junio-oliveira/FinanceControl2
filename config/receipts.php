@@ -11,8 +11,8 @@ return [
     'reader' => env('RECEIPT_READER', 'tesseract'),
 
     'tesseract' => [
-        'binary' => env('TESSERACT_BIN', 'tesseract'),
-        'tessdata_dir' => env('TESSDATA_DIR', storage_path('app/tessdata')),
+        'binary' => env('TESSERACT_BIN', base_path('bin/tesseract/tesseract.exe')),
+        'tessdata_dir' => env('TESSDATA_DIR', base_path('bin/tesseract/tessdata')),
         'lang' => 'por',
     ],
 
