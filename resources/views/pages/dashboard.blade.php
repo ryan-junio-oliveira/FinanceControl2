@@ -7,7 +7,6 @@
     use App\Support\Fin;
     $money = fn($v) => Fin::money($v);
     $mesLabel = ucfirst(\Carbon\Carbon::createFromFormat('Y-m', $mes)->translatedFormat('F/Y'));
-    $resultado = $kpi['receitas_mes'] - $kpi['despesas_total_mes'];
 @endphp
 
 <div class="flex flex-wrap items-end justify-between gap-3">
@@ -26,7 +25,7 @@
     <x-kpi-card label="Despesas no Mês (com faturas)" :value="$money($kpi['despesas_total_mes'])" icon="trending_down" accent="red" />
     <x-kpi-card label="Faturas em Aberto" :value="$money($faturaAberto)" icon="credit_card" accent="orange" />
     <x-kpi-card label="Investimentos" :value="$money($investido)" icon="savings" accent="cyan"
-        bottom="<span class='text-[11px] text-gray-400 font-medium'>Resultado: <b class='num {{ $resultado >= 0 ? 'text-emerald-600' : 'text-red-500' }}'>{{ $money($resultado) }}</b></span>" />
+        bottom="<span class='text-[11px] text-gray-400 font-medium'>Rendimentos no mês: <b class='num {{ $inv['rendMes'] >= 0 ? 'text-emerald-600' : 'text-red-500' }}'>{{ $money($inv['rendMes']) }}</b></span>" />
 </div>
 
 {{-- ══════════════ GRÁFICOS ══════════════ --}}
