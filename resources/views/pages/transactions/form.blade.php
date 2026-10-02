@@ -38,14 +38,15 @@
                     <x-form.money id="f-valor" name="amount" required value="{{ $val('amount') }}" placeholder="0,00" :error="$errors->has('amount')" />
                 </x-form.field>
 
-                <x-form.field label="Responsável" for="f-membro" :required="true" :error="$errors->first('user_id')">
-                    <x-form.select id="f-membro" name="user_id">
-                        <option value="">Selecione o membro</option>
-                        @foreach($membros as $m)
-                            <option value="{{ $m->id }}" {{ (string)$val('user_id', auth()->id()) === (string)$m->id ? 'selected' : '' }}>{{ $m->name }}</option>
+                @if($isDespesa)
+                <x-form.field label="Forma de pagamento" for="f-pagamento" :error="$errors->first('payment_method')">
+                    <x-form.select id="f-pagamento" name="payment_method">
+                        @foreach(['pix' => 'Pix', 'ted' => 'TED', 'dinheiro' => 'Dinheiro', 'cartao' => 'Cartão'] as $v => $l)
+                            <option value="{{ $v }}" {{ $val('payment_method', 'pix') === $v ? 'selected' : '' }}>{{ $l }}</option>
                         @endforeach
                     </x-form.select>
                 </x-form.field>
+                @endif
             </div>
 
             <div class="form-grid form-grid-2">
@@ -86,18 +87,28 @@
                 </x-form.field>
             </div>
 
-            @if(!$transaction)
-                <x-form.field label="Parcelas" for="f-parc" hint="À vista = 1. Parcelado divide o valor em vencimentos mensais.">
-                    <x-form.select id="f-parc" name="installments_total">
-                        <option value="1" {{ old('installments_total', '1') === '1' ? 'selected' : '' }}>À vista</option>
-                        @for($i = 2; $i <= 12; $i++)
-                            <option value="{{ $i }}" {{ (string)old('installments_total') === (string)$i ? 'selected' : '' }}>{{ $i }}x</option>
-                        @endfor
-                        @foreach([18, 24, 36, 48] as $i)
-                            <option value="{{ $i }}" {{ (string)old('installments_total') === (string)$i ? 'selected' : '' }}>{{ $i }}x</option>
-                        @endforeach
-                    </x-form.select>
-                </x-form.field>
+            @if($isDespesa)
+                <div id="f-pagseg" class="hidden form-grid form-grid-2">
+                    <x-form.field label="Cartão" for="f-cartao" :error="$errors->first('credit_card_id')">
+                        <x-form.select id="f-cartao" name="credit_card_id">
+                            <option value="">Selecione o cartão</option>
+                            @foreach($cartoes as $c)
+                                <option value="{{ $c->id }}" {{ (string)$val('credit_card_id') === (string)$c->id ? 'selected' : '' }}>{{ $c->name }}</option>
+                            @endforeach
+                        </x-form.select>
+                    </x-form.field>
+                    <x-form.field label="Parcelas" for="f-parc" hint="À vista = 1. Parcelado divide o valor em vencimentos mensais.">
+                        <x-form.select id="f-parc" name="installments_total">
+                            <option value="1" {{ old('installments_total', '1') === '1' ? 'selected' : '' }}>À vista</option>
+                            @for($i = 2; $i <= 12; $i++)
+                                <option value="{{ $i }}" {{ (string)old('installments_total') === (string)$i ? 'selected' : '' }}>{{ $i }}x</option>
+                            @endfor
+                            @foreach([18, 24, 36, 48] as $i)
+                                <option value="{{ $i }}" {{ (string)old('installments_total') === (string)$i ? 'selected' : '' }}>{{ $i }}x</option>
+                            @endforeach
+                        </x-form.select>
+                    </x-form.field>
+                </div>
             @endif
 
             <x-form.field label="Observações" for="f-obs">
@@ -171,4 +182,17 @@
     </x-section-card>
     @endif
 </div>
+
+@if($isDespesa)
+<script>
+(function () {
+    const pag = document.getElementById('f-pagamento');
+    const seg = document.getElementById('f-pagseg');
+    if (!pag || !seg) return;
+    const toggle = () => seg.classList.toggle('hidden', pag.value !== 'cartao');
+    pag.addEventListener('change', toggle);
+    toggle();
+})();
+</script>
+@endif
 @endsection

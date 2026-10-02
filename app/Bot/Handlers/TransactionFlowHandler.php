@@ -200,7 +200,6 @@ abstract class TransactionFlowHandler extends BotHandler
             return;
         }
         $data['payment_method'] = $method;
-        $data['notes'] = 'Pago via '.$method;
         $this->askAccount($driver, $msg, $data, $user);
     }
 
@@ -414,6 +413,7 @@ abstract class TransactionFlowHandler extends BotHandler
             'occurred_on' => $data['occurred_on'],
             'due_on' => $data['due_on'],
             'is_fixed' => $data['is_fixed'] ?? false,
+            'payment_method' => $data['payment_method'] ?? null,
             'status' => 'pago',
             'user_id' => $data['user_id'],
             'account_id' => $data['account_id'] ?? null,

@@ -60,8 +60,10 @@ final class TransactionService
 
         $parcelas = max(1, min(48, (int) ($data['installments_total'] ?? 1)));
         unset($data['installments_total']);
+        $data['user_id'] = $data['user_id'] ?? $actorId;
         $data['is_fixed'] = (bool) ($data['is_fixed'] ?? false);
         $data['source'] = 'cash';
+        unset($data['credit_card_id']);
 
         $criados = collect();
         DB::transaction(function () use ($family, $data, $type, $parcelas, $criados) {
@@ -110,6 +112,7 @@ final class TransactionService
 
     public function update(Transaction $transaction, Family $family, array $data, ?UploadedFile $anexo, int $actorId): Transaction
     {
+        $data['user_id'] = $data['user_id'] ?? $transaction->user_id;
         $family->users()->findOrFail($data['user_id']);
         if (! empty($data['account_id'])) {
             $family->accounts()->findOrFail($data['account_id']);
@@ -119,6 +122,7 @@ final class TransactionService
             abort_if($cat->type !== $transaction->type, 422, 'Categoria de outro tipo.');
         }
         $data['is_fixed'] = (bool) ($data['is_fixed'] ?? false);
+        unset($data['credit_card_id']);
 
         $transaction->update($data);
 

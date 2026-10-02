@@ -14,6 +14,7 @@ use App\Models\Portfolio;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Notifications\FaturaVencimento;
+use App\Providers\AppServiceProvider;
 use Illuminate\Contracts\Support\MessageBag;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
@@ -33,7 +34,7 @@ class FinfamBackendTest extends TestCase
         config(['mail.default' => 'smtp']);
         config(['mail.mailers.smtp.username' => null]);
         config(['mail.mailers.smtp.password' => null]);
-        $this->app->register(\App\Providers\AppServiceProvider::class, true);
+        $this->app->register(AppServiceProvider::class, true);
         $this->app->boot();
 
         $this->from('/forgot-password')
@@ -123,6 +124,32 @@ class FinfamBackendTest extends TestCase
         $this->assertTrue(AuditLog::where('action', 'created')->whereNotNull('ip_address')->exists());
 
         $this->get('/admin/logs')->assertOk()->assertSee('Criou Lançamento')->assertSee('127.0.0.1');
+    }
+
+    public function test_expense_via_card_creates_invoice_item(): void
+    {
+        $this->post('/register', [
+            'manager_name' => 'Ana Souza', 'email' => 'ana@email.com', 'family_name' => 'Família Ana',
+            'password' => 'Senha@123', 'password_confirmation' => 'Senha@123', 'terms' => '1',
+        ]);
+        $admin = User::where('email', 'ana@email.com')->first();
+        $cat = $admin->family->categories()->where('type', 'despesa')->first();
+        $cartao = $admin->family->creditCards()->create([
+            'name' => 'Nubank', 'brand' => 'visa', 'credit_limit' => 5000,
+            'closing_day' => 10, 'due_day' => 15, 'active' => true,
+        ]);
+
+        $this->post('/expenses', [
+            'description' => 'iFood', 'amount' => '89,90', 'occurred_on' => now()->toDateString(),
+            'status' => 'pago', 'category_id' => $cat->id,
+            'payment_method' => 'cartao', 'credit_card_id' => $cartao->id, 'installments_total' => 1,
+        ])->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('card_transactions', ['description' => 'iFood', 'amount' => 89.90, 'status' => 'pendente']);
+        $this->assertDatabaseMissing('transactions', ['description' => 'iFood']);
+
+        // Sem responsável enviado: assume o usuário logado.
+        $this->assertSame($admin->id, CardTransaction::where('description', 'iFood')->first()->user_id);
     }
 
     public function test_guests_are_redirected_to_login(): void
@@ -398,7 +425,7 @@ class FinfamBackendTest extends TestCase
             'password_confirmation' => 'Senha@123',
             'terms' => '1',
         ])->assertRedirect(route('dashboard'));
-        $this->post('/expenses', [])->assertSessionHasErrors(['description', 'amount', 'occurred_on', 'status', 'user_id']);
+        $this->post('/expenses', [])->assertSessionHasErrors(['description', 'amount', 'occurred_on', 'status']);
         $assertFriendly($bag('description'));
         $assertFriendly($bag('amount'));
         $this->post('/expenses', [

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\TransactionRequest;
 use App\Models\Attachment;
 use App\Models\Transaction;
+use App\Services\CardService;
 use App\Services\TransactionService;
 use App\Support\Fin;
 use Illuminate\Http\RedirectResponse;
@@ -59,6 +60,7 @@ class TransactionController extends Controller
             'categorias' => $family->categories()->where('type', $type)->where('archived', false)->orderBy('name')->get(),
             'membros' => $family->users()->orderBy('name')->get(),
             'contas' => $family->accounts()->where('active', true)->orderBy('name')->get(),
+            'cartoes' => $family->creditCards()->where('active', true)->orderBy('name')->get(),
         ]);
     }
 
@@ -77,6 +79,7 @@ class TransactionController extends Controller
             'categorias' => $family->categories()->where('type', $transaction->type)->where('archived', false)->orderBy('name')->get(),
             'membros' => $family->users()->orderBy('name')->get(),
             'contas' => $family->accounts()->where('active', true)->orderBy('name')->get(),
+            'cartoes' => $family->creditCards()->where('active', true)->orderBy('name')->get(),
         ]);
     }
 
@@ -84,11 +87,28 @@ class TransactionController extends Controller
     {
         $type = $this->assertType($type);
         $family = Fin::family();
+        $dados = $request->validated();
+
+        // Cartão: lança direto na fatura do cartão escolhido (item pendente).
+        if ($type === 'despesa' && ($dados['payment_method'] ?? null) === 'cartao') {
+            $family->creditCards()->findOrFail($dados['credit_card_id']);
+            $item = app(CardService::class)->createItem($family, [
+                'credit_card_id' => $dados['credit_card_id'],
+                'description' => $dados['description'],
+                'amount' => $dados['amount'],
+                'occurred_on' => $dados['occurred_on'],
+                'user_id' => $dados['user_id'] ?? $request->user()->id,
+                'category_id' => $dados['category_id'] ?? null,
+                'installments_total' => $dados['installments_total'] ?? 1,
+            ]);
+
+            return redirect()->route('cartoes', ['mes' => Fin::month()])->with('status', $item['parcelas'] > 1 ? "Compra parcelada em {$item['parcelas']}x na fatura." : 'Compra lançada na fatura do cartão.');
+        }
 
         $criados = $service->create(
             $family,
             $type,
-            $request->validated(),
+            $dados,
             $request->hasFile('anexo') ? $request->file('anexo') : null,
             $request->user()->id,
         );
