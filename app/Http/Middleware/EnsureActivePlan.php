@@ -17,6 +17,14 @@ class EnsureActivePlan
             return $next($request);
         }
 
+        // Pós-trial sem Pro: libera apenas perfil, pagamento e (admin) grupo.
+        $route = (string) ($request->route()?->getName() ?? '');
+        $isPerfil = str_starts_with($route, 'perfil');
+        $isGrupoAdmin = str_starts_with($route, 'familia') && $user->isAdmin();
+        if ($isPerfil || $isGrupoAdmin) {
+            return $next($request);
+        }
+
         return redirect()->route('plans');
     }
 }

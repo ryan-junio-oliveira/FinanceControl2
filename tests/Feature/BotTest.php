@@ -26,6 +26,7 @@ class BotTest extends TestCase
     {
         parent::setUp();
         config(['bot.driver' => 'null']);
+        config(['billing.enabled' => false]);
         NullDriver::flush();
     }
 
@@ -47,6 +48,36 @@ class BotTest extends TestCase
         $this->postJson('/api/bot/telegram', [
             'message' => ['chat' => ['id' => $chat], 'text' => $text, 'from' => ['first_name' => 'Admin']],
         ])->assertOk();
+    }
+
+    public function test_bot_blocks_when_plan_expired(): void
+    {
+        config(['billing.enabled' => true]);
+        [$family, $admin] = $this->familyWithLinkedUser();
+        BotIdentity::create(['user_id' => $admin->id, 'channel' => 'telegram', 'external_id' => '99']);
+
+        NullDriver::flush();
+        $this->send('1');
+        $this->assertStringContainsString('expirou', (string) NullDriver::lastText());
+        $this->assertStringContainsString('renove', (string) NullDriver::lastText());
+        // Não processa o menu.
+        $this->assertStringNotContainsString('Dados financeiros', (string) NullDriver::lastText());
+    }
+
+    public function test_bot_warns_member_when_plan_expired(): void
+    {
+        config(['billing.enabled' => true]);
+        [$family, $admin] = $this->familyWithLinkedUser();
+        $membro = User::create([
+            'name' => 'Membro', 'email' => 'membro@bot.com', 'password' => bcrypt('Senha@123'),
+            'family_id' => $family->id, 'role' => 'dependente', 'bot_code' => '888888',
+        ]);
+        BotIdentity::create(['user_id' => $membro->id, 'channel' => 'telegram', 'external_id' => '99']);
+
+        NullDriver::flush();
+        $this->send('1');
+        $this->assertStringContainsString('administrador', (string) NullDriver::lastText());
+        $this->assertStringNotContainsString('Dados financeiros', (string) NullDriver::lastText());
     }
 
     public function test_link_and_menu(): void

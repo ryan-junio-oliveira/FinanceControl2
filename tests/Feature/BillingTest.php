@@ -56,6 +56,17 @@ class BillingTest extends TestCase
         $this->actingAs($this->member($family))->get('/expenses')->assertRedirect(route('plans'));
     }
 
+    public function test_middleware_allows_profile_and_admin_group_after_expiry(): void
+    {
+        config(['billing.enabled' => true]);
+        $family = $this->familyWith('free', null);
+        $admin = $this->member($family);
+
+        $this->actingAs($admin)->get('/profile')->assertOk();
+        $this->actingAs($admin)->get('/family')->assertOk();
+        $this->actingAs($admin)->get('/expenses')->assertRedirect(route('plans'));
+    }
+
     public function test_billing_disabled_never_blocks(): void
     {
         config(['billing.enabled' => false]);

@@ -15,6 +15,7 @@ use App\Bot\Handlers\ReceiptHandler;
 use App\Bot\ValueObjects\IncomingMessage;
 use App\Models\BotIdentity;
 use App\Models\User;
+use App\Services\BillingService;
 use Illuminate\Support\Facades\Auth;
 
 /** Direciona cada mensagem para o handler certo. */
@@ -50,6 +51,16 @@ final class BotRouter
         }
 
         Auth::setUser($user);
+
+        // Plano expirado (fim do trial sem assinatura): avisa e bloqueia o uso.
+        if (! app(BillingService::class)->isActive($user->family)) {
+            $aviso = $user->isAdmin()
+                ? "🔒 Sua assinatura do Prumo expirou.\n\nAssine ou renove pelo site (menu Plano) para continuar usando o bot."
+                : "🔒 A assinatura do Prumo da sua família expirou.\n\nFale com o administrador para renovar — até lá o bot fica bloqueado.";
+            $driver->sendText($msg->chatId, $aviso);
+
+            return;
+        }
 
         $state = ConversationState::get($msg->channel, $msg->chatId);
 

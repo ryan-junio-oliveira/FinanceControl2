@@ -43,6 +43,7 @@ class ReceiptTest extends TestCase
     {
         parent::setUp();
         config(['bot.driver' => 'null']);
+        config(['billing.enabled' => false]);
         NullDriver::flush();
         NullDriver::$fixturePath = null;
     }
