@@ -39,6 +39,38 @@ window.addEventListener('pageshow', () => NProgress.done());
 window.addEventListener('load', () => NProgress.done());
 
 /* ════════════════════════════════════════════════════════════
+   Atalhos de busca nas tabelas (padrão SaaS):
+   "/" foca a busca · Esc limpa o campo
+   ════════════════════════════════════════════════════════════ */
+document.addEventListener('keydown', (e) => {
+    if (e.key !== '/' && e.key !== 'Escape') return;
+    const tag = (e.target.tagName || '').toLowerCase();
+    const typing = ['input', 'textarea', 'select'].includes(tag) || e.target.isContentEditable;
+    if (e.key === '/' && !typing) {
+        const input = document.querySelector('[data-toolbar] [data-search-input]');
+        if (input) {
+            e.preventDefault();
+            input.focus();
+        }
+    }
+    if (e.key === 'Escape') {
+        const input = document.querySelector('[data-toolbar] [data-search-input]');
+        if (input && document.activeElement === input) {
+            input.value = '';
+            input.closest('form').submit();
+        }
+    }
+});
+document.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-search-clear]');
+    if (!btn) return;
+    const form = btn.closest('form');
+    const input = form.querySelector('[data-search-input]');
+    if (input) input.value = '';
+    form.submit();
+});
+
+/* ════════════════════════════════════════════════════════════
    GSAP — animações de entrada (cabeçalho + telas de acesso)
    ════════════════════════════════════════════════════════════ */
 if (!reducedMotion) {

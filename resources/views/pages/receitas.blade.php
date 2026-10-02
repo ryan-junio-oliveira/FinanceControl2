@@ -68,7 +68,7 @@
                     <td class="text-gray-500">{{ $t->account->name ?? '—' }}</td>
                     <td class="text-right font-extrabold num text-emerald-600">+{{ Fin::money($t->amount) }}</td>
                     <td class="text-right"><x-badge :type="$t->display_status_type">{{ $t->display_status }}</x-badge></td>
-                    <td class="text-right whitespace-nowrap">
+                    <td class="text-right whitespace-nowrap row-actions">
                         @if($t->status !== 'pago')
                         <form method="POST" action="{{ route('lancamentos.settle', $t) }}" class="inline">
                             @csrf
@@ -93,6 +93,13 @@
                 </tr>
                 @endforelse
             </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="5" class="text-right text-gray-500">Subtotal desta página</td>
+                    <td class="text-right text-gray-900">+{{ Fin::money($ledger->sum('amount')) }}</td>
+                    <td colspan="2"></td>
+                </tr>
+            </tfoot>
         </table>
     </div>
     <div class="mt-5">{{ $ledger->links() }}</div>

@@ -392,6 +392,21 @@ dialog::backdrop { background: rgba(15,23,42,.45); backdrop-filter: blur(6px); }
     font-family: inherit;
 }
 .table-search input::placeholder { color: #94a3b8; }
+.table-search-clear {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 8px;
+    color: #94a3b8;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all .12s ease;
+}
+.table-search-clear:hover { color: #dc2626; background: #fef2f2; }
 .table-filter {
     height: 2.5rem;
     border-radius: 12px;
@@ -429,31 +444,75 @@ dialog::backdrop { background: rgba(15,23,42,.45); backdrop-filter: blur(6px); }
 }
 .table-clear:hover { color: #dc2626; background: #fef2f2; }
 
-/* ── Tabelas modernas ── */
-.table-modern { border-collapse: separate; border-spacing: 0; }
+/* Botão Filtrar (submit explícito da toolbar) */
+.table-apply {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .35rem;
+    height: 2.5rem;
+    padding: 0 1rem;
+    font-size: .75rem;
+    font-weight: 800;
+    color: #fff;
+    background: #0f172a;
+    border-radius: 12px;
+    transition: all .15s ease;
+    white-space: nowrap;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+}
+.table-apply:hover { background: #1e293b; }
+.table-apply .material-symbols-outlined { font-size: 16px; }
+
+/* ── Tabelas modernas (estilo ERP/SaaS) ── */
+.table-modern { border-collapse: separate; border-spacing: 0; width: 100%; }
 .table-modern thead tr th {
     font-size: .6875rem;
     font-weight: 800;
     text-transform: uppercase;
-    letter-spacing: .06em;
-    color: #94a3b8;
-    padding: .75rem .75rem;
-    border-bottom: 1px solid #e2e8f0;
-    background: #f8fafc;
+    letter-spacing: .07em;
+    color: #64748b;
+    padding: .875rem .75rem;
+    border-bottom: 1.5px solid #e2e8f0;
+    background: #f1f5f9;
     white-space: nowrap;
+    user-select: none;
 }
 .table-modern thead tr th:first-child { border-top-left-radius: 12px; border-bottom-left-radius: 12px; padding-left: 1rem; }
 .table-modern thead tr th:last-child { border-top-right-radius: 12px; border-bottom-right-radius: 12px; padding-right: 1rem; }
 .table-modern tbody tr {
     border-bottom: 1px solid #f1f5f9;
-    height: 56px;
+    height: 58px;
     transition: background .12s ease;
 }
-.table-modern tbody tr:hover { background: #f8fafc; }
+.table-modern tbody tr:nth-child(even) { background: #fcfcfd; }
+.table-modern tbody tr:hover { background: #f0fdf9; }
 .table-modern tbody tr:last-child { border-bottom: none; }
-.table-modern tbody td { padding: .625rem .75rem; vertical-align: middle; }
+.table-modern tbody td { padding: .75rem .75rem; vertical-align: middle; }
 .table-modern tbody td:first-child { padding-left: 1rem; }
 .table-modern tbody td:last-child { padding-right: 1rem; }
+
+/* Rodapé de total/subtotal (típico de ERP financeiro) */
+.table-modern tfoot td {
+    padding: .875rem .75rem;
+    border-top: 2px solid #e2e8f0;
+    background: #f8fafc;
+    font-size: .75rem;
+    font-weight: 800;
+    color: #334155;
+    white-space: nowrap;
+}
+.table-modern tfoot td:first-child { padding-left: 1rem; border-bottom-left-radius: 12px; }
+.table-modern tfoot td:last-child { padding-right: 1rem; border-bottom-right-radius: 12px; }
+.table-modern .num-cell { font-variant-numeric: tabular-nums; }
+
+/* Ações com fade no hover (só em telas com mouse; no touch ficam sempre visíveis) */
+@media (hover: hover) {
+    .table-modern .row-actions { opacity: .35; transition: opacity .15s ease; }
+    .table-modern tbody tr:hover .row-actions { opacity: 1; }
+}
 
 /* ── Progress bar melhorado ── */
 .progress-track {
