@@ -10,7 +10,6 @@ use App\Models\CardTransaction;
 use App\Models\Category;
 use App\Models\CreditCard;
 use App\Models\Invitation;
-use App\Models\Portfolio;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Notifications\FaturaVencimento;
@@ -254,15 +253,13 @@ class FinfamBackendTest extends TestCase
         $this->post("/cards/items/{$item->id}/settle")->assertSessionHasNoErrors();
         $this->assertEquals(0, (float) $card->fresh()->open_invoice);
 
-        // --- investimentos: carteira + ativo + aporte (abate da conta) ---
-        $this->post('/investments/portfolios', ['name' => 'Reserva', 'kind' => 'reserva', 'target_amount' => '50000'])->assertSessionHasNoErrors();
-        $cart = Portfolio::where('name', 'Reserva')->first();
+        // --- investimentos: ativo + aporte (abate da conta) ---
         $this->post('/investments/assets', [
-            'portfolio_id' => $cart->id, 'code' => 'SELIC', 'name' => 'Tesouro Selic',
+            'code' => 'SELIC', 'name' => 'Tesouro Selic',
             'kind' => 'renda_fixa', 'current_value' => '10000',
         ])->assertSessionHasNoErrors();
         $this->post('/investments/contributions', [
-            'portfolio_id' => $cart->id, 'account_id' => $conta->id, 'kind' => 'aporte',
+            'account_id' => $conta->id, 'kind' => 'aporte',
             'amount' => '1000', 'occurred_on' => now()->toDateString(),
         ])->assertSessionHasNoErrors();
         $this->assertEquals(4000, (float) $conta->fresh()->balance);
@@ -476,7 +473,7 @@ class FinfamBackendTest extends TestCase
         foreach ([
             '/expenses/create', '/incomes/create', '/accounts/create', '/accounts/transfer',
             '/cards/create', '/cards/items/create', '/categories/create',
-            '/investments/portfolios/create', '/investments/assets/create', '/investments/contributions/create',
+            '/investments/assets/create', '/investments/contributions/create',
             '/family/invites/create',
             '/profile', '/profile/edit', '/profile/password',
         ] as $uri) {

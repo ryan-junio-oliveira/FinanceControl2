@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Models\Asset;
 use App\Models\Contribution;
 use App\Models\Family;
-use App\Models\Portfolio;
 use App\Models\Transaction;
 use App\Support\Fin;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -26,17 +25,12 @@ final class InvestmentService
 
         $patrimonio = (float) Asset::where('family_id', $family->id)->sum('current_value');
 
-        $metas = $family->portfolios()->whereNotNull('target_amount')
-            ->withSum('assets as total', 'current_value')
-            ->orderBy('deadline')->orderBy('name')->get();
-
         $ativosQuery = Asset::where('family_id', $family->id)->with('portfolio');
         if (! empty($filters['q'])) {
             $q = '%'.$filters['q'].'%';
             $ativosQuery->where(fn ($w) => $w->where('name', 'like', $q)->orWhere('code', 'like', $q));
         }
         $ativos = $ativosQuery->orderBy('name')->paginate($perPage);
-        $porClasse = Asset::where('family_id', $family->id)->selectRaw('kind, SUM(current_value) as total')->groupBy('kind')->pluck('total', 'kind');
 
         $mesQuery = fn ($q) => $q->whereYear('occurred_on', $ano)->whereMonth('occurred_on', $m);
         $aportesMes = (float) $mesQuery(Contribution::where('family_id', $family->id)->where('kind', 'aporte'))->sum('amount');
@@ -47,9 +41,7 @@ final class InvestmentService
             'patrimonio' => $patrimonio,
             'aportesMes' => $aportesMes,
             'rendMes' => $rendMes,
-            'metas' => $metas,
             'ativos' => $ativos,
-            'porClasse' => $porClasse,
             'contas' => $family->accounts()->where('active', true)->orderBy('name')->get(),
         ];
     }
@@ -64,11 +56,6 @@ final class InvestmentService
         }
 
         return $q->orderBy('name')->paginate(12);
-    }
-
-    public function createPortfolio(Family $family, array $data): Portfolio
-    {
-        return $family->portfolios()->create($data);
     }
 
     public function createAsset(Family $family, array $data): Asset

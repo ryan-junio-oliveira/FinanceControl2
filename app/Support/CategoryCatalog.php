@@ -192,7 +192,7 @@ final class CategoryCatalog
                     }
 
                     $moved += $family->transactions()->where('category_id', $cat->id)->update(['category_id' => $target]);
-                    $moved += \App\Models\CardTransaction::where('family_id', $family->id)->where('category_id', $cat->id)->update(['category_id' => $target]);
+                    $moved += CardTransaction::where('family_id', $family->id)->where('category_id', $cat->id)->update(['category_id' => $target]);
                     $cat->delete();
                     $removed++;
                 }

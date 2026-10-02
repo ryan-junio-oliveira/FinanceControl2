@@ -1124,82 +1124,6 @@
                 ]
             }
         },
-        "/api/v1/portfolios": {
-            "get": {
-                "tags": [
-                    "Investments"
-                ],
-                "summary": "Lista carteiras",
-                "operationId": "0a54af8a5a8d46f025987b45b7b7d5d7",
-                "responses": {
-                    "200": {
-                        "description": "Carteiras com progresso"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            },
-            "post": {
-                "tags": [
-                    "Investments"
-                ],
-                "summary": "Cria carteira",
-                "operationId": "8833cdecfec022a512281afee4cdd11c",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "required": [
-                                    "name",
-                                    "kind"
-                                ],
-                                "properties": {
-                                    "name": {
-                                        "type": "string",
-                                        "example": "Reserva"
-                                    },
-                                    "kind": {
-                                        "type": "string",
-                                        "enum": [
-                                            "reserva",
-                                            "estudos",
-                                            "futuro",
-                                            "livre"
-                                        ]
-                                    },
-                                    "target_amount": {
-                                        "type": "string",
-                                        "example": "30000"
-                                    },
-                                    "deadline": {
-                                        "type": "string",
-                                        "format": "date"
-                                    },
-                                    "objective": {
-                                        "type": "string"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "201": {
-                        "description": "Carteira criada"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
         "/api/v1/assets": {
             "get": {
                 "tags": [
@@ -1858,7 +1782,7 @@
         },
         {
             "name": "Investments",
-            "description": "Carteiras, ativos e aportes"
+            "description": "Ativos e aportes"
         },
         {
             "name": "Transactions",

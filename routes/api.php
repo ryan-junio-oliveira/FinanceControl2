@@ -67,8 +67,6 @@ Route::prefix('v1')->group(function () {
         Route::delete('/categories/{category}', [CategoryController::class, 'destroy'])->middleware('family.ownership:category')->name('api.categories.destroy');
 
         // Investimentos
-        Route::get('/portfolios', [InvestmentController::class, 'portfolios'])->name('api.portfolios.index');
-        Route::post('/portfolios', [InvestmentController::class, 'storePortfolio'])->name('api.portfolios.store');
         Route::get('/assets', [InvestmentController::class, 'assets'])->name('api.assets.index');
         Route::post('/assets', [InvestmentController::class, 'storeAsset'])->name('api.assets.store');
         Route::patch('/assets/{asset}', [InvestmentController::class, 'updateAsset'])->middleware('family.ownership:asset')->name('api.assets.update');

@@ -7,7 +7,6 @@ use App\Models\Asset;
 use App\Models\CardTransaction;
 use App\Models\Category;
 use App\Models\Contribution;
-use App\Models\Portfolio;
 use App\Models\Transaction;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -165,31 +164,7 @@ final class Dashboard
         $rendMes = (float) $mesQuery(Contribution::where('family_id', $fid)->where('kind', 'rendimento'))->sum('amount');
         $aportesAno = (float) Contribution::where('family_id', $fid)->where('kind', 'aporte')->whereYear('occurred_on', $y)->sum('amount');
 
-        $metas = Portfolio::where('family_id', $fid)->whereNotNull('target_amount')->orderBy('name')->get()
-            ->map(fn ($p) => [
-                'nome' => $p->name,
-                'total' => $p->total,
-                'meta' => (float) $p->target_amount,
-                'progresso' => $p->progress,
-                'restante' => $p->remaining,
-                'mensal' => $p->monthly_needed,
-                'prazo' => $p->deadline?->format('d/m/Y'),
-            ])->all();
-
-        $monthlyNeeded = array_sum(array_column($metas, 'mensal') ?: [0]);
-
-        $reserva = Portfolio::where('family_id', $fid)->where('kind', 'reserva')->first();
-        $reservaTotal = $reserva ? (float) $reserva->total : 0;
-
-        // Despesa mensal média (média dos últimos 6 meses pagos).
-        $ultimos = [];
-        for ($i = 1; $i <= 6; $i++) {
-            $ultimos[] = self::soma($fid, 'despesa', Carbon::now()->subMonthsNoOverflow($i)->format('Y-m'), 'pago');
-        }
-        $media = count(array_filter($ultimos)) ? round(array_sum($ultimos) / 6, 2) : 0;
-        $diasReserva = $media > 0 ? round($reservaTotal / ($media / 30), 1) : 0;
-
-        return compact('aportesMes', 'rendMes', 'aportesAno', 'metas', 'monthlyNeeded', 'reservaTotal', 'diasReserva');
+        return compact('aportesMes', 'rendMes', 'aportesAno');
     }
 
     /** Detalhe por membro: receitas, despesas e gastos no cartão do mês. */

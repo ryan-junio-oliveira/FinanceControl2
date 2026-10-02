@@ -5,9 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AssetRequest;
 use App\Http\Requests\ContributionRequest;
-use App\Http\Requests\PortfolioRequest;
 use App\Http\Resources\AssetResource;
-use App\Http\Resources\PortfolioResource;
 use App\Models\Asset;
 use App\Services\InvestmentService;
 use App\Support\Fin;
@@ -16,48 +14,9 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use OpenApi\Attributes as OA;
 
-#[OA\Tag(name: 'Investments', description: 'Carteiras, ativos e aportes')]
+#[OA\Tag(name: 'Investments', description: 'Ativos e aportes')]
 class InvestmentController extends Controller
 {
-    #[OA\Get(
-        path: '/api/v1/portfolios',
-        summary: 'Lista carteiras',
-        tags: ['Investments'],
-        security: [['bearerAuth' => []]],
-        responses: [new OA\Response(response: 200, description: 'Carteiras com progresso')]
-    )]
-    public function portfolios(): AnonymousResourceCollection
-    {
-        return PortfolioResource::collection(Fin::family()->portfolios()->orderBy('name')->get());
-    }
-
-    #[OA\Post(
-        path: '/api/v1/portfolios',
-        summary: 'Cria carteira',
-        tags: ['Investments'],
-        security: [['bearerAuth' => []]],
-        requestBody: new OA\RequestBody(
-            required: true,
-            content: new OA\JsonContent(
-                required: ['name', 'kind'],
-                properties: [
-                    new OA\Property(property: 'name', type: 'string', example: 'Reserva'),
-                    new OA\Property(property: 'kind', type: 'string', enum: ['reserva', 'estudos', 'futuro', 'livre']),
-                    new OA\Property(property: 'target_amount', type: 'string', example: '30000'),
-                    new OA\Property(property: 'deadline', type: 'string', format: 'date'),
-                    new OA\Property(property: 'objective', type: 'string'),
-                ]
-            )
-        ),
-        responses: [new OA\Response(response: 201, description: 'Carteira criada')]
-    )]
-    public function storePortfolio(PortfolioRequest $request, InvestmentService $service): JsonResponse
-    {
-        $portfolio = $service->createPortfolio(Fin::family(), $request->validated());
-
-        return (new PortfolioResource($portfolio))->response()->setStatusCode(201);
-    }
-
     #[OA\Get(
         path: '/api/v1/assets',
         summary: 'Lista ativos',

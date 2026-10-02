@@ -120,8 +120,6 @@ Route::middleware('auth')->group(function () {
 
             Route::get('/market', [MercadoController::class, 'index'])->name('mercado');
             Route::get('/market/data', [MercadoController::class, 'dados'])->name('mercado.dados');
-            Route::get('/investments/portfolios/create', [InvestmentController::class, 'createPortfolio'])->name('investimentos.carteiras.create');
-            Route::post('/investments/portfolios', [InvestmentController::class, 'storePortfolio'])->name('investimentos.carteiras.store');
             Route::get('/investments/assets/create', [InvestmentController::class, 'createAsset'])->name('investimentos.ativos.create');
             Route::post('/investments/assets', [InvestmentController::class, 'storeAsset'])->name('investimentos.ativos.store');
             Route::get('/investments/assets/{asset}/edit', [InvestmentController::class, 'editAsset'])->name('investimentos.ativos.edit');

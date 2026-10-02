@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\AssetRequest;
 use App\Http\Requests\ContributionRequest;
-use App\Http\Requests\PortfolioRequest;
 use App\Models\Asset;
 use App\Services\InvestmentService;
 use App\Support\Fin;
@@ -32,11 +31,6 @@ class InvestmentController extends Controller
         return response()->json(MarketData::snapshot());
     }
 
-    public function createPortfolio(): View
-    {
-        return view('pages.investments.portfolio-form', ['portfolio' => null]);
-    }
-
     public function createAsset(): View
     {
         $family = Fin::family();
@@ -58,14 +52,6 @@ class InvestmentController extends Controller
             'contas' => $family->accounts()->where('active', true)->orderBy('name')->get(),
             'selected' => request()->query('carteira'),
         ]);
-    }
-
-    public function storePortfolio(PortfolioRequest $request, InvestmentService $service): RedirectResponse
-    {
-        $family = Fin::family();
-        $service->createPortfolio($family, $request->validated());
-
-        return redirect()->route('investimentos')->with('status', 'Carteira criada.');
     }
 
     public function storeAsset(AssetRequest $request, InvestmentService $service): RedirectResponse
