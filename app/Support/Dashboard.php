@@ -25,6 +25,12 @@ final class Dashboard
         '#F97316', '#10B981', '#6366F1', '#EF4444', '#14B8A6', '#D946EF',
     ];
 
+    /** Tons quentes (vermelho/laranja/âmbar) p/ despesas. */
+    private const WARM = ['#EF4444', '#F97316', '#F59E0B', '#DC2626', '#EA580C', '#FB7185', '#FACC15', '#B91C1C'];
+
+    /** Tons frios (verdes/azuis) p/ receitas. */
+    private const COOL = ['#059669', '#10B981', '#22C55E', '#0D9488', '#14B8A6', '#34D399', '#16A34A', '#2DD4BF'];
+
     public static function data(string $mes): array
     {
         $family = Fin::family();
@@ -33,10 +39,9 @@ final class Dashboard
 
         $hoje = Carbon::today();
         $mesAtual = Carbon::create($y, $m, 1);
-        $mesAnt = $mesAtual->copy()->subMonth()->format('Y-m');
         $isMesCorrente = $mes === Carbon::now()->format('Y-m');
 
-        $kpi = self::kpis($fid, $mes, $mesAnt, $y, $hoje, $isMesCorrente, $mesAtual);
+        $kpi = self::kpis($fid, $mes, $y, $isMesCorrente, $mesAtual, $hoje);
 
         $saldos = Account::balancesForFamily($fid);
         $saldoContas = array_sum($saldos);
@@ -47,14 +52,14 @@ final class Dashboard
         $aPagar = self::aPagar($fid, $hoje);
         $cartoes = self::cartoes($family, $hoje);
         $inv = self::investimentos($fid, $mes, $y);
-        $porMembro = self::porMembro($family, $mes);
+        $membros = self::membros($family, $mes);
         $proximos = self::proximos($fid, $hoje);
 
         $charts = [
             'fluxo' => self::chartFluxo($fid, $y),
             'resultado' => self::chartResultado($fid, $y),
-            'categorias' => self::chartCategorias($fid, $mes, 'despesa'),
-            'receitasCat' => self::chartCategorias($fid, $mes, 'receita'),
+            'categorias' => self::chartCategorias($fid, $mes, 'despesa', self::WARM),
+            'receitasCat' => self::chartCategorias($fid, $mes, 'receita', self::COOL),
             'saldos' => self::chartSaldos($family, $saldos),
             'alocacao' => self::chartAlocacao($fid),
             'dias' => self::chartDias($fid, $mes, $hoje, $isMesCorrente),
@@ -64,43 +69,21 @@ final class Dashboard
         return compact(
             'mes', 'y', 'm', 'isMesCorrente',
             'kpi', 'saldoContas', 'investido', 'faturaAberto', 'patrimonio',
-            'aPagar', 'cartoes', 'inv', 'porMembro', 'proximos', 'charts',
+            'aPagar', 'cartoes', 'inv', 'membros', 'proximos', 'charts',
         );
     }
 
     // ───────────────────────────── KPIs ─────────────────────────────
 
-    private static function kpis(int $fid, string $mes, string $mesAnt, int $y, Carbon $hoje, bool $isCorrente, Carbon $mesAtual): array
+    private static function kpis(int $fid, string $mes, int $y, bool $isCorrente, Carbon $mesAtual, Carbon $hoje): array
     {
-        $rec = self::soma($fid, 'receita', $mes);
-        $des = self::soma($fid, 'despesa', $mes);
-        $recPago = self::soma($fid, 'receita', $mes, 'pago');
-        $desPago = self::soma($fid, 'despesa', $mes, 'pago');
-
-        $recAnt = self::soma($fid, 'receita', $mesAnt, 'pago');
-        $desAnt = self::soma($fid, 'despesa', $mesAnt, 'pago');
-        $resultAnt = $recAnt - $desAnt;
-
-        $resultado = $recPago - $desPago;
-        $resultadoTotal = $rec - $des;
-
-        $acumulado = self::soma($fid, 'receita', null, 'pago', $y)
-            - self::soma($fid, 'despesa', null, 'pago', $y);
-
-        $poupanca = $recPago > 0 ? round($resultado / $recPago * 100, 1) : 0;
-
-        $dias = $isCorrente ? max(1, $hoje->day) : $mesAtual->daysInMonth;
-        $mediaDiaria = $dias > 0 ? round($desPago / $dias, 2) : 0;
-        $projecao = $isCorrente ? round($mediaDiaria * $mesAtual->daysInMonth, 2) : $desPago;
-
         return [
-            'receitas' => ['atual' => $recPago, 'total' => $rec, 'anterior' => $recAnt, 'variacao' => self::pct($recPago, $recAnt)],
-            'despesas' => ['atual' => $desPago, 'total' => $des, 'anterior' => $desAnt, 'variacao' => self::pct($desPago, $desAnt)],
-            'resultado' => ['atual' => $resultado, 'total' => $resultadoTotal, 'anterior' => $resultAnt, 'variacao' => self::pct($resultado, $resultAnt)],
-            'acumulado' => $acumulado,
-            'poupanca' => $poupanca,
-            'media_diaria' => $mediaDiaria,
-            'projecao' => $projecao,
+            'receitas_mes' => self::soma($fid, 'receita', $mes),
+            'despesas_cash_mes' => self::soma($fid, 'despesa', $mes, null, null, null, 'cash'),
+            'despesas_total_mes' => self::soma($fid, 'despesa', $mes),
+            'faturas_mes' => self::soma($fid, 'despesa', $mes, null, null, null, 'invoice'),
+            'acumulado' => self::soma($fid, 'receita', null, 'pago', $y)
+                - self::soma($fid, 'despesa', null, 'pago', $y),
         ];
     }
 
@@ -207,26 +190,39 @@ final class Dashboard
         return compact('aportesMes', 'rendMes', 'aportesAno', 'metas', 'monthlyNeeded', 'reservaTotal', 'diasReserva');
     }
 
-    private static function porMembro($family, string $mes): array
+    /** Detalhe por membro: receitas, despesas e gastos no cartão do mês. */
+    private static function membros($family, string $mes): array
     {
-        $rows = Transaction::where('family_id', $family->id)
-            ->where('type', 'despesa')->whereIn('status', ['pago', 'pendente'])
-            ->inMonth($mes)->groupBy('user_id')->selectRaw('user_id, SUM(amount) as total')
+        [$ano, $m] = array_map('intval', explode('-', $mes));
+        $noMes = fn ($q) => $q->whereYear('occurred_on', $ano)->whereMonth('occurred_on', $m);
+
+        $rec = $noMes(Transaction::where('family_id', $family->id)
+            ->where('type', 'receita')->whereIn('status', ['pago', 'pendente']))
+            ->groupBy('user_id')->selectRaw('user_id, SUM(amount) as total')
+            ->pluck('total', 'user_id');
+        $des = $noMes(Transaction::where('family_id', $family->id)
+            ->where('type', 'despesa')->whereIn('status', ['pago', 'pendente']))
+            ->groupBy('user_id')->selectRaw('user_id, SUM(amount) as total')
+            ->pluck('total', 'user_id');
+        $cartao = $noMes(CardTransaction::where('family_id', $family->id)->where('status', 'pendente'))
+            ->groupBy('user_id')->selectRaw('user_id, SUM(amount) as total')
             ->pluck('total', 'user_id');
 
-        $max = $rows->max() ?: 0;
+        $maxDes = $des->max() ?: 0;
 
-        return $family->users()->orderBy('name')->get()->map(function ($u) use ($rows, $max) {
-            $total = (float) ($rows[$u->id] ?? 0);
+        return $family->users()->orderBy('name')->get()->map(function ($u) use ($rec, $des, $cartao, $maxDes) {
+            $despesa = (float) ($des[$u->id] ?? 0);
 
             return [
                 'nome' => $u->name,
                 'iniciais' => $u->initials(),
                 'cor' => $u->avatarColor(),
-                'total' => $total,
-                'pct' => $max > 0 ? round($total / $max * 100) : 0,
+                'receitas' => round((float) ($rec[$u->id] ?? 0), 2),
+                'despesas' => round($despesa, 2),
+                'cartao' => round((float) ($cartao[$u->id] ?? 0), 2),
+                'pct' => $maxDes > 0 ? round($despesa / $maxDes * 100) : 0,
             ];
-        })->sortByDesc('total')->values()->all();
+        })->sortByDesc('despesas')->values()->all();
     }
 
     private static function proximos(int $fid, Carbon $hoje): array
@@ -295,7 +291,7 @@ final class Dashboard
         ];
     }
 
-    private static function chartCategorias(int $fid, string $mes, string $type): array
+    private static function chartCategorias(int $fid, string $mes, string $type, array $palette): array
     {
         $rows = Transaction::where('family_id', $fid)->where('type', $type)
             ->whereIn('status', ['pago', 'pendente'])->inMonth($mes)->whereNotNull('category_id')
@@ -323,7 +319,7 @@ final class Dashboard
             'type' => 'donut',
             'labels' => $labels,
             'series' => [['name' => 'total', 'data' => $data]],
-            'colors' => array_slice(self::PALETTE, 0, count($labels)),
+            'colors' => array_slice($palette, 0, count($labels)),
             'yformat' => 'money',
         ];
     }
@@ -399,12 +395,15 @@ final class Dashboard
 
     // ───────────────────────────── helpers ─────────────────────────────
 
-    /** Soma de lançamentos por tipo/status/mês/ano. */
-    private static function soma(int $fid, string $type, ?string $mes, ?string $status = null, ?int $year = null, ?int $month = null): float
+    /** Soma de lançamentos por tipo/status/mês/ano/fonte. */
+    private static function soma(int $fid, string $type, ?string $mes, ?string $status = null, ?int $year = null, ?int $month = null, ?string $source = null): float
     {
         $q = Transaction::where('family_id', $fid)->where('type', $type);
         if ($status) {
             $q->where('status', $status);
+        }
+        if ($source) {
+            $q->where('source', $source);
         }
         if ($mes) {
             $q->inMonth($mes);

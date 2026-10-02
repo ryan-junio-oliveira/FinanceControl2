@@ -11,7 +11,8 @@
         <h1 class="text-[24px] font-extrabold tracking-tight text-gray-900">Controle de Despesas</h1>
         <p class="text-[13px] text-gray-400 mt-0.5 font-medium">Todas as saídas em {{ $mes }}.</p>
     </div>
-    <div class="flex gap-2">
+    <div class="flex gap-2 flex-wrap items-center">
+        <x-month-picker :action="route('despesas')" :mes="$mes" />
         <x-btn-link :href="route('despesas.create')" color="danger" icon="add_circle">Nova Despesa</x-btn-link>
     </div>
 </div>

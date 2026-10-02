@@ -14,11 +14,12 @@ class Transaction extends Model
 
     public const STATUSES = ['pago', 'pendente', 'agendado'];
 
-    protected $fillable = [
+protected $fillable = [
         'family_id', 'user_id', 'account_id', 'category_id',
-        'type', 'is_fixed', 'description', 'amount', 'occurred_on', 'due_on', 'status',
+        'type', 'is_fixed', 'description', 'amount', 'occurred_on', 'due_on', 'status', 'source',
         'transfer_to_account_id', 'portfolio_id', 'notes',
         'installment_group_id', 'installment_number', 'installments_total',
+        'import_id', 'import_hash',
     ];
 
     protected function casts(): array

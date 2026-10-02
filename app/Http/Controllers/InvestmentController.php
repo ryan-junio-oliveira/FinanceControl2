@@ -18,9 +18,12 @@ class InvestmentController extends Controller
 {
     public function index(Request $request, InvestmentService $service): View
     {
-        return view('pages.investimentos', $service->dashboard(Fin::family(), [
-            'q' => $request->query('q'),
-        ]));
+        return view('pages.investimentos', $service->dashboard(
+            Fin::family(),
+            ['q' => $request->query('q')],
+            (int) $request->query('per_page', 12),
+            $request->query('mes'),
+        ));
     }
 
     /** Snapshot de mercado em JSON (a view busca via fetch com skeleton). */

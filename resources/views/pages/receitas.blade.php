@@ -10,7 +10,8 @@
         <h1 class="text-[24px] font-extrabold tracking-tight text-gray-900">Gestão de Receitas Familiares</h1>
         <p class="text-[13px] text-gray-400 mt-0.5 font-medium">Entradas em {{ $mes }}.</p>
     </div>
-    <div class="flex gap-2">
+    <div class="flex gap-2 flex-wrap items-center">
+        <x-month-picker :action="route('receitas')" :mes="$mes" />
         <x-btn-link :href="route('receitas.create')" color="success" icon="add_circle">Nova Receita</x-btn-link>
     </div>
 </div>

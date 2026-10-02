@@ -11,7 +11,8 @@
         <h1 class="text-[24px] font-extrabold tracking-tight text-gray-900">Cartões</h1>
         <p class="text-[13px] text-gray-400 mt-0.5 font-medium">Limite, fechamento, vencimento e titular de cada cartão.</p>
     </div>
-    <div class="flex gap-2">
+    <div class="flex gap-2 flex-wrap items-center">
+        <x-month-picker :action="route('cartoes')" :mes="$mes" />
         <x-btn-link :href="route('cartoes.itens.create')" color="orange" icon="add_shopping_cart">Nova Compra</x-btn-link>
         @if($isGestor)
         <x-btn-link :href="route('cartoes.create')" color="orange" icon="add_card">Novo Cartão</x-btn-link>
@@ -97,7 +98,7 @@
 
 <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
     {{-- Itens da fatura --}}
-    <x-section-card class="lg:col-span-7" title="Itens da Fatura" :subtitle="$fatura->total().' item(ns)'">
+    <x-section-card class="lg:col-span-7" title="Itens da Fatura" :subtitle="'Em '.ucfirst(\Carbon\Carbon::createFromFormat('Y-m', $mes)->translatedFormat('F/Y')).' · '.$fatura->total().' item(ns)'">
         <x-slot:action>
             <x-btn-link :href="route('cartoes.itens.create')" color="orange" size="sm" icon="add">Lançar compra</x-btn-link>
         </x-slot:action>

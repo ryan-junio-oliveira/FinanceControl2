@@ -9,13 +9,14 @@ use App\Models\CreditCard;
 use App\Services\CardService;
 use App\Support\Fin;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class CardController extends Controller
 {
-    public function index(CardService $service): View
+    public function index(Request $request, CardService $service): View
     {
-        return view('pages.cartoes', $service->dashboard(Fin::family()));
+        return view('pages.cartoes', $service->dashboard(Fin::family(), $request->query('mes')));
     }
 
     public function create(CardService $service): View

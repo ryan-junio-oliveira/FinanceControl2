@@ -7,7 +7,7 @@
     use App\Support\Fin;
     $money = fn($v) => Fin::money($v);
     $mesLabel = ucfirst(\Carbon\Carbon::createFromFormat('Y-m', $mes)->translatedFormat('F/Y'));
-    $bottomPagar = '<span class="text-[11px] text-gray-400 font-medium">'.$aPagar['s30']['qtd'].' conta(s) · '.$aPagar['atraso']['qtd'].' vencida(s)</span>';
+    $resultado = $kpi['receitas_mes'] - $kpi['despesas_total_mes'];
 @endphp
 
 <div class="flex flex-wrap items-end justify-between gap-3">
@@ -15,20 +15,18 @@
         <h1 class="text-[24px] font-extrabold tracking-tight text-gray-900">Visão Geral</h1>
         <p class="text-[13px] text-gray-400 mt-0.5 font-medium">Saúde financeira da família {{ auth()->user()->family->name }}</p>
     </div>
-    <form method="GET" action="{{ route('dashboard') }}" class="flex items-center gap-2">
-        <label class="text-[12px] font-bold text-gray-500" for="mes">Mês de referência</label>
-        <input type="month" name="mes" id="mes" value="{{ $mes }}" onchange="this.form.submit()"
-            class="h-10 rounded-lg border border-slate-200 bg-white px-3 text-[13px] font-bold text-gray-700 focus:border-emerald-500 outline-none transition">
-    </form>
+    <x-month-picker :action="route('dashboard')" :mes="$mes" />
 </div>
 
-{{-- ══════════════ O ESSENCIAL ══════════════ --}}
-<div class="grid sm:grid-cols-2 xl:grid-cols-5 gap-4">
-    <x-kpi-card label="Patrimônio Líquido" :value="$money($patrimonio)" icon="workspace_premium" accent="emerald" />
-    <x-kpi-card label="Receitas no Mês" :value="$money($kpi['receitas']['atual'])" icon="trending_up" accent="green" />
-    <x-kpi-card label="Despesas no Mês" :value="$money($kpi['despesas']['atual'])" icon="trending_down" accent="red" />
-    <x-kpi-card label="Resultado do Mês" :value="$money($kpi['resultado']['atual'])" icon="balance" accent="emerald" />
-    <x-kpi-card label="A Pagar (30 dias)" :value="$money($aPagar['s30']['valor'])" icon="event" accent="amber" :bottom="$bottomPagar" />
+{{-- ══════════════ VISÃO GERAL ══════════════ --}}
+<div class="grid sm:grid-cols-2 xl:grid-cols-6 gap-4">
+    <x-kpi-card label="Saldo em Contas" :value="$money($saldoContas)" icon="account_balance_wallet" accent="blue" />
+    <x-kpi-card label="Receitas no Mês" :value="$money($kpi['receitas_mes'])" icon="trending_up" accent="green" />
+    <x-kpi-card label="Despesas no Mês (sem faturas)" :value="$money($kpi['despesas_cash_mes'])" icon="payments" accent="red" />
+    <x-kpi-card label="Despesas no Mês (com faturas)" :value="$money($kpi['despesas_total_mes'])" icon="trending_down" accent="red" />
+    <x-kpi-card label="Faturas em Aberto" :value="$money($faturaAberto)" icon="credit_card" accent="orange" />
+    <x-kpi-card label="Investimentos" :value="$money($investido)" icon="savings" accent="cyan"
+        bottom="<span class='text-[11px] text-gray-400 font-medium'>Resultado: <b class='num {{ $resultado >= 0 ? 'text-emerald-600' : 'text-red-500' }}'>{{ $money($resultado) }}</b></span>" />
 </div>
 
 {{-- ══════════════ GRÁFICOS ══════════════ --}}
@@ -43,18 +41,11 @@
 </div>
 
 <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
-    <x-section-card class="lg:col-span-5" title="Resultado Mensal" subtitle="Barras = resultado · linha = acumulado no ano">
-        <div id="chart-resultado" class="w-full"></div>
+    <x-section-card class="lg:col-span-7" title="Receitas por Categoria" :subtitle="'Em '.$mesLabel">
+        <div id="chart-receitas" class="w-full"></div>
     </x-section-card>
 
-    <x-section-card class="lg:col-span-7" title="Saldo por Conta" subtitle="Cores da marca de cada banco">
-        <div id="chart-saldos" class="w-full"></div>
-    </x-section-card>
-</div>
-
-{{-- ══════════════ LISTAS ══════════════ --}}
-<div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
-    <x-section-card class="lg:col-span-7" title="Próximos Vencimentos" subtitle="Contas pendentes nos próximos 30 dias">
+    <x-section-card class="lg:col-span-5" title="Próximos Vencimentos" subtitle="Contas pendentes nos próximos 30 dias">
         @forelse($proximos as $v)
         <div class="flex items-center gap-3 p-3.5 rounded-xl border border-slate-100 hover:border-slate-200 bg-slate-50/40 mb-2.5 transition">
             <span class="w-10 h-10 rounded-lg grid place-items-center shrink-0 bg-amber-50 text-amber-500">
@@ -74,53 +65,52 @@
         </div>
         @endforelse
     </x-section-card>
-
-    <div class="lg:col-span-5 space-y-4">
-        <x-section-card title="Gastos por Membro" :subtitle="'Em '.$mesLabel">
-            @forelse($porMembro as $g)
-            <div class="flex items-center gap-3 py-2">
-                <span class="w-9 h-9 rounded-full grid place-items-center text-white text-[11px] font-extrabold shrink-0"
-                    style="background:{{ $g['cor'] }}">{{ $g['iniciais'] }}</span>
-                <div class="flex-1 min-w-0">
-                    <div class="flex items-center justify-between gap-2">
-                        <p class="text-[13px] font-bold text-gray-800 truncate">{{ $g['nome'] }}</p>
-                        <span class="num text-[12px] font-extrabold text-gray-700 shrink-0">{{ $money($g['total']) }}</span>
-                    </div>
-                    <div class="mt-1.5 h-1.5 rounded-full bg-slate-100 overflow-hidden">
-                        <div class="h-full rounded-full" style="width:{{ $g['pct'] }}%;background:{{ $g['cor'] }}"></div>
-                    </div>
-                </div>
-            </div>
-            @empty
-            <p class="text-[13px] text-gray-400 text-center py-8">Nenhum gasto no período.</p>
-            @endforelse
-        </x-section-card>
-
-        <x-section-card title="Metas de Investimento" subtitle="Progresso até o objetivo">
-            @forelse($inv['metas'] as $meta)
-            <div class="py-2.5">
-                <div class="flex items-center justify-between gap-2">
-                    <p class="text-[13px] font-bold text-gray-800 truncate">{{ $meta['nome'] }}</p>
-                    <span class="text-[11px] font-extrabold num text-gray-600 shrink-0">{{ round($meta['progresso'] ?? 0) }}%</span>
-                </div>
-                <div class="mt-1.5 h-2 rounded-full bg-slate-100 overflow-hidden">
-                    <div class="h-full rounded-full bg-gradient-to-r from-emerald-500 to-emerald-600 transition-all"
-                        style="width:{{ min(100, $meta['progresso'] ?? 0) }}%"></div>
-                </div>
-            </div>
-            @empty
-            <p class="text-[13px] text-gray-400 text-center py-8">Nenhuma meta configurada.</p>
-            @endforelse
-        </x-section-card>
-    </div>
 </div>
+
+{{-- ══════════════ POR MEMBRO ══════════════ --}}
+<x-section-card title="Detalhes por Membro" :subtitle="'Receitas, despesas e gastos no cartão em '.$mesLabel">
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        @forelse($membros as $u)
+        <div class="rounded-xl border border-slate-200 p-4">
+            <div class="flex items-center gap-3 mb-3">
+                <span class="w-10 h-10 rounded-full grid place-items-center text-white text-[12px] font-extrabold shrink-0"
+                    style="background:{{ $u['cor'] }}">{{ $u['iniciais'] }}</span>
+                <div class="min-w-0">
+                    <p class="text-[14px] font-extrabold text-gray-800 truncate">{{ $u['nome'] }}</p>
+                    <p class="text-[11px] text-gray-400">{{ $mesLabel }}</p>
+                </div>
+            </div>
+            <div class="grid grid-cols-3 gap-2 text-[12px]">
+                <div class="rounded-xl bg-emerald-50 border border-emerald-100 p-2.5">
+                    <p class="text-[10px] font-bold uppercase tracking-wider text-emerald-600">Receitas</p>
+                    <p class="num font-extrabold text-[13px] text-emerald-700 mt-0.5">{{ $money($u['receitas']) }}</p>
+                </div>
+                <div class="rounded-xl bg-red-50 border border-red-100 p-2.5">
+                    <p class="text-[10px] font-bold uppercase tracking-wider text-red-500">Despesas</p>
+                    <p class="num font-extrabold text-[13px] text-red-700 mt-0.5">{{ $money($u['despesas']) }}</p>
+                </div>
+                <div class="rounded-xl bg-orange-50 border border-orange-100 p-2.5">
+                    <p class="text-[10px] font-bold uppercase tracking-wider text-orange-600">Cartão</p>
+                    <p class="num font-extrabold text-[13px] text-orange-700 mt-0.5">{{ $money($u['cartao']) }}</p>
+                </div>
+            </div>
+            <div class="mt-3">
+                <div class="h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                    <div class="h-full rounded-full" style="width:{{ $u['pct'] }}%;background:{{ $u['cor'] }}"></div>
+                </div>
+            </div>
+        </div>
+        @empty
+        <p class="text-[13px] text-gray-400 text-center py-8 col-span-full">Nenhum membro na conta.</p>
+        @endforelse
+    </div>
+</x-section-card>
 
 <script>
 window.DashboardCharts = {
     'chart-fluxo': @json($charts['fluxo']),
-    'chart-resultado': @json($charts['resultado']),
     'chart-categorias': @json($charts['categorias']),
-    'chart-saldos': @json($charts['saldos']),
+    'chart-receitas': @json($charts['receitasCat']),
 };
 </script>
 @endsection

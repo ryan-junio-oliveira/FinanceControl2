@@ -92,14 +92,15 @@ final class BotPresenter
     public static function dashboardText(array $dados, string $mes): string
     {
         $k = $dados['kpi'];
-        $pos = $k['resultado']['atual'] >= 0;
+        $resultado = $k['receitas_mes'] - $k['despesas_total_mes'];
+        $pos = $resultado >= 0;
         $lines = [
             self::header('Dados financeiros'),
             self::mesLabel($mes),
             '',
-            '💰 Receitas: <b>'.self::money($k['receitas']['atual']).'</b>',
-            '💸 Despesas: <b>'.self::money($k['despesas']['atual']).'</b>',
-            ($pos ? '✅' : '🔴').' Resultado: <b>'.self::money($k['resultado']['atual']).'</b>',
+            '💰 Receitas: <b>'.self::money($k['receitas_mes']).'</b>',
+            '💸 Despesas: <b>'.self::money($k['despesas_total_mes']).'</b>',
+            ($pos ? '✅' : '🔴').' Resultado: <b>'.self::money($resultado).'</b>',
             '',
             self::divider(),
             '🏦 Contas: <b>'.self::money($dados['saldoContas']).'</b>',

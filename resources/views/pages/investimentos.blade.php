@@ -10,11 +10,19 @@
         <h1 class="text-[24px] font-extrabold tracking-tight text-gray-900">Meus Investimentos</h1>
         <p class="text-[13px] text-gray-400 mt-0.5 font-medium">Todos os seus ativos em um só lugar.</p>
     </div>
-    <div class="flex gap-2 flex-wrap">
+    <div class="flex gap-2 flex-wrap items-center">
+        <x-month-picker :action="route('investimentos')" :mes="$mes" />
         <x-btn-link :href="route('mercado')" color="ghost" icon="candlestick_chart">Ver mercado</x-btn-link>
         <x-btn-link :href="route('investimentos.ativos.create')" color="cyan" icon="add_circle">Adicionar ativo</x-btn-link>
         <x-btn-link :href="route('investimentos.aportes.create')" color="cyan" icon="payments">Novo Aporte</x-btn-link>
     </div>
+</div>
+
+{{-- Resumo do mês --}}
+<div class="grid sm:grid-cols-3 gap-4">
+    <x-kpi-card label="Patrimônio Total" :value="Fin::money($patrimonio)" icon="savings" accent="cyan" />
+    <x-kpi-card label="Aportes no Mês" :value="Fin::money($aportesMes)" icon="add_circle" accent="emerald" />
+    <x-kpi-card label="Rendimentos no Mês" :value="Fin::money($rendMes)" icon="trending_up" accent="green" />
 </div>
 
 {{-- Metas financeiras --}}

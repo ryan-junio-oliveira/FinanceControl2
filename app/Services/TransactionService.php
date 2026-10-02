@@ -61,6 +61,7 @@ final class TransactionService
         $parcelas = max(1, min(48, (int) ($data['installments_total'] ?? 1)));
         unset($data['installments_total']);
         $data['is_fixed'] = (bool) ($data['is_fixed'] ?? false);
+        $data['source'] = 'cash';
 
         $criados = collect();
         DB::transaction(function () use ($family, $data, $type, $parcelas, $criados) {

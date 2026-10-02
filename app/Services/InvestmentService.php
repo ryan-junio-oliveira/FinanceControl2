@@ -3,9 +3,11 @@
 namespace App\Services;
 
 use App\Models\Asset;
+use App\Models\Contribution;
 use App\Models\Family;
 use App\Models\Portfolio;
 use App\Models\Transaction;
+use App\Support\Fin;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 
@@ -17,8 +19,11 @@ use Illuminate\Support\Facades\DB;
 final class InvestmentService
 {
     /** Dados completos da tela de investimentos. */
-    public function dashboard(Family $family, array $filters = [], int $perPage = 12): array
+    public function dashboard(Family $family, array $filters = [], int $perPage = 12, ?string $mes = null): array
     {
+        $mes ??= Fin::month();
+        [$ano, $m] = array_map('intval', explode('-', $mes));
+
         $patrimonio = (float) Asset::where('family_id', $family->id)->sum('current_value');
 
         $metas = $family->portfolios()->whereNotNull('target_amount')
@@ -33,8 +38,15 @@ final class InvestmentService
         $ativos = $ativosQuery->orderBy('name')->paginate($perPage);
         $porClasse = Asset::where('family_id', $family->id)->selectRaw('kind, SUM(current_value) as total')->groupBy('kind')->pluck('total', 'kind');
 
+        $mesQuery = fn ($q) => $q->whereYear('occurred_on', $ano)->whereMonth('occurred_on', $m);
+        $aportesMes = (float) $mesQuery(Contribution::where('family_id', $family->id)->where('kind', 'aporte'))->sum('amount');
+        $rendMes = (float) $mesQuery(Contribution::where('family_id', $family->id)->where('kind', 'rendimento'))->sum('amount');
+
         return [
+            'mes' => $mes,
             'patrimonio' => $patrimonio,
+            'aportesMes' => $aportesMes,
+            'rendMes' => $rendMes,
             'metas' => $metas,
             'ativos' => $ativos,
             'porClasse' => $porClasse,

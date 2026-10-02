@@ -42,7 +42,7 @@ final class CardService
     }
 
     /** Dados completos da tela de cartões (faturas, por membro, opções). */
-    public function dashboard(Family $family): array
+    public function dashboard(Family $family, ?string $mes = null): array
     {
         $hoje = Carbon::today();
 
@@ -61,11 +61,17 @@ final class CardService
             $c->setAttribute('prox_vencimento', $c->nextDueDate($hoje));
         });
 
+        $fatura = CardTransaction::where('family_id', $family->id)
+            ->with(['member', 'category', 'card']);
+        if ($mes) {
+            [$y, $m] = array_map('intval', explode('-', $mes));
+            $fatura->whereYear('occurred_on', $y)->whereMonth('occurred_on', $m);
+        }
+
         return [
+            'mes' => $mes ?? Fin::month(),
             'cartoes' => $cartoes,
-            'fatura' => CardTransaction::where('family_id', $family->id)
-                ->with(['member', 'category', 'card'])
-                ->orderByDesc('occurred_on')->paginate(12),
+            'fatura' => $fatura->orderByDesc('occurred_on')->paginate(12),
             'porMembro' => CardTransaction::where('family_id', $family->id)->where('status', 'pendente')
                 ->selectRaw('user_id, SUM(amount) as total')->groupBy('user_id')
                 ->orderByDesc('total')->with('member')->get(),
@@ -183,6 +189,7 @@ final class CardService
                     'occurred_on' => $item->occurred_on,
                     'due_on' => $item->occurred_on,
                     'status' => 'pago',
+                    'source' => 'invoice',
                 ]);
             }
         });
@@ -217,6 +224,7 @@ final class CardService
                     'occurred_on' => Fin::today(),
                     'due_on' => Fin::today(),
                     'status' => 'pago',
+                    'source' => 'invoice',
                 ]);
             }
         });
