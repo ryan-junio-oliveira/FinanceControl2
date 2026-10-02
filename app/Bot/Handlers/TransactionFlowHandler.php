@@ -10,6 +10,7 @@ use App\Bot\ValueObjects\IncomingMessage;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Services\AccountService;
+use App\Services\CardService;
 use App\Services\CategoryService;
 use App\Services\TransactionService;
 use App\Support\Fin;
@@ -20,6 +21,12 @@ abstract class TransactionFlowHandler extends BotHandler
     abstract protected function type(): string;
 
     abstract protected function typeLabel(): string;
+
+    /** Despesas perguntam a forma de pagamento (Pix/TED/Dinheiro/Cartão). */
+    protected function asksPaymentMethod(): bool
+    {
+        return false;
+    }
 
     public function menu(BotDriver $driver, IncomingMessage $msg, ?User $user): void
     {
@@ -63,11 +70,14 @@ abstract class TransactionFlowHandler extends BotHandler
             'amount' => $this->stepDate($driver, $msg, $data, $text),
             'date' => $this->stepMember($driver, $msg, $data, $text, $user),
             'member' => $this->stepAccount($driver, $msg, $data, $text, $user),
+            'payment' => $this->stepPayment($driver, $msg, $data, $text, $user),
+            'paymentcard' => $this->stepPaymentCard($driver, $msg, $data, $text, $user),
             'account' => $this->stepCategory($driver, $msg, $data, $text, $user),
             'category' => $this->stepCategoryChosen($driver, $msg, $data, $text, $user),
             'fixed' => $this->stepFixedAnswer($driver, $msg, $data, $text, $user),
             'dueday' => $this->stepDueDay($driver, $msg, $data, $text, $user),
             'confirm' => $this->stepSave($driver, $msg, $data, $text, $user),
+            'confirmcard' => $this->stepSaveCard($driver, $msg, $data, $text, $user),
             default => $this->menu($driver, $msg, $user),
         };
     }
@@ -115,7 +125,7 @@ abstract class TransactionFlowHandler extends BotHandler
         $members = $user->family->users()->orderBy('name')->get();
         if ($members->count() <= 1) {
             $data['user_id'] = $user->id;
-            $this->askAccount($driver, $msg, $data, $user);
+            $this->afterMember($driver, $msg, $data, $user);
 
             return;
         }
@@ -138,7 +148,82 @@ abstract class TransactionFlowHandler extends BotHandler
         }
         $data['user_id'] = $ids[$num - 1];
         unset($data['_members']);
+        $this->afterMember($driver, $msg, $data, $user);
+    }
+
+    /** Depois do responsável: despesa pergunta a forma de pagamento. */
+    private function afterMember(BotDriver $driver, IncomingMessage $msg, array $data, ?User $user): void
+    {
+        if ($this->asksPaymentMethod()) {
+            $this->askPayment($driver, $msg, $data);
+
+            return;
+        }
         $this->askAccount($driver, $msg, $data, $user);
+    }
+
+    private function askPayment(BotDriver $driver, IncomingMessage $msg, array $data): void
+    {
+        $this->ask($driver, $msg, 'payment', $data, '💳 Como você pagou?', $this->paymentKeyboard());
+    }
+
+    private function paymentKeyboard(): BotKeyboard
+    {
+        return BotKeyboard::menu(['💸 Pix' => 'pix', '🏦 TED' => 'ted', '💵 Dinheiro' => 'dinheiro', '💳 Cartão' => 'cartao']);
+    }
+
+    private function stepPayment(BotDriver $driver, IncomingMessage $msg, array $data, string $text, ?User $user): void
+    {
+        $low = mb_strtolower(trim($text));
+        if (in_array($low, ['cartao', 'cartão', 'credito', 'crédito', '3'], true)) {
+            $data['payment_method'] = 'cartao';
+            $cards = app(CardService::class)->list($user->family);
+            if ($cards->isEmpty()) {
+                $this->done($driver, $msg, $user, '❌ Você ainda não tem cartões. Cadastre um no menu Cartões.');
+
+                return;
+            }
+            $this->ask($driver, $msg, 'paymentcard', $data + ['_cards' => $cards->pluck('id')->all()], "💳 Em qual cartão?\n".$this->numberedList($cards->map(fn ($c) => $c->name)->all()), $this->cancelKeyboard());
+
+            return;
+        }
+
+        $method = match ($low) {
+            'pix' => 'Pix',
+            'ted', 'doc', 'transferencia', 'transferência' => 'TED',
+            'dinheiro', 'cash', 'especie', 'espécie' => 'Dinheiro',
+            default => null,
+        };
+        if ($method === null) {
+            $this->ask($driver, $msg, 'payment', $data, 'Escolha uma opção:', $this->paymentKeyboard());
+
+            return;
+        }
+        $data['payment_method'] = $method;
+        $data['notes'] = 'Pago via '.$method;
+        $this->askAccount($driver, $msg, $data, $user);
+    }
+
+    private function stepPaymentCard(BotDriver $driver, IncomingMessage $msg, array $data, string $text, ?User $user): void
+    {
+        $ids = $data['_cards'] ?? [];
+        $num = self::num($text);
+        if ($num === null || ! isset($ids[$num - 1])) {
+            $this->ask($driver, $msg, 'paymentcard', $data, '❌ Escolha o número do cartão:', $this->cancelKeyboard());
+
+            return;
+        }
+        $data['credit_card_id'] = $ids[$num - 1];
+        unset($data['_cards']);
+        $data['_via_cartao'] = true;
+
+        $cats = app(CategoryService::class)->list($user->family, ['tipo' => $this->type()], 100);
+        if ($cats->isEmpty()) {
+            $this->done($driver, $msg, $user, '❌ Sem categorias cadastradas. Crie no sistema primeiro.');
+
+            return;
+        }
+        $this->ask($driver, $msg, 'category', $data + ['_categories' => $cats->pluck('id')->all()], "🏷️ Qual a categoria?\n".$this->numberedList($cats->map(fn ($c) => $c->name)->all()), $this->cancelKeyboard());
     }
 
     private function askAccount(BotDriver $driver, IncomingMessage $msg, array $data, ?User $user): void
@@ -188,6 +273,12 @@ abstract class TransactionFlowHandler extends BotHandler
         unset($data['_categories']);
         $data['status'] = 'pago';
 
+        if (! empty($data['_via_cartao'])) {
+            $this->stepConfirmCard($driver, $msg, $data, $text, $user);
+
+            return;
+        }
+
         $this->ask(
             $driver,
             $msg,
@@ -196,6 +287,46 @@ abstract class TransactionFlowHandler extends BotHandler
             '🔁 É '.$this->typeLabel().' fixa (se repete todo mês)?',
             $this->fixedKeyboard()
         );
+    }
+
+    private function stepConfirmCard(BotDriver $driver, IncomingMessage $msg, array $data, string $text, ?User $user): void
+    {
+        $card = $user->family->creditCards()->find($data['credit_card_id']);
+        $cat = $user->family->categories()->find($data['category_id']);
+        $member = $user->family->users()->find($data['user_id']);
+        $summary = '🧾 <b>Confirmar compra no cartão?</b>'."\n"
+            .BotPresenter::divider()."\n"
+            .'💳 '.($card->name ?? '—')."\n"
+            .'🛒 '.$data['description']."\n"
+            .'💵 <b>'.BotPresenter::money($data['amount']).'</b> · '.Carbon::parse($data['occurred_on'])->format('d/m/Y')."\n"
+            .'🏷️ '.($cat->name ?? '—').' · 👤 '.($member->name ?? '—');
+        $this->ask($driver, $msg, 'confirmcard', $data, $summary, $this->confirmKeyboard());
+    }
+
+    private function stepSaveCard(BotDriver $driver, IncomingMessage $msg, array $data, string $text, ?User $user): void
+    {
+        if (self::isNo($text)) {
+            $this->done($driver, $msg, $user, '🚫 Lançamento cancelado.');
+
+            return;
+        }
+        if (! self::isYes($text)) {
+            $this->ask($driver, $msg, 'confirmcard', $data, 'Confirma? Toque em ✅ Confirmar ou ❌ Cancelar.', $this->confirmKeyboard());
+
+            return;
+        }
+
+        app(CardService::class)->createItem($user->family, [
+            'credit_card_id' => $data['credit_card_id'],
+            'description' => $data['description'],
+            'amount' => $data['amount'],
+            'occurred_on' => $data['occurred_on'],
+            'user_id' => $data['user_id'],
+            'category_id' => $data['category_id'] ?? null,
+        ]);
+
+        $card = $user->family->creditCards()->find($data['credit_card_id']);
+        $this->done($driver, $msg, $user, '✅ Compra lançada na fatura do <b>'.($card->name ?? 'cartão').'</b>: <b>'.$data['description'].'</b> ('.BotPresenter::money($data['amount']).').');
     }
 
     private function stepFixedAnswer(BotDriver $driver, IncomingMessage $msg, array $data, string $text, ?User $user): void

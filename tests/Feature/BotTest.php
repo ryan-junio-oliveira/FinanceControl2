@@ -96,6 +96,7 @@ class BotTest extends TestCase
         $this->send('Mercado semanal');
         $this->send('350,75');
         $this->send('hoje');
+        $this->send('pix'); // Forma de pagamento.
 
         // Conta (só 1) → categoria.
         $this->send('1');
@@ -138,6 +139,7 @@ class BotTest extends TestCase
         $this->send('Aluguel');
         $this->send('1200');
         $this->send('hoje');
+        $this->send('pix'); // Forma de pagamento.
         $this->send('1'); // Conta (só 1) → categoria.
 
         $cats = $family->categories()->where('type', 'despesa')->where('archived', false)->orderBy('name')->get();
@@ -159,6 +161,36 @@ class BotTest extends TestCase
         $this->assertTrue((bool) $tx->is_fixed);
         $this->assertSame(10, (int) Carbon::parse($tx->due_on)->day);
         $this->assertStringContainsString('registrada', (string) NullDriver::lastText());
+    }
+
+    public function test_expense_payment_card_flow(): void
+    {
+        [$family, $admin] = $this->familyWithLinkedUser();
+        BotIdentity::create(['user_id' => $admin->id, 'channel' => 'telegram', 'external_id' => '99']);
+        $family->creditCards()->create([
+            'name' => 'Inter Mastercard', 'brand' => 'mastercard',
+            'credit_limit' => 5000, 'closing_day' => 6, 'due_day' => 12, 'active' => true,
+        ]);
+
+        $this->send('2');
+        $this->send('despesa:new');
+        $this->send('iFood');
+        $this->send('89,90');
+        $this->send('hoje');
+        $this->send('cartao'); // Forma de pagamento → qual cartão?
+
+        $this->assertStringContainsString('qual cartão', (string) NullDriver::lastText());
+        $this->send('1'); // Único cartão.
+        $this->send('1'); // Primeira categoria.
+
+        $this->assertStringContainsString('Confirmar compra no cartão', (string) NullDriver::lastText());
+        $this->send('sim');
+
+        $this->assertDatabaseHas('card_transactions', [
+            'description' => 'iFood', 'amount' => 89.90, 'status' => 'pendente',
+        ]);
+        $this->assertDatabaseMissing('transactions', ['description' => 'iFood']);
+        $this->assertStringContainsString('fatura do', (string) NullDriver::lastText());
     }
 
     public function test_account_create_flow(): void

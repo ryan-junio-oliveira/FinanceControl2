@@ -9,6 +9,11 @@ class ExpenseHandler extends TransactionFlowHandler
         return 'despesa';
     }
 
+    protected function asksPaymentMethod(): bool
+    {
+        return true;
+    }
+
     protected function typeLabel(bool $singular = false): string
     {
         return $singular ? 'despesa' : 'Despesas';
