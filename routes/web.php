@@ -19,7 +19,6 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\TransactionController;
-use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Support\Facades\Route;
 
 // ---------- Páginas legais (públicas) ----------
@@ -29,9 +28,8 @@ Route::get('/privacidade', [LegalController::class, 'privacy'])->name('privacida
 // Página offline do PWA (pública; o service worker a exibe sem rede).
 Route::view('/offline', 'pages.offline')->name('offline');
 
-// Webhook do Mercado Pago (público, sem CSRF).
-Route::post('/webhooks/mercadopago', [BillingController::class, 'webhook'])
-    ->withoutMiddleware([ValidateCsrfToken::class]);
+// Webhook do Mercado Pago (público; CSRF liberado no bootstrap/app.php).
+Route::post('/webhooks/mercadopago', [BillingController::class, 'webhook']);
 
 // ---------- Guests ----------
 Route::middleware('guest')->group(function () {
