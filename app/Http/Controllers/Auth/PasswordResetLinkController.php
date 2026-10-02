@@ -27,8 +27,7 @@ class PasswordResetLinkController extends Controller
 
         $status = Password::sendResetLink($request->only('email'));
 
-        return $status === Password::RESET_LINK_SENT
-            ? back()->with('status', 'Enviamos o link de recuperação para '.$request->email.'. Verifique sua caixa de entrada e o spam.')
-            : back()->withErrors(['email' => 'Não encontramos uma conta com este e-mail. Confira e tente de novo.'])->onlyInput('email');
+        // Mensagem única exista ou não a conta: não revela quais e-mails têm cadastro.
+        return back()->with('status', 'Se este e-mail estiver cadastrado, enviamos o link de recuperação. Verifique sua caixa de entrada e o spam.');
     }
 }
