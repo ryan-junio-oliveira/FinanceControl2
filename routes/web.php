@@ -139,11 +139,12 @@ Route::middleware('auth')->group(function () {
                 Route::post('/investments/contributions', [InvestmentController::class, 'storeContribution'])->name('investimentos.aportes.store');
                 Route::delete('/investments/assets/{asset}', [InvestmentController::class, 'destroyAsset'])->name('investimentos.ativos.destroy');
 
-                Route::get('/family/invites/create', [FamilyController::class, 'createInvite'])->name('familia.convites.create');
-                Route::post('/family/invites', [FamilyController::class, 'invite'])->name('familia.convites.store');
-                Route::delete('/family/invites/{invite}', [FamilyController::class, 'revokeInvite'])->name('familia.convites.destroy');
-                Route::delete('/family/members/{member}', [FamilyController::class, 'removeMember'])->name('familia.membros.destroy');
-                Route::patch('/family/members/{member}/role', [FamilyController::class, 'updateRole'])->name('familia.membros.papel');
+Route::get('/family/invites/create', [FamilyController::class, 'createInvite'])->name('familia.convites.create');
+            Route::post('/family/invites', [FamilyController::class, 'invite'])->name('familia.convites.store');
+            Route::delete('/family/invites/{invite}', [FamilyController::class, 'revokeInvite'])->name('familia.convites.destroy');
+            Route::delete('/family/members/{member}', [FamilyController::class, 'removeMember'])->name('familia.membros.destroy');
+            Route::patch('/family/members/{member}/role', [FamilyController::class, 'updateRole'])->name('familia.membros.papel');
+            Route::post('/family/secret', [FamilyController::class, 'updateSecret'])->name('familia.secret');
 
                 Route::post('/cards/{card}/pay-invoice', [CardController::class, 'payInvoice'])->name('cartoes.fatura.pagar');
 
