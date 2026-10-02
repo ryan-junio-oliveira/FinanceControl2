@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Services\FamilyService;
 use App\Support\Fin;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class FamilyController extends Controller
@@ -63,5 +64,16 @@ class FamilyController extends Controller
         $service->updateRole($member, $request->validated());
 
         return back()->with('status', 'Papel atualizado.');
+    }
+
+    /** Define a palavra-chave da família (somente gestor). */
+    public function updateSecret(Request $request): RedirectResponse
+    {
+        $phrase = trim((string) $request->input('secret_phrase', ''));
+        abort_if(mb_strlen($phrase) > 80, 422, 'Palavra-chave muito longa (máx. 80 caracteres).');
+
+        Fin::family()->setting()->update(['secret_phrase' => $phrase !== '' ? $phrase : null]);
+
+        return back()->with('status', 'Palavra-chave da família atualizada.');
     }
 }

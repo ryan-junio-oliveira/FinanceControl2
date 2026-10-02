@@ -9,7 +9,7 @@ class FamilySetting extends Model
 {
     protected $fillable = [
         'family_id', 'currency', 'timezone',
-        'consolidate_dependent_yield', 'notifications',
+        'consolidate_dependent_yield', 'notifications', 'secret_phrase',
     ];
 
     protected function casts(): array

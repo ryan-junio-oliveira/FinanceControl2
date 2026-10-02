@@ -15,6 +15,28 @@
     @endif
 </div>
 
+{{-- Palavra-chave da família (identidade) --}}
+<x-section-card title="Palavra-chave da Família" subtitle="Combinação secreta para confirmar identidade entre os membros">
+    @if($isGestor)
+    <form method="POST" action="{{ route('familia.secret') }}" class="flex flex-wrap items-center gap-3">
+        @csrf
+        <input name="secret_phrase" value="{{ auth()->user()->family->setting()->secret_phrase ?? '' }}" maxlength="80"
+            placeholder="Ex.: abacaxi e laranja" autocomplete="off"
+            class="fld-control max-w-xs">
+        <x-btn-submit color="rose">Salvar</x-btn-submit>
+    </form>
+    @else
+        @php $frase = auth()->user()->family->setting()->secret_phrase ?? null; @endphp
+        @if($frase)
+        <p class="text-[16px] font-extrabold text-gray-800">🔑 {{ $frase }}</p>
+        @else
+        <p class="text-[13px] text-gray-400">A família ainda não definiu uma palavra-chave.</p>
+        @endif
+    @endif
+    <p class="text-[12px] text-gray-400 mt-3">Use-a para confirmar que alguém é realmente um membro da família ao pedir ou transferir dinheiro.</p>
+</x-section-card>
+
+{{-- Todos os membros --}}
 <x-section-card title="Todos os Membros" :subtitle="$membros->count().' membro(s) na conta'">
     <div class="overflow-x-auto -mx-5 lg:-mx-6 px-5 lg:px-6">
         <table class="w-full text-left min-w-[720px] table-modern">

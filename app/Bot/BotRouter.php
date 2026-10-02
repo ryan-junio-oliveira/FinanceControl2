@@ -81,6 +81,16 @@ final class BotRouter
             return;
         }
 
+        // Palavra-chave da família (identidade) sob demanda.
+        if (in_array($low, ['senha', 'palavra', 'palavra-chave', 'palavra-chave da família', 'chave'], true)) {
+            $frase = $user->family->setting()->secret_phrase ?? null;
+            $driver->sendText($msg->chatId, $frase
+                ? '🔑 Palavra-chave da família: <b>'.e($frase).'</b>'
+                : 'A família ainda não definiu uma palavra-chave.');
+
+            return;
+        }
+
         // Atalhos de submenu vindos dos botões (ex.: despesa:new).
         if (preg_match('/^(despesa|receita):(list|new)$/', $low, $m)) {
             $handler = $m[1] === 'despesa' ? ExpenseHandler::class : IncomeHandler::class;

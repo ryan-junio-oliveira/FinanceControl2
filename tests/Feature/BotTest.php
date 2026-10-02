@@ -80,6 +80,21 @@ class BotTest extends TestCase
         $this->assertStringNotContainsString('Dados financeiros', (string) NullDriver::lastText());
     }
 
+    public function test_bot_shows_secret_phrase(): void
+    {
+        [$family, $admin] = $this->familyWithLinkedUser();
+        BotIdentity::create(['user_id' => $admin->id, 'channel' => 'telegram', 'external_id' => '99']);
+        $family->setting()->update(['secret_phrase' => 'abacaxi e laranja']);
+
+        $this->send('1'); // Dados financeiros mostra a palavra-chave.
+        $this->assertStringContainsString('Palavra-chave', (string) NullDriver::lastText());
+        $this->assertStringContainsString('abacaxi e laranja', (string) NullDriver::lastText());
+
+        NullDriver::flush();
+        $this->send('senha'); // Atalho de texto.
+        $this->assertStringContainsString('abacaxi e laranja', (string) NullDriver::lastText());
+    }
+
     public function test_link_and_menu(): void
     {
         [, $admin] = $this->familyWithLinkedUser();

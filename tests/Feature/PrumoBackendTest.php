@@ -201,6 +201,19 @@ class PrumoBackendTest extends TestCase
         $this->get('/expenses')->assertRedirect('/login');
     }
 
+    public function test_admin_defines_family_secret_phrase(): void
+    {
+        $this->post('/register', [
+            'manager_name' => 'Dona Alice', 'email' => 'alice@email.com', 'family_name' => 'Família Alice',
+            'password' => 'Senha@123', 'password_confirmation' => 'Senha@123', 'terms' => '1',
+        ])->assertRedirect(route('dashboard'));
+        $admin = User::where('email', 'alice@email.com')->first();
+
+        $this->post('/family/secret', ['secret_phrase' => 'abacaxi'])->assertSessionHasNoErrors();
+        $this->assertSame('abacaxi', $admin->family->setting()->secret_phrase);
+        $this->get('/family')->assertSee('abacaxi');
+    }
+
     public function test_full_family_flow(): void
     {
         // --- registro cria família + admin ---

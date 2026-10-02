@@ -20,6 +20,11 @@ class DashboardHandler extends BotHandler
     {
         $mes = Fin::month();
         $dados = Dashboard::data($mes);
-        $driver->sendText($msg->chatId, BotPresenter::dashboardText($dados, $mes), $this->menuKeyboard());
+        $texto = BotPresenter::dashboardText($dados, $mes);
+        $frase = $user->family->setting()->secret_phrase ?? null;
+        if ($frase) {
+            $texto .= "\n\n🔑 Palavra-chave: <b>".e($frase).'</b>';
+        }
+        $driver->sendText($msg->chatId, $texto, $this->menuKeyboard());
     }
 }

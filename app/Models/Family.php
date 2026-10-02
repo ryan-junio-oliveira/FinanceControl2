@@ -57,6 +57,6 @@ class Family extends Model
 
     public function setting(): FamilySetting
     {
-        return $this->settings()->firstOrCreate([]);
+        return $this->settings()->firstOrCreate(['family_id' => $this->id]);
     }
 }
