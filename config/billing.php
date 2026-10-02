@@ -21,6 +21,8 @@ return [
         'test_payer_email' => env('MERCADOPAGO_TEST_PAYER_EMAIL', null),
         // ID fixo do plano criado no MP (criar com BillingService::ensurePlan).
         'preapproval_plan_id' => env('MERCADOPAGO_PLAN_ID', null),
+        // Secret da assinatura (x-signature) configurado no webhook do MP.
+        'webhook_secret' => env('MERCADOPAGO_WEBHOOK_SECRET', null),
     ],
 
     /*

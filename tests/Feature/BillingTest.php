@@ -109,6 +109,26 @@ class BillingTest extends TestCase
         $this->assertTrue($fresh->plan_paid_until->isFuture());
     }
 
+    public function test_webhook_validates_signature(): void
+    {
+        $secret = 'segredo-teste';
+        config(['billing.mercado_pago.access_token' => 'TEST', 'billing.mercado_pago.webhook_secret' => $secret]);
+        $family = Family::create([
+            'name' => 'Família MP', 'plan' => 'free', 'trial_ends_at' => null, 'mp_preapproval_id' => 'PRE1',
+        ]);
+        Http::fake(['api.mercadopago.com/preapproval/PRE1' => Http::response(['status' => 'authorized', 'next_payment_date' => now()->addMonth()->toIso8601String()])]);
+
+        // Assinatura válida → processa e ativa.
+        $ts = time();
+        $v1 = hash_hmac('sha256', 'id:PRE1:'.$ts, $secret);
+        $this->postJson('/webhooks/mercadopago', ['type' => 'preapproval', 'data' => ['id' => 'PRE1']], ['x-signature' => "ts={$ts},v1={$v1}"])->assertOk();
+        $this->assertSame('pro', $family->fresh()->plan);
+
+        // Assinatura errada → 401 e não altera.
+        $this->postJson('/webhooks/mercadopago', ['type' => 'preapproval', 'data' => ['id' => 'PRE1']], ['x-signature' => "ts={$ts},v1=".str_repeat('0', 64)])->assertStatus(401);
+        $this->assertSame('pro', $family->fresh()->plan);
+    }
+
     public function test_webhook_cancels_plan(): void
     {
         config(['billing.mercado_pago.access_token' => 'TEST-TOKEN']);
