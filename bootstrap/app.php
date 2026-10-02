@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EnsureActivePlan;
 use App\Http\Middleware\EnsureFamilyOwnership;
 use App\Http\Middleware\EnsureFamilyRole;
 use App\Http\Middleware\NoStoreHtml;
@@ -19,6 +20,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'family.role' => EnsureFamilyRole::class,
             'family.ownership' => EnsureFamilyOwnership::class,
+            'plan.active' => EnsureActivePlan::class,
         ]);
         $middleware->web(append: [
             NoStoreHtml::class,

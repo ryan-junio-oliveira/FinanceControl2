@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Family extends Model
 {
-    protected $fillable = ['name', 'plan', 'trial_ends_at'];
+    protected $fillable = ['name', 'plan', 'trial_ends_at', 'mp_preapproval_id'];
 
     protected function casts(): array
     {

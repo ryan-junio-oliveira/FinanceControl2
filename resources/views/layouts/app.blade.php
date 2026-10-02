@@ -76,6 +76,7 @@
                     ['route'=>'categorias','label'=>'Categorias','icon'=>'category','color'=>'violet'],
                     ['route'=>'familia','label'=>'Membros','icon'=>'group','color'=>'rose'],
                     ['route'=>'perfil','label'=>'Meu Perfil','icon'=>'person'],
+                    ['route'=>'plans','label'=>'Plano','icon'=>'workspace_premium','color'=>'amber'],
                 ];
             @endphp
             @foreach($nav as $item)
