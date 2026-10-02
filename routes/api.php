@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
-| API v1 — FinFamília
+| API v1 — Prumo
 |--------------------------------------------------------------------------
 | REST para o bot (smartphone). Autenticação via Sanctum (Bearer token).
 | Middleware `family.ownership` garante que o recurso pertence à família.

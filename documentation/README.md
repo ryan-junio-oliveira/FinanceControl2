@@ -1,6 +1,6 @@
-# Documentação do FinFamília
+# Documentação do Prumo
 
-Bem-vindo à documentação técnica do FinFamília. Aqui você encontra tudo para desenvolver, testar e operar o sistema.
+Bem-vindo à documentação técnica do Prumo. Aqui você encontra tudo para desenvolver, testar e operar o sistema.
 
 ## Índice
 

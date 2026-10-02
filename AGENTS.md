@@ -1,6 +1,6 @@
 # Laravel Application
 
-Este repositório contém uma aplicação Laravel (FinFamília — gestão financeira familiar).
+Este repositório contém uma aplicação Laravel (Prumo — gestão financeira familiar).
 
 ## Pré-requisitos
 

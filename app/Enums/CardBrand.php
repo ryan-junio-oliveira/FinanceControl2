@@ -2,7 +2,7 @@
 
 namespace App\Enums;
 
-/** Bandeiras de cartão aceitas no FinFamília. */
+/** Bandeiras de cartão aceitas no Prumo. */
 enum CardBrand: string
 {
     case Visa = 'visa';

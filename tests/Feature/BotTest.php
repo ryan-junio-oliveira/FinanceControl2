@@ -67,7 +67,7 @@ class BotTest extends TestCase
         NullDriver::flush();
         $this->send('/start 123456');
         $this->assertDatabaseHas('bot_identities', ['user_id' => $admin->id, 'channel' => 'telegram', 'external_id' => '99']);
-        $this->assertStringContainsString('FinFamília', (string) NullDriver::lastText());
+        $this->assertStringContainsString('Prumo', (string) NullDriver::lastText());
     }
 
     public function test_dashboard_query(): void
@@ -390,7 +390,7 @@ class BotTest extends TestCase
         $this->assertNotNull(ConversationState::get('telegram', '99'));
         $this->send('cancelar');
         $this->assertNull(ConversationState::get('telegram', '99'));
-        $this->assertStringContainsString('FinFamília', (string) NullDriver::lastText());
+        $this->assertStringContainsString('Prumo', (string) NullDriver::lastText());
     }
 
     public function test_vencimento_alerts(): void

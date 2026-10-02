@@ -31,7 +31,7 @@ abstract class BotHandler
         ConversationState::clear($msg->channel, $msg->chatId);
         $hello = $user ? ', '.explode(' ', $user->name)[0] : '';
         $prefix = $unknown ? "🤔 Não entendi. Escolha uma opção:\n\n" : '';
-        $text = $prefix.'🏠 <b>FinFamília</b>'.$hello."\n".BotPresenter::divider()."\nEscolha uma opção:";
+        $text = $prefix.'🏠 <b>Prumo</b>'.$hello."\n".BotPresenter::divider()."\nEscolha uma opção:";
         $driver->sendText($msg->chatId, $text, $this->menuKeyboard());
     }
 

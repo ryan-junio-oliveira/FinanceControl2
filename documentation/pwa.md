@@ -1,4 +1,4 @@
-# PWA — FinFamília instalável
+# PWA — Prumo instalável
 
 O app web é um **PWA instalável**: ícone na tela inicial, tela cheia e leitura offline do que já foi visitado.
 

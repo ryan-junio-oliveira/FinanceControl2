@@ -23,7 +23,7 @@ class RegisterRequest extends FormRequest
             'manager_name.required' => 'Como podemos te chamar? Informe seu nome.',
             'email.required' => 'Informe um e-mail válido para acessar a conta.',
             'email.email' => 'Esse e-mail não parece válido. Confira e tente de novo.',
-            'email.unique' => 'Este e-mail já tem conta no FinFamília. Tente fazer login.',
+            'email.unique' => 'Este e-mail já tem conta no Prumo. Tente fazer login.',
             'family_name.required' => 'Dê um nome para a conta (ex.: Carlos ou Família Silva).',
             'terms.accepted' => 'Para criar a conta, aceite os Termos de Uso e a Política de Privacidade.',
         ]);

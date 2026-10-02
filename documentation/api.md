@@ -1,4 +1,4 @@
-# API v1 — FinFamília
+# API v1 — Prumo
 
 REST API para o bot (smartphone). Autenticação via **Sanctum** (Bearer token).
 

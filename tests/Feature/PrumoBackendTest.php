@@ -21,7 +21,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\ViewErrorBag;
 use Tests\TestCase;
 
-class FinfamBackendTest extends TestCase
+class PrumoBackendTest extends TestCase
 {
     use RefreshDatabase;
 
@@ -67,7 +67,7 @@ class FinfamBackendTest extends TestCase
         $manifest = public_path('manifest.webmanifest');
         $this->assertFileExists($manifest);
         $data = json_decode((string) file_get_contents($manifest), true);
-        $this->assertSame('FinFamília', $data['short_name']);
+        $this->assertSame('Prumo', $data['short_name']);
         $this->assertSame('standalone', $data['display']);
 
         // Service worker com cache versionado e fallback offline.

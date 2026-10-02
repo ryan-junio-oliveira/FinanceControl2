@@ -38,7 +38,7 @@ class LinkHandler extends BotHandler
     {
         $driver->sendText(
             $msg->chatId,
-            "👋 <b>Bem-vindo ao FinFamília!</b>\n"
+            "👋 <b>Bem-vindo ao Prumo!</b>\n"
             .BotPresenter::divider()."\n"
             ."Para usar o bot, vincule sua conta.\n\nDigite o <b>código de 6 dígitos</b> que aparece em <b>Perfil → Bot no Celular</b> no sistema.",
             $this->cancelKeyboard()

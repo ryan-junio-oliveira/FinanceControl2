@@ -200,7 +200,7 @@ window.addEventListener('beforeinstallprompt', (e) => {
     bar.innerHTML =
         '<span class="w-10 h-10 rounded-xl grid place-items-center text-white shrink-0" style="background:linear-gradient(135deg,#059669,#064E3B)">' +
         '<span class="material-symbols-outlined text-[20px]">install_mobile</span></span>' +
-        '<span class="flex-1 min-w-0"><span class="block text-[13px] font-extrabold text-gray-900">Instalar FinFamília</span>' +
+        '<span class="flex-1 min-w-0"><span class="block text-[13px] font-extrabold text-gray-900">Instalar Prumo</span>' +
         '<span class="block text-[11px] text-gray-500">Acesso rápido na tela inicial, até offline.</span></span>' +
         '<button type="button" data-pwa-install class="h-9 px-4 rounded-lg bg-emerald-600 text-white text-[12px] font-bold hover:bg-emerald-700 transition shrink-0">Instalar</button>' +
         '<button type="button" data-pwa-close class="w-8 h-8 grid place-items-center rounded-lg text-gray-300 hover:text-gray-500 hover:bg-slate-100 transition shrink-0" title="Agora não">' +

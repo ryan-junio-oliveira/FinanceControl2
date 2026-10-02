@@ -7,7 +7,7 @@ use App\Models\Family;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Catálogo padrão de categorias do FinFamília: só os grandes temas.
+ * Catálogo padrão de categorias do Prumo: só os grandes temas.
  *
  * Semeado automaticamente para cada família nova (via cadastro) e
  * reaplicável via `php artisan categories:seed` sem duplicar.

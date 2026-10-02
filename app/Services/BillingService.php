@@ -53,7 +53,7 @@ final class BillingService
 
         $admin = $family->users()->where('role', 'admin')->orderBy('id')->first();
         $resp = $this->http()->post('/preapproval', [
-            'reason' => 'FinFamília '.$plan['label'],
+            'reason' => 'Prumo '.$plan['label'],
             'auto_recurring' => [
                 'frequency' => (int) $plan['frequencia'],
                 'frequency_type' => (string) $plan['tipo'],

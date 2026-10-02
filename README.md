@@ -1,4 +1,4 @@
-# FinFamília
+# Prumo
 
 Sistema de gestão financeira familiar — dashboard, despesas, receitas, contas, cartões, investimentos e membros da família.
 

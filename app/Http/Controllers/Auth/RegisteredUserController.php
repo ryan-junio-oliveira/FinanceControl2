@@ -23,6 +23,6 @@ class RegisteredUserController extends Controller
         Auth::login($user);
         $request->session()->regenerate();
 
-        return redirect()->route('dashboard')->with('status', 'Conta criada! Bem-vindo ao FinFamília.');
+        return redirect()->route('dashboard')->with('status', 'Conta criada! Bem-vindo ao Prumo.');
     }
 }

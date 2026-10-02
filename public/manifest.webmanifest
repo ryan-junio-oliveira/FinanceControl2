@@ -1,6 +1,6 @@
 {
-  "name": "FinFamília — Gestão financeira familiar",
-  "short_name": "FinFamília",
+  "name": "Prumo — Gestão financeira para você e sua família",
+  "short_name": "Prumo",
   "description": "Despesas, receitas, cartões, contas e investimentos da família.",
   "start_url": "/?pwa=1",
   "scope": "/",

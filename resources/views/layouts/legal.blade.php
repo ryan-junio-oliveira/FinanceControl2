@@ -3,15 +3,15 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>@yield('title', 'FinFamília') · FinFamília</title>
-    <meta name="description" content="FinFamília — termos de uso e política de privacidade (LGPD).">
+    <title>@yield('title', 'Prumo') · Prumo</title>
+    <meta name="description" content="Prumo — termos de uso e política de privacidade (LGPD).">
     <meta name="theme-color" content="#064E3B">
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="manifest" href="/manifest.webmanifest">
     <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-title" content="FinFamília">
+    <meta name="apple-mobile-web-app-title" content="Prumo">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
@@ -28,7 +28,7 @@
                     style="background: linear-gradient(135deg, #059669, #064E3B);">
                     <span class="material-symbols-outlined text-[18px]">savings</span>
                 </span>
-                <span class="text-[17px] font-extrabold tracking-tight">Fin<span class="text-emerald-600">Família</span></span>
+                <span class="text-[17px] font-extrabold tracking-tight">Prumo</span>
             </a>
             <a href="{{ route('login') }}" class="text-[12px] font-bold text-gray-500 hover:text-emerald-600 transition">Voltar ao acesso</a>
         </div>
@@ -42,7 +42,7 @@
     {{-- Rodapé --}}
     <footer class="shrink-0 border-t border-slate-200 bg-white/70 backdrop-blur">
         <div class="max-w-3xl mx-auto px-4 py-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px]">
-            <p class="text-gray-400 font-medium">© 2026 <b class="text-gray-500">FinFamília</b> · Gestão financeira familiar</p>
+            <p class="text-gray-400 font-medium">© 2026 <b class="text-gray-500">Prumo</b> · Gestão financeira familiar</p>
             <nav class="flex items-center gap-4 font-semibold">
                 <a href="{{ route('termos') }}" class="text-gray-400 hover:text-emerald-600 transition">Termos de Uso</a>
                 <span class="text-slate-200">•</span>

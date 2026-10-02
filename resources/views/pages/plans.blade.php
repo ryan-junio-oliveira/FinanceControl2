@@ -6,7 +6,7 @@
 @php use App\Support\Fin; @endphp
 
 <div class="max-w-4xl mx-auto w-full">
-    <x-form.header title="Assinatura FinFamília" subtitle="Escolha um plano para manter sua família no controle financeiro."
+    <x-form.header title="Assinatura Prumo" subtitle="Escolha um plano para manter sua família no controle financeiro."
         :backUrl="route('dashboard')" backLabel="Voltar ao dashboard" icon="workspace_premium"
         iconBg="linear-gradient(135deg,#FEF3C7,#FDE68A)" iconColor="#B45309" />
 

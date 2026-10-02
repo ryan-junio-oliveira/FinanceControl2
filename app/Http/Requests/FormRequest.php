@@ -6,7 +6,7 @@ use Illuminate\Foundation\Http\FormRequest as BaseRequest;
 use Illuminate\Validation\Rules\Password;
 
 /**
- * Base das Form Requests do FinFamília.
+ * Base das Form Requests do Prumo.
  *
  * Centraliza a regra de senha forte e o redirecionamento de erros
  * (volta para a página anterior mantendo os dados digitados).
@@ -18,7 +18,7 @@ abstract class FormRequest extends BaseRequest
         return true;
     }
 
-    /** Regra padrão de senha forte do FinFamília. */
+    /** Regra padrão de senha forte do Prumo. */
     protected function strongPassword(): Password
     {
         return Password::min(8)->mixedCase()->numbers()->symbols();

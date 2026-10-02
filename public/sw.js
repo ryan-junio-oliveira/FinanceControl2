@@ -1,4 +1,4 @@
-/* FinFamília PWA — service worker.
+/* Prumo PWA — service worker.
  * Estratégia segura p/ app autenticado com CRUD:
  * - Navegações: network-first, cai p/ cache e depois /offline.
  * - Estáticos (css/js/fontes/img, mesmo domínio): cache-first + atualização em fundo.

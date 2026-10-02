@@ -11,9 +11,9 @@ use Illuminate\Support\Facades\Hash;
 use OpenApi\Attributes as OA;
 
 #[OA\Info(
-    title: 'FinFamília API',
+    title: 'Prumo API',
     version: '1.0.0',
-    description: 'REST API do FinFamília — gestão financeira familiar para o bot (smartphone).',
+    description: 'REST API do Prumo — gestão financeira familiar para o bot (smartphone).',
     contact: new OA\Contact(email: 'suporte@finfamilia.com.br')
 )]
 #[OA\Server(url: '/api/v1')]

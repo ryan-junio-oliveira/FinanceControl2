@@ -9,8 +9,8 @@ return [
     'documentations' => [
         'default' => [
             'api' => [
-                'title' => 'FinFamília API',
-                'description' => 'REST API do FinFamília — gestão financeira familiar para o bot (smartphone).',
+                'title' => 'Prumo API',
+                'description' => 'REST API do Prumo — gestão financeira familiar para o bot (smartphone).',
                 'version' => '1.0.0',
             ],
 

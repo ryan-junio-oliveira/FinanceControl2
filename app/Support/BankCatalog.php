@@ -6,7 +6,7 @@ use App\Models\Bank;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Catálogo padrão de bancos do FinFamília.
+ * Catálogo padrão de bancos do Prumo.
  *
  * Tabela global `banks` (não é por família): semeada via
  * `php artisan banks:seed` de forma idempotente (não duplica;

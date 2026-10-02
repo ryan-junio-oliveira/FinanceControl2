@@ -1,6 +1,6 @@
 # Bot (Telegram / WhatsApp)
 
-Assistente conversacional do FinFamília: o usuário registra e consulta tudo pelo celular, espelhando o frontend em mensagens.
+Assistente conversacional do Prumo: o usuário registra e consulta tudo pelo celular, espelhando o frontend em mensagens.
 
 ## Canais
 
