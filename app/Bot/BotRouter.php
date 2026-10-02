@@ -77,7 +77,7 @@ final class BotRouter
 
             return;
         }
-        if (preg_match('/^cartoes:(faturas|new)$/', $low, $m)) {
+        if (preg_match('/^cartoes:(faturas|new|create)$/', $low, $m)) {
             ConversationState::put($msg->channel, $msg->chatId, CardHandler::class, 'menu');
             app(CardHandler::class)->handle($driver, $msg, ['step' => 'menu', 'data' => []], $user);
 

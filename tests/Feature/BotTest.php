@@ -208,6 +208,39 @@ class BotTest extends TestCase
         $this->assertStringContainsString('Banco Inter', (string) NullDriver::lastText());
     }
 
+    public function test_card_create_flow(): void
+    {
+        [$family, $admin] = $this->familyWithLinkedUser();
+        BotIdentity::create(['user_id' => $admin->id, 'channel' => 'telegram', 'external_id' => '99']);
+        $family->accounts()->create([
+            'bank_id' => Bank::where('code', '341')->first()->id,
+            'name' => 'Conta', 'kind' => 'corrente', 'initial_balance' => 0,
+        ]);
+
+        $this->send('4'); // Cartões → submenu.
+        $this->assertStringContainsString('o que deseja', (string) NullDriver::lastText());
+
+        $this->send('cartoes:create');
+        $this->send('Nubank Ultravioleta');
+        $this->send('1'); // Visa.
+
+        // Membro único pula o titular; pergunta a conta vinculada → "Sem conta".
+        $this->send('2');
+        $this->send('5000');
+        $this->send('10'); // fechamento
+        $this->send('15'); // vencimento
+
+        $this->assertStringContainsString('Confirmar', (string) NullDriver::lastText());
+        $this->assertStringContainsString('Nubank Ultravioleta', (string) NullDriver::lastText());
+        $this->send('sim');
+
+        $this->assertDatabaseHas('credit_cards', [
+            'name' => 'Nubank Ultravioleta', 'brand' => 'visa', 'holder_user_id' => $admin->id,
+            'credit_limit' => 5000, 'closing_day' => 10, 'due_day' => 15, 'active' => true,
+        ]);
+        $this->assertStringContainsString('cadastrado', (string) NullDriver::lastText());
+    }
+
     public function test_cancel_clears_state(): void
     {
         [, $admin] = $this->familyWithLinkedUser();
