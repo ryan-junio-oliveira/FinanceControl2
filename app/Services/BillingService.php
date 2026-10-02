@@ -93,16 +93,22 @@ final class BillingService
     public function handleWebhook(array $payload): void
     {
         $topic = $payload['type'] ?? $payload['topic'] ?? null;
+        $entity = $payload['entity'] ?? null;
         $id = $payload['data']['id'] ?? null;
         if (! $id) {
             return;
         }
 
-        match ($topic) {
-            'preapproval' => $this->handlePreapproval($id),
-            'payment' => $this->handlePayment($id),
-            default => null,
-        };
+        // Tipos reais do MP: "subscription_preapproval" (assinatura) e "payment".
+        $isPreapproval = in_array($topic, ['preapproval', 'subscription_preapproval'], true) || $entity === 'preapproval';
+        if ($isPreapproval) {
+            $this->handlePreapproval($id);
+
+            return;
+        }
+        if ($topic === 'payment') {
+            $this->handlePayment($id);
+        }
     }
 
     private function handlePreapproval(string $id): void

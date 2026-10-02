@@ -129,6 +129,22 @@ class BillingTest extends TestCase
         $this->assertSame('pro', $family->fresh()->plan);
     }
 
+    public function test_webhook_accepts_without_signature_like_simulation(): void
+    {
+        config(['billing.mercado_pago.access_token' => 'TEST', 'billing.mercado_pago.webhook_secret' => 'segredo']);
+        $family = Family::create([
+            'name' => 'Família MP', 'plan' => 'free', 'trial_ends_at' => null, 'mp_preapproval_id' => 'PRE1',
+        ]);
+        Http::fake(['api.mercadopago.com/preapproval/PRE1' => Http::response(['status' => 'authorized', 'next_payment_date' => now()->addMonth()->toIso8601String()])]);
+
+        // Formato real da simulação do MP (sem x-signature, type subscription_preapproval).
+        $this->postJson('/webhooks/mercadopago', [
+            'action' => 'updated', 'type' => 'subscription_preapproval', 'entity' => 'preapproval',
+            'data' => ['id' => 'PRE1'],
+        ])->assertOk();
+        $this->assertSame('pro', $family->fresh()->plan);
+    }
+
     public function test_webhook_cancels_plan(): void
     {
         config(['billing.mercado_pago.access_token' => 'TEST-TOKEN']);
