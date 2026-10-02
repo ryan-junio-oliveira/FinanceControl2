@@ -25,6 +25,26 @@ class FinfamBackendTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_forgot_password_without_smtp_does_not_crash(): void
+    {
+        User::factory()->create(['email' => 'reset@email.com', 'password' => Hash::make('Senha@123')]);
+
+        // Simula dev/produção sem SMTP configurado (cai no driver log).
+        config(['mail.default' => 'smtp']);
+        config(['mail.mailers.smtp.username' => null]);
+        config(['mail.mailers.smtp.password' => null]);
+        $this->app->register(\App\Providers\AppServiceProvider::class, true);
+        $this->app->boot();
+
+        $this->from('/forgot-password')
+            ->post('/forgot-password', ['email' => 'reset@email.com'])
+            ->assertSessionHasNoErrors()
+            ->assertSessionHas('status');
+
+        // No driver log o e-mail vai para o arquivo de log.
+        $this->assertSame('log', config('mail.default'));
+    }
+
     public function test_guest_pages_render(): void
     {
         $this->get('/login')->assertOk();

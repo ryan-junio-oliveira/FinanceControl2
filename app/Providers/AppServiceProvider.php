@@ -46,7 +46,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Se o mailer SMTP não tem credenciais (dev sem config), cai no driver "log"
+        // para envios não quebrarem a aplicação (ex.: recuperar senha, convites).
+        if (config('mail.default') === 'smtp'
+            && (empty(config('mail.mailers.smtp.username')) || empty(config('mail.mailers.smtp.password')))) {
+            config(['mail.default' => 'log']);
+        }
     }
 
     /**
