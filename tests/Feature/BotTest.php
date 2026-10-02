@@ -271,6 +271,35 @@ class BotTest extends TestCase
         $this->assertEquals(10120.50, (float) $ativo->fresh()->current_value);
     }
 
+    public function test_income_deposito_transfers_carteira_to_account(): void
+    {
+        [$family, $admin] = $this->familyWithLinkedUser();
+        BotIdentity::create(['user_id' => $admin->id, 'channel' => 'telegram', 'external_id' => '99']);
+        $conta = $family->accounts()->create([
+            'bank_id' => Bank::where('code', '341')->first()->id,
+            'name' => 'Corrente', 'kind' => 'corrente', 'initial_balance' => 0,
+        ]);
+
+        $this->send('3'); // Receitas
+        $this->send('receita:new');
+        $this->send('Depósito da feira');
+        $this->send('300');
+        $this->send('hoje');
+        $this->send('deposito');
+        $this->send('1'); // Conta de destino (não-carteira).
+        $this->send('1'); // Categoria.
+        $this->send('nao'); // não é fixa.
+
+        $this->assertStringContainsString('Depósito', (string) NullDriver::lastText());
+        $this->send('sim');
+
+        $this->assertDatabaseHas('transactions', ['type' => 'transferencia', 'amount' => 300]);
+        $this->assertDatabaseMissing('transactions', ['type' => 'receita', 'description' => 'Depósito da feira']);
+        $carteira = $family->accounts()->where('kind', 'carteira')->first();
+        $this->assertNotNull($carteira);
+        $this->assertStringContainsString('Depósito registrado', (string) NullDriver::lastText());
+    }
+
     public function test_account_create_flow(): void
     {
         [, $admin] = $this->familyWithLinkedUser();

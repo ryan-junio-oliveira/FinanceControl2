@@ -146,6 +146,29 @@ class FinfamBackendTest extends TestCase
         ]);
     }
 
+    public function test_income_deposito_creates_transfer(): void
+    {
+        $this->post('/register', [
+            'manager_name' => 'Cadu Reis', 'email' => 'cadu@email.com', 'family_name' => 'Família Cadu',
+            'password' => 'Senha@123', 'password_confirmation' => 'Senha@123', 'terms' => '1',
+        ]);
+        $admin = User::where('email', 'cadu@email.com')->first();
+        $bank = Bank::create(['code' => '341', 'name' => 'Itaú', 'color' => '#EC7000']);
+        $conta = $admin->family->accounts()->create([
+            'bank_id' => $bank->id,
+            'name' => 'Corrente', 'kind' => 'corrente', 'initial_balance' => 0,
+        ]);
+
+        $this->post('/incomes', [
+            'description' => 'Depósito', 'amount' => '250,50', 'occurred_on' => now()->toDateString(),
+            'status' => 'pago', 'account_id' => $conta->id, 'payment_method' => 'deposito',
+        ])->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('transactions', ['type' => 'transferencia', 'amount' => 250.50, 'transfer_to_account_id' => $conta->id]);
+        $this->assertDatabaseMissing('transactions', ['type' => 'receita', 'description' => 'Depósito']);
+        $this->assertNotNull(Account::where('kind', 'carteira')->first());
+    }
+
     public function test_expense_via_card_creates_invoice_item(): void
     {
         $this->post('/register', [

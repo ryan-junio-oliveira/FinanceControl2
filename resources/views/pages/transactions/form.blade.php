@@ -40,7 +40,7 @@
 
                 <x-form.field label="{{ $isDespesa ? 'Forma de pagamento' : 'Forma de recebimento' }}" for="f-pagamento" :error="$errors->first('payment_method')">
                     <x-form.select id="f-pagamento" name="payment_method">
-                        @foreach(['pix' => 'Pix', 'ted' => 'TED', 'dinheiro_fisico' => 'Dinheiro físico', 'dinheiro_digital' => 'Dinheiro digital'] + ($isDespesa ? ['cartao' => 'Cartão'] : []) as $v => $l)
+                        @foreach(['pix' => 'Pix', 'ted' => 'TED', 'dinheiro_fisico' => 'Dinheiro físico', 'dinheiro_digital' => 'Dinheiro digital'] + ($isDespesa ? ['cartao' => 'Cartão'] : ['deposito' => 'Depósito']) as $v => $l)
                             <option value="{{ $v }}" {{ $val('payment_method', 'pix') === $v ? 'selected' : '' }}>{{ $l }}</option>
                         @endforeach
                     </x-form.select>
@@ -195,8 +195,9 @@
         if (seg) seg.classList.toggle('hidden', v !== 'cartao');
         if (contaWrap) contaWrap.classList.toggle('hidden', v === 'dinheiro_fisico' || v === 'cartao');
         if (contaSel) {
+            const filtraCarteira = v === 'dinheiro_digital' || v === 'deposito';
             allOpts.forEach((o) => {
-                o.hidden = v === 'dinheiro_digital' && o.dataset.kind === 'carteira';
+                o.hidden = filtraCarteira && o.dataset.kind === 'carteira';
             });
         }
     };

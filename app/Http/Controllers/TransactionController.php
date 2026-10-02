@@ -119,6 +119,23 @@ class TransactionController extends Controller
             $dados['account_id'] = $conta->id;
         }
 
+        // Depósito: dinheiro físico (carteira) entra numa conta bancária.
+        if ($type === 'receita' && ($dados['payment_method'] ?? null) === 'deposito') {
+            $conta = $family->accounts()->where('active', true)->where('kind', '!=', 'carteira')->find($dados['account_id'] ?? null)
+                ?? $family->accounts()->where('active', true)->where('kind', '!=', 'carteira')->orderBy('name')->first();
+            abort_if(! $conta, 422, 'Escolha a conta bancária de destino do depósito.');
+            app(AccountService::class)->transfer($family, [
+                'from_account_id' => app(AccountService::class)->dinheiroFisico($family)->id,
+                'to_account_id' => $conta->id,
+                'user_id' => $dados['user_id'] ?? $request->user()->id,
+                'amount' => $dados['amount'],
+                'occurred_on' => $dados['occurred_on'],
+                'description' => $dados['description'] ?: 'Depósito (dinheiro físico → conta)',
+            ]);
+
+            return redirect()->route('receitas', ['mes' => Fin::month()])->with('status', 'Depósito registrado.');
+        }
+
         $criados = $service->create(
             $family,
             $type,

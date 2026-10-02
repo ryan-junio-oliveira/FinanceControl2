@@ -177,6 +177,8 @@ abstract class TransactionFlowHandler extends BotHandler
         ];
         if ($this->type() === 'despesa') {
             $options['💳 Cartão'] = 'cartao';
+        } else {
+            $options['🏦 Depósito (carteira → conta)'] = 'deposito';
         }
 
         return BotKeyboard::menu($options);
@@ -210,6 +212,7 @@ abstract class TransactionFlowHandler extends BotHandler
             'pix' => 'pix',
             'ted', 'doc', 'transferencia', 'transferência' => 'ted',
             'dinheiro_fisico', 'fisico', 'físico', 'especie', 'espécie', 'carteira' => 'dinheiro_fisico',
+            'deposito', 'depósito' => $this->type() === 'receita' ? 'deposito' : null,
             default => null,
         };
         if ($method === null) {
@@ -247,7 +250,7 @@ abstract class TransactionFlowHandler extends BotHandler
     private function askAccount(BotDriver $driver, IncomingMessage $msg, array $data, ?User $user): void
     {
         $accounts = app(AccountService::class)->list($user->family)->values();
-        if (($data['payment_method'] ?? null) === 'dinheiro_digital') {
+        if (in_array($data['payment_method'] ?? null, ['dinheiro_digital', 'deposito'], true)) {
             $accounts = $accounts->filter(fn ($a) => $a->kind !== 'carteira')->values();
         }
         if ($accounts->isEmpty()) {
@@ -396,14 +399,19 @@ abstract class TransactionFlowHandler extends BotHandler
         $member = $user->family->users()->find($data['user_id']);
         $account = $user->family->accounts()->find($data['account_id']);
         $cat = $user->family->categories()->find($data['category_id']);
+        $isDeposito = ($data['payment_method'] ?? null) === 'deposito';
+        $titulo = $isDeposito ? 'Depósito' : strtolower($this->typeLabel(true));
+        $contaLinha = $isDeposito
+            ? '💵 Carteira → 🏦 '.($account->name ?? '—')
+            : '👤 '.($member->name ?? '—').' · 🏦 '.($account->name ?? '—');
         $fixedLine = ! empty($data['is_fixed'])
             ? "\n🔁 Fixa · ".$this->paymentLabel().' todo dia '.Carbon::parse($data['due_on'])->format('j')
             : "\n🔁 Eventual";
-        $summary = '🧾 <b>Confirmar '.strtolower($this->typeLabel(true)).'?</b>'."\n"
+        $summary = '🧾 <b>Confirmar '.$titulo.'?</b>'."\n"
             .BotPresenter::divider()."\n"
             .'📝 '.$data['description']."\n"
             .'💵 <b>'.BotPresenter::money($data['amount']).'</b> · '.Carbon::parse($data['occurred_on'])->format('d/m/Y')."\n"
-            .'👤 '.($member->name ?? '—').' · 🏦 '.($account->name ?? '—')."\n"
+            .$contaLinha."\n"
             .'🏷️ '.($cat->name ?? '—')
             .$fixedLine;
         $this->ask($driver, $msg, 'confirm', $data, $summary, $this->confirmKeyboard());
@@ -428,6 +436,21 @@ abstract class TransactionFlowHandler extends BotHandler
         }
         if (! self::isYes($text)) {
             $this->ask($driver, $msg, 'confirm', $data, 'Confirma? Toque em ✅ Confirmar ou ❌ Cancelar.', $this->confirmKeyboard());
+
+            return;
+        }
+
+        // Depósito: dinheiro físico (carteira) entra numa conta bancária.
+        if (($data['payment_method'] ?? null) === 'deposito') {
+            app(AccountService::class)->transfer($user->family, [
+                'from_account_id' => app(AccountService::class)->dinheiroFisico($user->family)->id,
+                'to_account_id' => $data['account_id'],
+                'user_id' => $data['user_id'],
+                'amount' => $data['amount'],
+                'occurred_on' => $data['occurred_on'],
+                'description' => $data['description'] ?: 'Depósito (dinheiro físico → conta)',
+            ]);
+            $this->done($driver, $msg, $user, '✅ Depósito registrado: <b>'.$data['description'].'</b> ('.BotPresenter::money($data['amount']).').');
 
             return;
         }
