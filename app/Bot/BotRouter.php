@@ -8,6 +8,7 @@ use App\Bot\Handlers\BotHandler;
 use App\Bot\Handlers\CardHandler;
 use App\Bot\Handlers\ExpenseHandler;
 use App\Bot\Handlers\IncomeHandler;
+use App\Bot\Handlers\InvestmentHandler;
 use App\Bot\Handlers\LinkHandler;
 use App\Bot\Handlers\MenuHandler;
 use App\Bot\Handlers\ReceiptHandler;
@@ -86,6 +87,12 @@ final class BotRouter
         if (preg_match('/^contas:(list|new)$/', $low, $m)) {
             ConversationState::put($msg->channel, $msg->chatId, AccountHandler::class, 'menu');
             app(AccountHandler::class)->handle($driver, $msg, ['step' => 'menu', 'data' => []], $user);
+
+            return;
+        }
+        if (preg_match('/^investimentos:(list|new)$/', $low, $m)) {
+            ConversationState::put($msg->channel, $msg->chatId, InvestmentHandler::class, 'menu');
+            app(InvestmentHandler::class)->handle($driver, $msg, ['step' => 'menu', 'data' => []], $user);
 
             return;
         }

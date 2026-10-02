@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Bot\BotManager;
 use App\Bot\ConversationState;
 use App\Bot\Drivers\NullDriver;
+use App\Models\Asset;
 use App\Models\Bank;
 use App\Models\BotIdentity;
 use App\Models\Family;
@@ -221,6 +222,53 @@ class BotTest extends TestCase
         $carteira = $family->accounts()->where('kind', 'carteira')->first();
         $this->assertNotNull($carteira);
         $this->assertSame($carteira->id, $tx->account_id);
+    }
+
+    public function test_investment_aporte_flow(): void
+    {
+        [$family, $admin] = $this->familyWithLinkedUser();
+        BotIdentity::create(['user_id' => $admin->id, 'channel' => 'telegram', 'external_id' => '99']);
+        $conta = $family->accounts()->create([
+            'bank_id' => Bank::where('code', '341')->first()->id,
+            'name' => 'Corrente', 'kind' => 'corrente', 'initial_balance' => 0,
+        ]);
+
+        $this->send('6'); // Investimentos → submenu.
+        $this->send('investimentos:new');
+        $this->send('aporte');
+        $this->send('1'); // Conta.
+        $this->send('500');
+        $this->send('hoje');
+
+        $this->assertStringContainsString('Confirmar aporte', (string) NullDriver::lastText());
+        $this->send('sim');
+
+        $this->assertDatabaseHas('contributions', ['kind' => 'aporte', 'amount' => 500, 'account_id' => $conta->id]);
+        $this->assertDatabaseHas('transactions', ['type' => 'aporte', 'amount' => 500]);
+        $this->assertEquals(-500, (float) $conta->fresh()->balance);
+        $this->assertStringContainsString('Aporte registrado', (string) NullDriver::lastText());
+    }
+
+    public function test_investment_rendimento_flow(): void
+    {
+        [$family, $admin] = $this->familyWithLinkedUser();
+        BotIdentity::create(['user_id' => $admin->id, 'channel' => 'telegram', 'external_id' => '99']);
+        $ativo = Asset::create([
+            'family_id' => $family->id, 'code' => 'SELIC', 'name' => 'Tesouro Selic', 'kind' => 'renda_fixa', 'current_value' => 10000,
+        ]);
+
+        $this->send('6');
+        $this->send('investimentos:new');
+        $this->send('rendimento');
+        $this->send('1'); // Ativo.
+        $this->send('120,50');
+        $this->send('hoje');
+
+        $this->assertStringContainsString('Confirmar rendimento', (string) NullDriver::lastText());
+        $this->send('sim');
+
+        $this->assertDatabaseHas('contributions', ['kind' => 'rendimento', 'amount' => 120.50, 'asset_id' => $ativo->id]);
+        $this->assertEquals(10120.50, (float) $ativo->fresh()->current_value);
     }
 
     public function test_account_create_flow(): void
