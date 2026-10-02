@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Sobe servidor + túnel cloudflared e registra o webhook do bot.
-# Uso: bash start-bot.sh  (ou ./start-bot.sh)
+# Uso: bash scripts/start-bot.sh  (ou ./scripts/start-bot.sh)
 set -e
-cd "$(dirname "$0")"
+cd "$(dirname "$0")/.."
 LOGFILE="storage/logs/cloudflared.log"
 
 if curl -s -o /dev/null --max-time 2 http://localhost:8000/login; then

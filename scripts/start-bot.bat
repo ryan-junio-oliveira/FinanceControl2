@@ -1,7 +1,7 @@
 @echo off
 setlocal enabledelayedexpansion
 chcp 65001 >nul
-cd /d "%~dp0"
+cd /d "%~dp0.."
 
 echo ================================================
 echo   FinFamilia — Bot (servidor + tunel + webhook)
@@ -13,8 +13,8 @@ if %errorlevel% equ 0 (
     echo [1/3] Servidor ja rodando na porta 8000.
 ) else (
     echo [1/3] Iniciando php artisan serve...
-    start "FinFamilia-Server" cmd /k "cd /d %~dp0 && php artisan serve --host=0.0.0.0 --port=8000"
-    timeout /t 6 /nobreak >nul
+    start "FinFamilia-Server" cmd /k "cd /d %~dp0.. && php artisan serve --host=0.0.0.0 --port=8000"
+    powershell -NoProfile -Command "Start-Sleep -Seconds 6" >nul
 )
 
 REM 2) Localizar o cloudflared
@@ -30,17 +30,17 @@ if "%CLOUD%"=="" (
 )
 
 REM 3) Tunel
-if exist "%~dp0storage\logs\cloudflared.log" del "%~dp0storage\logs\cloudflared.log"
+if exist "%~dp0..\storage\logs\cloudflared.log" del "%~dp0..\storage\logs\cloudflared.log"
 echo [2/3] Iniciando cloudflared (aguarde a URL)...
-start "FinFamilia-Tunel" cmd /k ""%CLOUD%" tunnel --url http://localhost:8000 --loglevel warn --logfile "%~dp0storage\logs\cloudflared.log""
+start "FinFamilia-Tunel" cmd /k ""%CLOUD%" tunnel --url http://localhost:8000 --loglevel warn --logfile "%~dp0..\storage\logs\cloudflared.log""
 
 echo Aguardando URL publica...
 set "URL="
 for /l %%i in (1,1,40) do (
     if not defined URL (
-        for /f "usebackq delims=" %%u in (`powershell -NoProfile -Command "(Select-String -Path '%~dp0storage\logs\cloudflared.log' -Pattern 'https://[a-z0-9.-]+\.trycloudflare\.com' -AllMatches).Matches.Value | Select-Object -First 1"`) do set "URL=%%u"
+        for /f "usebackq delims=" %%u in (`powershell -NoProfile -Command "(Select-String -Path '%~dp0..\storage\logs\cloudflared.log' -Pattern 'https://[a-z0-9.-]+\.trycloudflare\.com' -AllMatches).Matches.Value ^| Select-Object -First 1"`) do set "URL=%%u"
     )
-    if not defined URL timeout /t 1 /nobreak >nul
+    if not defined URL powershell -NoProfile -Command "Start-Sleep -Seconds 1" >nul
 )
 if "%URL%"=="" (
     echo Nao consegui obter a URL do tunel. Veja storage\logs\cloudflared.log
