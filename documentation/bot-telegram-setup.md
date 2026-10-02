@@ -40,6 +40,10 @@ O Telegram só entrega updates em URL **HTTPS pública** — `localhost` não se
 
 Anote a URL pública (ex.: `https://xxx.trycloudflare.com`). URLs de túnel gratuito **mudam a cada reinício** — nesse caso, refaça o passo 5.
 
+> 💡 **Script automático**: rode `start-bot.bat` (Windows, duplo clique) ou `bash start-bot.sh`
+> (Git Bash). Ele sobe o servidor se necessário, inicia o túnel, extrai a URL nova
+> e registra o webhook sozinho. Use sempre depois de reiniciar o notebook.
+
 ## 5. Registrar o webhook
 
 ```sh
