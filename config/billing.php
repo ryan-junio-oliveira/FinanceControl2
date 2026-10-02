@@ -16,6 +16,9 @@ return [
         'public_key' => env('MERCADOPAGO_PUBLIC_KEY', ''),
         // URL de retorno após pagar no MP (colocada no checkout).
         'back_url' => env('MERCADOPAGO_BACK_URL', env('APP_URL', 'http://localhost').'/plans'),
+        // Em modo de teste (conta MP de testes), o comprador também precisa
+        // ser um test user. Setar o email aqui para simular o pagamento.
+        'test_payer_email' => env('MERCADOPAGO_TEST_PAYER_EMAIL', null),
         // ID fixo do plano criado no MP (criar com BillingService::ensurePlan).
         'preapproval_plan_id' => env('MERCADOPAGO_PLAN_ID', null),
     ],

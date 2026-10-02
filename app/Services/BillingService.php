@@ -52,6 +52,7 @@ final class BillingService
         $plan = config("billing.plans.{$frequencia}") ?? abort(422, 'Plano inválido.');
 
         $admin = $family->users()->where('role', 'admin')->orderBy('id')->first();
+        $payerEmail = (string) (config('billing.mercado_pago.test_payer_email') ?: $admin?->email ?? '');
         $resp = $this->http()->post('/preapproval', [
             'reason' => 'Prumo '.$plan['label'],
             'auto_recurring' => [
@@ -60,7 +61,7 @@ final class BillingService
                 'transaction_amount' => (float) $plan['price'],
                 'currency_id' => 'BRL',
             ],
-            'payer' => ['email' => $admin?->email ?? ''],
+            'payer_email' => $payerEmail,
             'external_reference' => (string) $family->id,
             'back_url' => config('billing.mercado_pago.back_url'),
         ]);
