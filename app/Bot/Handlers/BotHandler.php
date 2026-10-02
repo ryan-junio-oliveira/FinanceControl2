@@ -81,9 +81,7 @@ abstract class BotHandler
     {
         $out = [];
         foreach ($lines as $i => $line) {
-            $n = $i + 1;
-            $num = $n <= 9 ? $n.'️⃣' : '<b>'.$n.'</b>';
-            $out[] = $num.' '.$line;
+            $out[] = '<b>'.($i + 1).'</b> '.$line;
         }
 
         return implode("\n", $out);
