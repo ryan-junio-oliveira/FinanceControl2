@@ -80,6 +80,22 @@
         </form>
     </x-section-card>
 
+    {{-- Meus dados (LGPD) --}}
+    <x-section-card title="Meus Dados (LGPD)" subtitle="Direitos de portabilidade e acesso do Art. 18">
+        <div class="flex flex-wrap items-center justify-between gap-3 p-4 rounded-xl border border-slate-200 bg-slate-50/40">
+            <div class="flex items-start gap-3">
+                <span class="material-symbols-outlined text-emerald-600 text-[22px] shrink-0">download</span>
+                <div>
+                    <p class="text-[13px] font-bold text-gray-800">Exportar meus dados</p>
+                    <p class="text-[12px] text-gray-500 mt-0.5">Baixe uma cópia de todos os dados da sua família (lançamentos, contas, cartões e investimentos) em formato JSON.</p>
+                </div>
+            </div>
+            <a href="{{ route('perfil.export') }}" class="h-10 px-5 inline-flex items-center gap-2 text-[13px] font-extrabold text-white bg-emerald-700 hover:bg-emerald-800 rounded-xl transition">
+                <span class="material-symbols-outlined text-[17px]">file_download</span> Exportar
+            </a>
+        </div>
+    </x-section-card>
+
     {{-- Encerrar cadastro (só admin) --}}
     <x-section-card title="Encerrar Cadastro" subtitle="Apaga a conta da família inteira">
         @if($user->role === 'admin')

@@ -13,6 +13,7 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FamilyController;
 use App\Http\Controllers\InvestmentController;
+use App\Http\Controllers\LandingController;
 use App\Http\Controllers\LegalController;
 use App\Http\Controllers\MercadoController;
 use App\Http\Controllers\NotificationController;
@@ -24,6 +25,9 @@ use Illuminate\Support\Facades\Route;
 // ---------- Páginas legais (públicas) ----------
 Route::get('/termos', [LegalController::class, 'terms'])->name('termos');
 Route::get('/privacidade', [LegalController::class, 'privacy'])->name('privacidade');
+
+// Landing page (pública)
+Route::get('/', [LandingController::class, 'index'])->name('home');
 
 // Página offline do PWA (pública; o service worker a exibe sem rede).
 Route::view('/offline', 'pages.offline')->name('offline');
@@ -61,8 +65,7 @@ Route::middleware('auth')->group(function () {
         Route::middleware('family.role')->group(function () {
             Route::post('/notifications/read', [NotificationController::class, 'readAll'])->name('notificacoes.lidas');
             Route::get('/notifications/{notification}/read', [NotificationController::class, 'read'])->name('notificacoes.ler');
-            Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
-            Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard.index');
+            Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
             // User profile
             Route::get('/profile', [ProfileController::class, 'show'])->name('perfil');
@@ -71,6 +74,7 @@ Route::middleware('auth')->group(function () {
             Route::get('/profile/password', [ProfileController::class, 'editPassword'])->name('perfil.senha');
             Route::patch('/profile/password', [ProfileController::class, 'updatePassword'])->name('perfil.senha.update');
             Route::post('/profile/bot-code', [ProfileController::class, 'regenerateBotCode'])->name('perfil.botcode');
+            Route::get('/profile/export', [ProfileController::class, 'export'])->name('perfil.export');
             Route::delete('/profile', [ProfileController::class, 'destroy'])->name('perfil.destroy');
 
             // Expenses & Incomes
@@ -139,12 +143,12 @@ Route::middleware('auth')->group(function () {
                 Route::post('/investments/contributions', [InvestmentController::class, 'storeContribution'])->name('investimentos.aportes.store');
                 Route::delete('/investments/assets/{asset}', [InvestmentController::class, 'destroyAsset'])->name('investimentos.ativos.destroy');
 
-Route::get('/family/invites/create', [FamilyController::class, 'createInvite'])->name('familia.convites.create');
-            Route::post('/family/invites', [FamilyController::class, 'invite'])->name('familia.convites.store');
-            Route::delete('/family/invites/{invite}', [FamilyController::class, 'revokeInvite'])->name('familia.convites.destroy');
-            Route::delete('/family/members/{member}', [FamilyController::class, 'removeMember'])->name('familia.membros.destroy');
-            Route::patch('/family/members/{member}/role', [FamilyController::class, 'updateRole'])->name('familia.membros.papel');
-            Route::post('/family/secret', [FamilyController::class, 'updateSecret'])->name('familia.secret');
+                Route::get('/family/invites/create', [FamilyController::class, 'createInvite'])->name('familia.convites.create');
+                Route::post('/family/invites', [FamilyController::class, 'invite'])->name('familia.convites.store');
+                Route::delete('/family/invites/{invite}', [FamilyController::class, 'revokeInvite'])->name('familia.convites.destroy');
+                Route::delete('/family/members/{member}', [FamilyController::class, 'removeMember'])->name('familia.membros.destroy');
+                Route::patch('/family/members/{member}/role', [FamilyController::class, 'updateRole'])->name('familia.membros.papel');
+                Route::post('/family/secret', [FamilyController::class, 'updateSecret'])->name('familia.secret');
 
                 Route::post('/cards/{card}/pay-invoice', [CardController::class, 'payInvoice'])->name('cartoes.fatura.pagar');
 

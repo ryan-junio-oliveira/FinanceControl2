@@ -40,6 +40,7 @@ final class AuthService
                 'password' => Hash::make($data['password']),
                 'family_id' => $family->id,
                 'role' => 'admin',
+                'terms_accepted_at' => now(),
             ]);
         });
 
@@ -60,6 +61,7 @@ final class AuthService
                 'password' => Hash::make($password),
                 'family_id' => $invitation->family_id,
                 'role' => $invitation->role,
+                'terms_accepted_at' => now(),
             ]);
             $invitation->update(['accepted_at' => now()]);
 

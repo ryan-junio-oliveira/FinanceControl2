@@ -197,7 +197,7 @@ class PrumoBackendTest extends TestCase
 
     public function test_guests_are_redirected_to_login(): void
     {
-        $this->get('/')->assertRedirect('/login');
+        $this->get('/')->assertOk();
         $this->get('/expenses')->assertRedirect('/login');
     }
 
@@ -212,6 +212,33 @@ class PrumoBackendTest extends TestCase
         $this->post('/family/secret', ['secret_phrase' => 'abacaxi'])->assertSessionHasNoErrors();
         $this->assertSame('abacaxi', $admin->family->setting()->secret_phrase);
         $this->get('/family')->assertSee('abacaxi');
+    }
+
+    public function test_landing_page_is_public(): void
+    {
+        $this->get('/')->assertOk()->assertSee('Prumo')->assertSee('Gestão financeira');
+    }
+
+    public function test_profile_export_returns_json(): void
+    {
+        $this->post('/register', [
+            'manager_name' => 'Eva', 'email' => 'eva@email.com', 'family_name' => 'Família Eva',
+            'password' => 'Senha@123', 'password_confirmation' => 'Senha@123', 'terms' => '1',
+        ])->assertRedirect(route('dashboard'));
+
+        $this->get('/profile/export')
+            ->assertOk()
+            ->assertHeader('Content-Type', 'application/json; charset=utf-8');
+    }
+
+    public function test_register_records_terms_acceptance(): void
+    {
+        $this->post('/register', [
+            'manager_name' => 'Fábio', 'email' => 'fabio@email.com', 'family_name' => 'Família Fábio',
+            'password' => 'Senha@123', 'password_confirmation' => 'Senha@123', 'terms' => '1',
+        ])->assertRedirect(route('dashboard'));
+
+        $this->assertNotNull(User::where('email', 'fabio@email.com')->first()->terms_accepted_at);
     }
 
     public function test_full_family_flow(): void
@@ -234,7 +261,7 @@ class PrumoBackendTest extends TestCase
         $mes = now()->format('Y-m');
 
         // --- páginas com estado vazio ---
-        foreach (['/', '/expenses', '/incomes', '/accounts', '/cards', '/categories', '/family', '/investments', '/settings'] as $uri) {
+        foreach (['/dashboard', '/expenses', '/incomes', '/accounts', '/cards', '/categories', '/family', '/investments', '/settings'] as $uri) {
             $this->get($uri)->assertOk();
         }
 
@@ -319,7 +346,7 @@ class PrumoBackendTest extends TestCase
 
         // --- dependente: vê dashboard mas não investimentos/config ---
         $this->actingAs($lucas);
-        $this->get('/')->assertOk();
+        $this->get('/dashboard')->assertOk();
         $this->get('/expenses')->assertOk();
         $this->get('/investments')->assertForbidden();
         $this->get('/settings')->assertForbidden();
@@ -339,7 +366,7 @@ class PrumoBackendTest extends TestCase
         $this->post('/login', ['email' => 'carlos@email.com', 'password' => 'Senha@123'])->assertRedirect(route('dashboard'));
 
         // --- reuniões finais de render ---
-        $this->get('/')->assertOk();
+        $this->get('/dashboard')->assertOk();
         $this->get("/expenses?mes={$mes}&status=pendente")->assertOk();
         $this->get('/family')->assertOk();
     }
