@@ -26,7 +26,7 @@ class MenuHandler extends BotHandler
             'despesas' => app(ExpenseHandler::class)->menu($driver, $msg, $user),
             'receitas' => app(IncomeHandler::class)->menu($driver, $msg, $user),
             'cartoes' => app(CardHandler::class)->menu($driver, $msg, $user),
-            'contas' => app(AccountHandler::class)->show($driver, $msg, $user),
+            'contas' => app(AccountHandler::class)->menu($driver, $msg, $user),
             'investimentos' => app(InvestmentHandler::class)->show($driver, $msg, $user),
             'mercado' => app(MarketHandler::class)->show($driver, $msg, $user),
             default => $this->show($driver, $msg, $user, true),

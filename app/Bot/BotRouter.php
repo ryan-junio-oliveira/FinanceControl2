@@ -3,6 +3,7 @@
 namespace App\Bot;
 
 use App\Bot\Contracts\BotDriver;
+use App\Bot\Handlers\AccountHandler;
 use App\Bot\Handlers\BotHandler;
 use App\Bot\Handlers\CardHandler;
 use App\Bot\Handlers\ExpenseHandler;
@@ -32,12 +33,6 @@ final class BotRouter
             return;
         }
 
-        if (in_array($low, self::CANCEL, true) || $low === 'cancel') {
-            app(MenuHandler::class)->show($driver, $msg, self::user($msg));
-
-            return;
-        }
-
         $user = self::user($msg);
 
         // Sem vínculo: tenta código direto, senão pede o código.
@@ -54,6 +49,17 @@ final class BotRouter
         }
 
         Auth::setUser($user);
+
+        $state = ConversationState::get($msg->channel, $msg->chatId);
+
+        // Cancelar/voltar: exceto "0" quando há um fluxo ativo (ex.: saldo inicial).
+        if (in_array($low, self::CANCEL, true) || $low === 'cancel') {
+            if ($low !== '0' || ! $state) {
+                app(MenuHandler::class)->show($driver, $msg, $user);
+
+                return;
+            }
+        }
 
         // Foto/documento sempre inicia o fluxo de comprovante.
         if ($msg->hasFile()) {
@@ -77,8 +83,13 @@ final class BotRouter
 
             return;
         }
+        if (preg_match('/^contas:(list|new)$/', $low, $m)) {
+            ConversationState::put($msg->channel, $msg->chatId, AccountHandler::class, 'menu');
+            app(AccountHandler::class)->handle($driver, $msg, ['step' => 'menu', 'data' => []], $user);
 
-        $state = ConversationState::get($msg->channel, $msg->chatId);
+            return;
+        }
+
         if ($state && class_exists($state['handler'])) {
             $handler = app($state['handler']);
             if ($handler instanceof BotHandler) {

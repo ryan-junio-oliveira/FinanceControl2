@@ -161,6 +161,53 @@ class BotTest extends TestCase
         $this->assertStringContainsString('registrada', (string) NullDriver::lastText());
     }
 
+    public function test_account_create_flow(): void
+    {
+        [, $admin] = $this->familyWithLinkedUser();
+        BotIdentity::create(['user_id' => $admin->id, 'channel' => 'telegram', 'external_id' => '99']);
+
+        $this->send('5'); // Contas → submenu.
+        $this->assertStringContainsString('o que deseja', (string) NullDriver::lastText());
+
+        $this->send('contas:new');
+        $this->send('Nubank');
+        $this->send('341'); // Busca por código → Itaú (único).
+
+        $this->assertStringContainsString('tipo', (string) NullDriver::lastText());
+        $this->send('1'); // Corrente.
+        $this->send('500,25');
+
+        $this->assertStringContainsString('Confirmar', (string) NullDriver::lastText());
+        $this->assertStringContainsString('Itaú', (string) NullDriver::lastText());
+        $this->send('sim');
+
+        $this->assertDatabaseHas('accounts', [
+            'name' => 'Nubank', 'kind' => 'corrente', 'initial_balance' => 500.25, 'active' => true,
+        ]);
+        $this->assertStringContainsString('cadastrada', (string) NullDriver::lastText());
+    }
+
+    public function test_account_create_bank_multiple_choice(): void
+    {
+        [, $admin] = $this->familyWithLinkedUser();
+        BotIdentity::create(['user_id' => $admin->id, 'channel' => 'telegram', 'external_id' => '99']);
+        Bank::create(['code' => '077', 'name' => 'Banco Inter', 'color' => '#FF6F00']);
+
+        $this->send('5');
+        $this->send('contas:new');
+        $this->send('Minha Inter');
+        $this->send('a'); // "a" em Itaú e Banco Inter → lista numerada.
+
+        $this->assertStringContainsString('vários bancos', (string) NullDriver::lastText());
+        $this->send('1'); // "Banco Inter" vem antes de "Itaú" (ordem alfabética).
+
+        $this->assertStringContainsString('tipo', (string) NullDriver::lastText());
+        $this->send('1');
+        $this->send('0');
+        $this->assertStringContainsString('Confirmar', (string) NullDriver::lastText());
+        $this->assertStringContainsString('Banco Inter', (string) NullDriver::lastText());
+    }
+
     public function test_cancel_clears_state(): void
     {
         [, $admin] = $this->familyWithLinkedUser();
