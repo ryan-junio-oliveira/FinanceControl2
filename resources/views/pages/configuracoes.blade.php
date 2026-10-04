@@ -33,7 +33,7 @@
             @csrf @method('PATCH')
             <div class="sm:col-span-2">
                 <x-form.field label="Nome da conta" :required="true">
-                    <x-form.input name="name" value="{{ old('name', auth()->user()->group->name) }}" required placeholder="Ex.: Grupo Silva" />
+                    <x-form.input name="name" value="{{ old('name', auth()->user()->group->name) }}" required placeholder="Ex.: Família Silva" />
                 </x-form.field>
             </div>
             <x-form.field label="Moeda base">
@@ -70,7 +70,7 @@
 </div>
 
 {{-- Painel: Segurança — DESATIVADO TEMPORARIAMENTE.
-     Futuro: o administrador poderá exigir 2FA de todos os membros do grupo.
+     Futuro: o administrador poderá exigir 2FA de todos os membros da família.
      O backend (configuracoes.sessoes) segue ativo; só a UI está oculta.
 <div data-panel="seg" class="cfg-panel hidden space-y-4">
     <x-section-card title="Encerrar Outras Sessões" subtitle="Exige sua senha atual para segurança">

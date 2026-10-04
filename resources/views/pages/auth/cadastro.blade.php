@@ -32,7 +32,7 @@
         </div>
         <div class="flex flex-col gap-1.5">
             <label for="group_name" class="text-xs font-bold text-gray-600">Nome da conta *</label>
-            <input id="group_name" name="group_name" required value="{{ old('group_name') }}" placeholder="Digite um nome (ex.: Carlos ou Grupo Silva)"
+            <input id="group_name" name="group_name" required value="{{ old('group_name') }}" placeholder="Digite um nome (ex.: Carlos ou Família Silva)"
                 class="h-12 rounded-lg border px-4 text-sm w-full bg-white text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-emerald-700 focus:ring-[3px] focus:ring-emerald-700/10 {{ $errors->has('group_name') ? 'border-red-400 focus:border-red-500 focus:ring-red-500/10' : 'border-slate-300' }}">
             @error('group_name')<p class="flex items-center gap-1 text-xs font-semibold text-red-600"><span class="material-symbols-outlined text-[14px]">error</span>{{ $message }}</p>@enderror
         </div>

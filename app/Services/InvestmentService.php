@@ -99,7 +99,7 @@ final class InvestmentService
             } else {
                 $portfolio = $group->portfolios()->firstOrCreate(
                     ['name' => 'Geral'],
-                    ['kind' => 'livre', 'objective' => 'Carteira automática do grupo']
+                    ['kind' => 'livre', 'objective' => 'Carteira automática da família']
                 );
             }
             if ($asset && $asset->portfolio_id && $asset->portfolio_id !== $portfolio->id) {

@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>@yield('title', 'Visão Geral') · Prumo</title>
-    <meta name="description" content="Prumo — gestão financeira em grupo: dashboard, despesas, receitas, investimentos, cartões, contas e grupo.">
+    <meta name="description" content="Prumo — gestão financeira familiar: dashboard, despesas, receitas, investimentos, cartões, contas e família.">
     <meta name="theme-color" content="#059669">
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="manifest" href="/manifest.webmanifest">
@@ -15,8 +15,8 @@
     <meta name="apple-mobile-web-app-title" content="Prumo">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?group=Montserrat:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?group=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @stack('head')
 </head>
@@ -221,7 +221,7 @@
                         style="background: linear-gradient(135deg, #059669, #064E3B);">
                         <span class="material-symbols-outlined text-[13px]">savings</span>
                     </span>
-                    <span>© {{ date('Y') }} <b class="text-gray-500 font-bold">Prumo</b> · Gestão financeira em grupo</span>
+                    <span>© {{ date('Y') }} <b class="text-gray-500 font-bold">Prumo</b> · Gestão financeira familiar</span>
                 </div>
                 <nav class="flex items-center gap-4 text-[11px] font-semibold">
                     <a href="{{ route('termos') }}" class="text-gray-400 hover:text-emerald-600 transition">Termos de Uso</a>

@@ -15,8 +15,8 @@
     @endif
 </div>
 
-{{-- Palavra-chave do grupo (identidade) --}}
-<x-section-card title="Palavra-chave da Grupo" subtitle="Combinação secreta para confirmar identidade entre os membros">
+{{-- Palavra-chave da família (identidade) --}}
+<x-section-card title="Palavra-chave da Família" subtitle="Combinação secreta para confirmar identidade entre os membros">
     @if($isGestor)
     <form method="POST" action="{{ route('grupo.secret') }}" class="flex flex-wrap items-center gap-3">
         @csrf
@@ -30,10 +30,10 @@
         @if($frase)
         <p class="text-[16px] font-extrabold text-gray-800">🔑 {{ $frase }}</p>
         @else
-        <p class="text-[13px] text-gray-400">A grupo ainda não definiu uma palavra-chave.</p>
+        <p class="text-[13px] text-gray-400">A família ainda não definiu uma palavra-chave.</p>
         @endif
     @endif
-    <p class="text-[12px] text-gray-400 mt-3">Use-a para confirmar que alguém é realmente um membro do grupo ao pedir ou transferir dinheiro.</p>
+    <p class="text-[12px] text-gray-400 mt-3">Use-a para confirmar que alguém é realmente um membro da família ao pedir ou transferir dinheiro.</p>
 </x-section-card>
 
 {{-- Todos os membros --}}

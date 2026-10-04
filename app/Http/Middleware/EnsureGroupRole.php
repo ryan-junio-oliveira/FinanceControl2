@@ -28,7 +28,7 @@ class EnsureGroupRole
         // em vez de um loop silencioso login → dashboard → login.
         if (! $user->group_id) {
             if ($api) {
-                return response()->json(['message' => 'Sua conta não está vinculada a nenhum grupo.'], 422);
+                return response()->json(['message' => 'Sua conta não está vinculada a nenhuma família.'], 422);
             }
 
             Auth::logout();
@@ -36,7 +36,7 @@ class EnsureGroupRole
             $request->session()->regenerateToken();
 
             return redirect()->route('login')->withErrors([
-                'email' => 'Sua conta não está vinculada a nenhum grupo. Cadastre-se novamente para criar sua conta.',
+                'email' => 'Sua conta não está vinculada a nenhuma família. Cadastre-se novamente para criar sua conta.',
             ]);
         }
 

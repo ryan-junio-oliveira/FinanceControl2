@@ -16,7 +16,7 @@ class SendResetLinkRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'email.required' => 'Informe o e-mail cadastrado na conta do grupo.',
+            'email.required' => 'Informe o e-mail cadastrado na conta da família.',
             'email.email' => 'Esse e-mail não parece válido. Confira e tente de novo.',
         ];
     }

@@ -47,13 +47,13 @@ class TransactionRequest extends FormRequest
             'due_on.after_or_equal' => 'O vencimento não pode ser anterior à data do lançamento.',
             'status.required' => 'Escolha a situação do lançamento.',
             'status.in' => 'Situação inválida. Escolha entre pago, pendente ou agendado.',
-            'user_id.exists' => 'O membro selecionado não pertence à grupo.',
+            'user_id.exists' => 'O membro selecionado não pertence à família.',
             'payment_method.in' => 'Forma de pagamento inválida.',
-            'credit_card_id.exists' => 'O cartão selecionado não pertence à grupo.',
+            'credit_card_id.exists' => 'O cartão selecionado não pertence à família.',
             'anexo.max' => 'O anexo deve ter no máximo 5 MB.',
             'anexo.mimes' => 'Anexe PDF ou imagem (JPG, PNG, WebP).',
-            'account_id.exists' => 'A conta selecionada não pertence à grupo.',
-            'category_id.exists' => 'A categoria selecionada não pertence à grupo.',
+            'account_id.exists' => 'A conta selecionada não pertence à família.',
+            'category_id.exists' => 'A categoria selecionada não pertence à família.',
         ];
     }
 }

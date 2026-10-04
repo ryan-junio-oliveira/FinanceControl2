@@ -74,6 +74,6 @@ class GroupController extends Controller
 
         Fin::group()->setting()->update(['secret_phrase' => $phrase !== '' ? $phrase : null]);
 
-        return back()->with('status', 'Palavra-chave do grupo atualizada.');
+        return back()->with('status', 'Palavra-chave da família atualizada.');
     }
 }

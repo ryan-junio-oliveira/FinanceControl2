@@ -12,7 +12,7 @@
 <div class="flex flex-wrap items-end justify-between gap-3">
     <div>
         <h1 class="text-[24px] font-extrabold tracking-tight text-gray-900">Visão Geral</h1>
-        <p class="text-[13px] text-gray-400 mt-0.5 font-medium">Saúde financeira do grupo {{ auth()->user()->group->name }}</p>
+        <p class="text-[13px] text-gray-400 mt-0.5 font-medium">Saúde financeira da família {{ auth()->user()->group->name }}</p>
     </div>
     <x-month-picker :action="route('dashboard')" :mes="$mes" />
 </div>

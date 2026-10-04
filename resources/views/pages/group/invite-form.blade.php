@@ -9,7 +9,7 @@
         title="Convidar membro"
         subtitle="Geramos um link de primeiro acesso para o membro definir a senha."
         :backUrl="route('grupo')"
-        backLabel="Voltar para o grupo"
+        backLabel="Voltar para a família"
         icon="person_add"
         iconBg="linear-gradient(135deg,#FFF1F2,#FFE4E6)"
         iconColor="#E11D48" />

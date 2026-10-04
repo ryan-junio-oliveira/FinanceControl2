@@ -17,7 +17,7 @@ class SettingsRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'name.required' => 'A grupo precisa de um nome.',
+            'name.required' => 'A família precisa de um nome.',
             'currency.in' => 'Moeda inválida. Escolha entre Real, Dólar ou Euro.',
         ];
     }
