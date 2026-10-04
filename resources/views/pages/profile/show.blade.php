@@ -6,7 +6,7 @@
 <div class="max-w-3xl mx-auto w-full space-y-4">
     <div>
         <h1 class="text-[24px] font-extrabold tracking-tight text-gray-900">Meu Perfil</h1>
-        <p class="text-[13px] text-gray-400 mt-0.5 font-medium">{{ $user->email }} · {{ $user->family->name }}</p>
+        <p class="text-[13px] text-gray-400 mt-0.5 font-medium">{{ $user->email }} · {{ $user->group->name }}</p>
     </div>
 
     {{-- Informações do perfil --}}
@@ -94,7 +94,7 @@
                 <span class="material-symbols-outlined text-emerald-600 text-[22px] shrink-0">download</span>
                 <div>
                     <p class="text-[13px] font-bold text-gray-800">Exportar meus dados</p>
-                    <p class="text-[12px] text-gray-500 mt-0.5">Baixe uma cópia de todos os dados da sua família (lançamentos, contas, cartões e investimentos) em formato JSON.</p>
+                    <p class="text-[12px] text-gray-500 mt-0.5">Baixe uma cópia de todos os dados da seu grupo (lançamentos, contas, cartões e investimentos) em formato JSON.</p>
                 </div>
             </div>
             <a href="{{ route('perfil.export') }}" class="h-10 px-5 inline-flex items-center gap-2 text-[13px] font-extrabold text-white bg-emerald-700 hover:bg-emerald-800 rounded-xl transition">
@@ -104,17 +104,17 @@
     </x-section-card>
 
     {{-- Encerrar cadastro (só admin) --}}
-    <x-section-card title="Encerrar Cadastro" subtitle="Apaga a conta da família inteira">
+    <x-section-card title="Encerrar Cadastro" subtitle="Apaga a conta do grupo inteira">
         @if($user->role === 'admin')
         <div class="flex items-start gap-3 p-3.5 rounded-xl bg-red-50 border border-red-100 mb-4">
             <span class="material-symbols-outlined text-red-500 text-[20px] shrink-0 mt-0.5">warning</span>
             <p class="text-[12px] text-red-800 font-medium leading-relaxed">
-                Ao encerrar, <strong>todos os membros da família perdem o acesso</strong> e
+                Ao encerrar, <strong>todos os membros do grupo perdem o acesso</strong> e
                 <strong>todos os registros da conta são apagados</strong> (lançamentos, contas, cartões, categorias e convites).
                 Essa ação não pode ser desfeita.
             </p>
         </div>
-        <form method="POST" action="{{ route('perfil.destroy') }}" onsubmit="return confirm('Encerrar o cadastro e apagar TODOS os registros da família?')" class="form-grid">
+        <form method="POST" action="{{ route('perfil.destroy') }}" onsubmit="return confirm('Encerrar o cadastro e apagar TODOS os registros do grupo?')" class="form-grid">
             @csrf @method('DELETE')
             <x-form.field label="Sua senha para confirmar" for="p-del" :required="true" :error="$errors->first('password')">
                 <x-form.input id="p-del" name="password" required type="password" placeholder="••••••••" autocomplete="current-password" />
@@ -128,7 +128,7 @@
             <span class="material-symbols-outlined text-slate-400 text-[20px] shrink-0 mt-0.5">lock</span>
             <p class="text-[12px] text-gray-500 font-medium leading-relaxed">
                 Somente o <strong>administrador da conta</strong> pode encerrar o cadastro.
-                Fale com o responsável pela sua família.
+                Fale com o responsável pela seu grupo.
             </p>
         </div>
         @endif

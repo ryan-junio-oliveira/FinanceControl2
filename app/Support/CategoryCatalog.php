@@ -3,15 +3,15 @@
 namespace App\Support;
 
 use App\Models\CardTransaction;
-use App\Models\Family;
+use App\Models\Group;
 use Illuminate\Support\Facades\DB;
 
 /**
  * Catálogo padrão de categorias do Prumo: só os grandes temas.
  *
- * Semeado automaticamente para cada família nova (via cadastro) e
+ * Semeado automaticamente para cado grupo nova (via cadastro) e
  * reaplicável via `php artisan categories:seed` sem duplicar.
- * Famílias antigas são consolidadas via `php artisan categories:prune`
+ * Grupos antigas são consolidadas via `php artisan categories:prune`
  * (remapa lançamentos para o tema e apaga as categorias detalhadas).
  */
 final class CategoryCatalog
@@ -124,25 +124,25 @@ final class CategoryCatalog
     }
 
     /**
-     * Semeia o catálogo para a família (idempotente: não duplica).
+     * Semeia o catálogo para o grupo (idempotente: não duplica).
      *
      * @return int quantidade de categorias criadas (0 = já tinha tudo)
      */
-    public static function seedForFamily(Family $family): int
+    public static function seedForGroup(Group $group): int
     {
-        return DB::transaction(function () use ($family) {
+        return DB::transaction(function () use ($group) {
             $created = 0;
-            $sort = (int) ($family->categories()->max('sort') ?? 0);
+            $sort = (int) ($group->categories()->max('sort') ?? 0);
 
             foreach (self::items() as $item) {
-                $exists = $family->categories()
+                $exists = $group->categories()
                     ->where('name', $item['name'])
                     ->where('type', $item['type'])
                     ->exists();
 
                 if (! $exists) {
                     $sort++;
-                    $family->categories()->create([
+                    $group->categories()->create([
                         'name' => $item['name'],
                         'type' => $item['type'],
                         'icon' => $item['icon'],
@@ -162,10 +162,10 @@ final class CategoryCatalog
      *
      * @return array{moved: int, removed: int}
      */
-    public static function pruneForFamily(Family $family): array
+    public static function pruneForGroup(Group $group): array
     {
-        return DB::transaction(function () use ($family) {
-            self::seedForFamily($family);
+        return DB::transaction(function () use ($group) {
+            self::seedForGroup($group);
 
             $themeIds = [];
             foreach (['despesa', 'receita'] as $type) {
@@ -173,7 +173,7 @@ final class CategoryCatalog
                     if ($item['type'] !== $type) {
                         continue;
                     }
-                    $themeIds[$type][$item['name']] = $family->categories()
+                    $themeIds[$type][$item['name']] = $group->categories()
                         ->where('type', $type)->where('name', $item['name'])->value('id');
                 }
             }
@@ -182,7 +182,7 @@ final class CategoryCatalog
             $removed = 0;
             foreach (['despesa', 'receita'] as $type) {
                 $themeNames = array_column(array_filter(self::items(), fn ($i) => $i['type'] === $type), 'name');
-                $old = $family->categories()->where('type', $type)->whereNotIn('name', $themeNames)->get();
+                $old = $group->categories()->where('type', $type)->whereNotIn('name', $themeNames)->get();
 
                 foreach ($old as $cat) {
                     $theme = self::themeFor($cat->type, $cat->name) ?? self::fallback($cat->type);
@@ -191,8 +191,8 @@ final class CategoryCatalog
                         continue;
                     }
 
-                    $moved += $family->transactions()->where('category_id', $cat->id)->update(['category_id' => $target]);
-                    $moved += CardTransaction::where('family_id', $family->id)->where('category_id', $cat->id)->update(['category_id' => $target]);
+                    $moved += $group->transactions()->where('category_id', $cat->id)->update(['category_id' => $target]);
+                    $moved += CardTransaction::where('group_id', $group->id)->where('category_id', $cat->id)->update(['category_id' => $target]);
                     $cat->delete();
                     $removed++;
                 }

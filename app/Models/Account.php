@@ -9,16 +9,16 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Account extends Model
 {
-    protected $fillable = ['family_id', 'bank_id', 'name', 'kind', 'initial_balance', 'active'];
+    protected $fillable = ['group_id', 'bank_id', 'name', 'kind', 'initial_balance', 'active'];
 
     protected function casts(): array
     {
         return ['initial_balance' => 'decimal:2', 'active' => 'boolean'];
     }
 
-    public function family(): BelongsTo
+    public function group(): BelongsTo
     {
-        return $this->belongsTo(Family::class);
+        return $this->belongsTo(Group::class);
     }
 
     public function bank(): BelongsTo
@@ -34,12 +34,12 @@ class Account extends Model
     /** Saldo atual = inicial + receitas pagas − despesas/aportes pagos + transferências líquidas. */
     public function getBalanceAttribute(): float
     {
-        // Se pré-calculado via balancesForFamily (balance_cached), evita N+1.
+        // Se pré-calculado via balancesForGroup (balance_cached), evita N+1.
         if (array_key_exists('balance_cached', $this->attributes) && $this->attributes['balance_cached'] !== null) {
             return (float) $this->attributes['balance_cached'];
         }
         // Mantido para compatibilidade pontual (ex.: testes). Para listagens,
-        // prefira balancesForFamily() que resolve tudo em 4 queries.
+        // prefira balancesForGroup() que resolve tudo em 4 queries.
         $in = (float) $this->transactions()->where('status', 'pago')->where('type', 'receita')->sum('amount');
         $out = (float) $this->transactions()->where('status', 'pago')->whereIn('type', ['despesa', 'aporte'])->sum('amount');
         $tIn = (float) Transaction::where('transfer_to_account_id', $this->id)->where('status', 'pago')->sum('amount');
@@ -49,15 +49,15 @@ class Account extends Model
     }
 
     /**
-     * Saldos de todas as contas da família em apenas 4 agregações SQL.
+     * Saldos de todas as contas do grupo em apenas 4 agregações SQL.
      *
      * @return array<int, float> [account_id => balance]
      */
-    public static function balancesForFamily(int $familyId): array
+    public static function balancesForGroup(int $groupId): array
     {
-        $initial = self::where('family_id', $familyId)->pluck('initial_balance', 'id');
+        $initial = self::where('group_id', $groupId)->pluck('initial_balance', 'id');
 
-        $byAccount = Transaction::where('family_id', $familyId)
+        $byAccount = Transaction::where('group_id', $groupId)
             ->where('status', 'pago')
             ->whereNotNull('account_id')
             ->selectRaw('account_id, type, SUM(amount) as total')
@@ -65,7 +65,7 @@ class Account extends Model
             ->get()
             ->groupBy('account_id');
 
-        $transferIn = Transaction::where('family_id', $familyId)
+        $transferIn = Transaction::where('group_id', $groupId)
             ->where('status', 'pago')
             ->whereNotNull('transfer_to_account_id')
             ->selectRaw('transfer_to_account_id as account_id, SUM(amount) as total')

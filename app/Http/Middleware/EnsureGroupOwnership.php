@@ -18,12 +18,12 @@ use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Garante que o recurso ({account}, {card}, {transaction}...) pertence
- * à família do usuário autenticado.
+ * à grupo do usuário autenticado.
  *
- * Uso: Route::middleware('family.ownership:account') — o nome do parâmetro
- * de rota é passado ao middleware, que resolve o model e valida o family_id.
+ * Uso: Route::middleware('group.ownership:account') — o nome do parâmetro
+ * de rota é passado ao middleware, que resolve o model e valida o group_id.
  */
-class EnsureFamilyOwnership
+class EnsureGroupOwnership
 {
     /** @var array<string, class-string<Model>> */
     private const MODELS = [
@@ -51,8 +51,8 @@ class EnsureFamilyOwnership
             abort(404);
         }
 
-        $familyId = $request->user()?->family_id;
-        abort_if($familyId === null || $model->family_id !== $familyId, 404);
+        $groupId = $request->user()?->group_id;
+        abort_if($groupId === null || $model->group_id !== $groupId, 404);
 
         return $next($request);
     }

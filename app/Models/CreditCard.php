@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class CreditCard extends Model
 {
     protected $fillable = [
-        'family_id', 'holder_user_id', 'account_id', 'name', 'brand', 'last4',
+        'group_id', 'holder_user_id', 'account_id', 'name', 'brand', 'last4',
         'credit_limit', 'closing_day', 'due_day', 'active',
     ];
 
@@ -20,9 +20,9 @@ class CreditCard extends Model
         return ['credit_limit' => 'decimal:2', 'active' => 'boolean'];
     }
 
-    public function family(): BelongsTo
+    public function group(): BelongsTo
     {
-        return $this->belongsTo(Family::class);
+        return $this->belongsTo(Group::class);
     }
 
     public function holder(): BelongsTo

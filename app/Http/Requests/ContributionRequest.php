@@ -14,12 +14,12 @@ class ContributionRequest extends FormRequest
 
     public function rules(): array
     {
-        $fid = Auth::user()?->family_id;
+        $fid = Auth::user()?->group_id;
 
         return [
-            'portfolio_id' => ['nullable', Rule::exists('portfolios', 'id')->where('family_id', $fid)],
-            'asset_id' => ['nullable', Rule::exists('assets', 'id')->where('family_id', $fid), 'required_if:kind,rendimento'],
-            'account_id' => ['required_if:kind,aporte', 'nullable', Rule::exists('accounts', 'id')->where('family_id', $fid)],
+            'portfolio_id' => ['nullable', Rule::exists('portfolios', 'id')->where('group_id', $fid)],
+            'asset_id' => ['nullable', Rule::exists('assets', 'id')->where('group_id', $fid), 'required_if:kind,rendimento'],
+            'account_id' => ['required_if:kind,aporte', 'nullable', Rule::exists('accounts', 'id')->where('group_id', $fid)],
             'kind' => ['required', 'in:aporte,rendimento'],
             'amount' => ['required', 'numeric', 'min:0.01'],
             'occurred_on' => ['required', 'date'],

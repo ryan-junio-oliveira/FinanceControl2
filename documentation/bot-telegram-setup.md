@@ -13,7 +13,7 @@ Guia passo a passo para ligar o assistente do Prumo no Telegram, do zero ao prim
 1. No Telegram, busque `@BotFather` (oficial, com selo ✓) e toque **START**
 2. Envie `/newbot`
 3. Escolha um **nome** (ex.: `Prumo`)
-4. Escolha um **username** terminado em `bot` (ex.: `finfamiliaapp_bot`; se estiver em uso, varie: `finfamilia_br_bot`)
+4. Escolha um **username** terminado em `bot` (ex.: `prumoapp_bot`; se estiver em uso, varie: `prumo_br_bot`)
 5. Guarde o **token** (`123456:ABC...`)
 
 > ⚠️ Quem tem o token controla o bot. Não commite o token nem cole em canais públicos. Se vazar, gere outro com `/revoke` no BotFather.

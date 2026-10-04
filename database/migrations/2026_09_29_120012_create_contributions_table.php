@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('contributions', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('family_id')->constrained('families')->cascadeOnDelete();
+            $table->foreignId('group_id')->constrained('groups')->cascadeOnDelete();
             $table->foreignId('portfolio_id')->nullable()->constrained('portfolios')->nullOnDelete();
             $table->foreignId('asset_id')->nullable()->constrained('assets')->nullOnDelete();
             $table->foreignId('account_id')->nullable()->constrained('accounts')->nullOnDelete();

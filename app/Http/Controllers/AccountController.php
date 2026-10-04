@@ -14,17 +14,17 @@ class AccountController extends Controller
 {
     public function index(AccountService $service): View
     {
-        $family = Fin::family();
+        $group = Fin::group();
 
         return view('pages.contas', [
-            'contas' => $service->list($family),
+            'contas' => $service->list($group),
         ]);
     }
 
     /** Extrato detalhado de uma conta específica. */
     public function show(Account $account, AccountService $service): View
     {
-        abort_if($account->family_id !== Fin::familyId(), 404);
+        abort_if($account->group_id !== Fin::groupId(), 404);
 
         return view('pages.accounts.extrato', [
             'conta' => $account->load('bank'),
@@ -43,7 +43,7 @@ class AccountController extends Controller
 
     public function edit(Account $account, AccountService $service): View
     {
-        abort_if($account->family_id !== Fin::familyId(), 404);
+        abort_if($account->group_id !== Fin::groupId(), 404);
         $this->authorize('manage', $account);
 
         return view('pages.accounts.form', [
@@ -54,16 +54,16 @@ class AccountController extends Controller
 
     public function store(AccountRequest $request, AccountService $service): RedirectResponse
     {
-        $family = Fin::family();
-        $service->create($family, $request->validated());
+        $group = Fin::group();
+        $service->create($group, $request->validated());
 
         return redirect()->route('contas')->with('status', 'Conta criada.');
     }
 
     public function update(AccountRequest $request, Account $account, AccountService $service): RedirectResponse
     {
-        $family = Fin::family();
-        abort_if($account->family_id !== $family->id, 404);
+        $group = Fin::group();
+        abort_if($account->group_id !== $group->id, 404);
         $this->authorize('manage', $account);
 
         $service->update($account, $request->validated(), $request->boolean('active'));
@@ -73,25 +73,25 @@ class AccountController extends Controller
 
     public function destroy(Account $account, AccountService $service): RedirectResponse
     {
-        $family = Fin::family();
-        abort_if($account->family_id !== $family->id, 404);
+        $group = Fin::group();
+        abort_if($account->group_id !== $group->id, 404);
         $this->authorize('manage', $account);
         $service->destroy($account);
 
         return redirect()->route('contas')->with('status', 'Conta excluída.');
     }
 
-    /** Transferência interna entre contas da família. */
+    /** Transferência interna entre contas do grupo. */
     public function createTransfer(AccountService $service): View
     {
-        return view('pages.accounts.transfer-form', $service->transferOptions(Fin::family()));
+        return view('pages.accounts.transfer-form', $service->transferOptions(Fin::group()));
     }
 
-    /** Transferência interna entre contas da família. */
+    /** Transferência interna entre contas do grupo. */
     public function transfer(TransferRequest $request, AccountService $service): RedirectResponse
     {
-        $family = Fin::family();
-        $service->transfer($family, $request->validated());
+        $group = Fin::group();
+        $service->transfer($group, $request->validated());
 
         return redirect()->route('contas')->with('status', 'Transferência registrada.');
     }

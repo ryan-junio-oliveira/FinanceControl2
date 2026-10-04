@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('invitations', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('family_id')->constrained('families')->cascadeOnDelete();
+            $table->foreignId('group_id')->constrained('groups')->cascadeOnDelete();
             $table->string('name');
             $table->string('email');
             $table->string('role')->default('dependente');
@@ -18,7 +18,7 @@ return new class extends Migration
             $table->timestamp('accepted_at')->nullable();
             $table->timestamps();
 
-            $table->unique(['family_id', 'email']);
+            $table->unique(['group_id', 'email']);
         });
     }
 

@@ -53,10 +53,10 @@ final class BotRouter
         Auth::setUser($user);
 
         // Plano expirado (fim do trial sem assinatura): avisa e bloqueia o uso.
-        if (! app(BillingService::class)->isActive($user->family)) {
+        if (! app(BillingService::class)->isActive($user->group)) {
             $aviso = $user->isAdmin()
                 ? "🔒 Sua assinatura do Prumo expirou.\n\nAssine ou renove pelo site (menu Plano) para continuar usando o bot."
-                : "🔒 A assinatura do Prumo da sua família expirou.\n\nFale com o administrador para renovar — até lá o bot fica bloqueado.";
+                : "🔒 A assinatura do Prumo da seu grupo expirou.\n\nFale com o administrador para renovar — até lá o bot fica bloqueado.";
             $driver->sendText($msg->chatId, $aviso);
 
             return;
@@ -81,12 +81,12 @@ final class BotRouter
             return;
         }
 
-        // Palavra-chave da família (identidade) sob demanda.
-        if (in_array($low, ['senha', 'palavra', 'palavra-chave', 'palavra-chave da família', 'chave'], true)) {
-            $frase = $user->family->setting()->secret_phrase ?? null;
+        // Palavra-chave do grupo (identidade) sob demanda.
+        if (in_array($low, ['senha', 'palavra', 'palavra-chave', 'palavra-chave do grupo', 'chave'], true)) {
+            $frase = $user->group->setting()->secret_phrase ?? null;
             $driver->sendText($msg->chatId, $frase
-                ? '🔑 Palavra-chave da família: <b>'.e($frase).'</b>'
-                : 'A família ainda não definiu uma palavra-chave.');
+                ? '🔑 Palavra-chave do grupo: <b>'.e($frase).'</b>'
+                : 'A grupo ainda não definiu uma palavra-chave.');
 
             return;
         }

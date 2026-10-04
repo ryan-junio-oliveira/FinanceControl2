@@ -8,15 +8,15 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('families', function (Blueprint $table) {
-            $table->string('mp_preapproval_id', 64)->nullable()->after('trial_ends_at');
+        Schema::table('group_settings', function (Blueprint $table) {
+            $table->string('secret_phrase', 80)->nullable()->after('notifications');
         });
     }
 
     public function down(): void
     {
-        Schema::table('families', function (Blueprint $table) {
-            $table->dropColumn('mp_preapproval_id');
+        Schema::table('group_settings', function (Blueprint $table) {
+            $table->dropColumn('secret_phrase');
         });
     }
 };

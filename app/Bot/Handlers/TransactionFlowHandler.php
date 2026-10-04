@@ -122,7 +122,7 @@ abstract class TransactionFlowHandler extends BotHandler
         $data['occurred_on'] = $date;
         $data['due_on'] = $date;
 
-        $members = $user->family->users()->orderBy('name')->get();
+        $members = $user->group->users()->orderBy('name')->get();
         if ($members->count() <= 1) {
             $data['user_id'] = $user->id;
             $this->afterMember($driver, $msg, $data, $user);
@@ -190,7 +190,7 @@ abstract class TransactionFlowHandler extends BotHandler
 
         if ($this->type() === 'despesa' && in_array($low, ['cartao', 'cartão', 'credito', 'crédito'], true)) {
             $data['payment_method'] = 'cartao';
-            $cards = app(CardService::class)->list($user->family);
+            $cards = app(CardService::class)->list($user->group);
             if ($cards->isEmpty()) {
                 $this->done($driver, $msg, $user, '❌ Você ainda não tem cartões. Cadastre um no menu Cartões.');
 
@@ -224,7 +224,7 @@ abstract class TransactionFlowHandler extends BotHandler
 
         // Dinheiro físico: vai para a conta "carteira" (espécie), sem escolher conta.
         if ($method === 'dinheiro_fisico') {
-            $data['account_id'] = app(AccountService::class)->dinheiroFisico($user->family)->id;
+            $data['account_id'] = app(AccountService::class)->dinheiroFisico($user->group)->id;
             $this->askCategory($driver, $msg, $data, $user);
 
             return;
@@ -249,7 +249,7 @@ abstract class TransactionFlowHandler extends BotHandler
 
     private function askAccount(BotDriver $driver, IncomingMessage $msg, array $data, ?User $user): void
     {
-        $accounts = app(AccountService::class)->list($user->family)->values();
+        $accounts = app(AccountService::class)->list($user->group)->values();
         if (in_array($data['payment_method'] ?? null, ['dinheiro_digital', 'deposito'], true)) {
             $accounts = $accounts->filter(fn ($a) => $a->kind !== 'carteira')->values();
         }
@@ -278,7 +278,7 @@ abstract class TransactionFlowHandler extends BotHandler
 
     private function askCategory(BotDriver $driver, IncomingMessage $msg, array $data, ?User $user): void
     {
-        $cats = app(CategoryService::class)->list($user->family, ['tipo' => $this->type()], 100);
+        $cats = app(CategoryService::class)->list($user->group, ['tipo' => $this->type()], 100);
         if ($cats->isEmpty()) {
             $this->done($driver, $msg, $user, '❌ Sem categorias cadastradas. Crie no sistema primeiro.');
 
@@ -318,9 +318,9 @@ abstract class TransactionFlowHandler extends BotHandler
 
     private function stepConfirmCard(BotDriver $driver, IncomingMessage $msg, array $data, string $text, ?User $user): void
     {
-        $card = $user->family->creditCards()->find($data['credit_card_id']);
-        $cat = $user->family->categories()->find($data['category_id']);
-        $member = $user->family->users()->find($data['user_id']);
+        $card = $user->group->creditCards()->find($data['credit_card_id']);
+        $cat = $user->group->categories()->find($data['category_id']);
+        $member = $user->group->users()->find($data['user_id']);
         $summary = '🧾 <b>Confirmar compra no cartão?</b>'."\n"
             .BotPresenter::divider()."\n"
             .'💳 '.($card->name ?? '—')."\n"
@@ -343,7 +343,7 @@ abstract class TransactionFlowHandler extends BotHandler
             return;
         }
 
-        app(CardService::class)->createItem($user->family, [
+        app(CardService::class)->createItem($user->group, [
             'credit_card_id' => $data['credit_card_id'],
             'description' => $data['description'],
             'amount' => $data['amount'],
@@ -352,7 +352,7 @@ abstract class TransactionFlowHandler extends BotHandler
             'category_id' => $data['category_id'] ?? null,
         ]);
 
-        $card = $user->family->creditCards()->find($data['credit_card_id']);
+        $card = $user->group->creditCards()->find($data['credit_card_id']);
         $this->done($driver, $msg, $user, '✅ Compra lançada na fatura do <b>'.e($card->name ?? 'cartão').'</b>: <b>'.e($data['description']).'</b> ('.BotPresenter::money($data['amount']).').');
     }
 
@@ -396,9 +396,9 @@ abstract class TransactionFlowHandler extends BotHandler
 
     private function stepConfirm(BotDriver $driver, IncomingMessage $msg, array $data, string $text, ?User $user): void
     {
-        $member = $user->family->users()->find($data['user_id']);
-        $account = $user->family->accounts()->find($data['account_id']);
-        $cat = $user->family->categories()->find($data['category_id']);
+        $member = $user->group->users()->find($data['user_id']);
+        $account = $user->group->accounts()->find($data['account_id']);
+        $cat = $user->group->categories()->find($data['category_id']);
         $isDeposito = ($data['payment_method'] ?? null) === 'deposito';
         $titulo = $isDeposito ? 'Depósito' : strtolower($this->typeLabel(true));
         $contaLinha = $isDeposito
@@ -442,8 +442,8 @@ abstract class TransactionFlowHandler extends BotHandler
 
         // Depósito: dinheiro físico (carteira) entra numa conta bancária.
         if (($data['payment_method'] ?? null) === 'deposito') {
-            app(AccountService::class)->transfer($user->family, [
-                'from_account_id' => app(AccountService::class)->dinheiroFisico($user->family)->id,
+            app(AccountService::class)->transfer($user->group, [
+                'from_account_id' => app(AccountService::class)->dinheiroFisico($user->group)->id,
                 'to_account_id' => $data['account_id'],
                 'user_id' => $data['user_id'],
                 'amount' => $data['amount'],
@@ -455,7 +455,7 @@ abstract class TransactionFlowHandler extends BotHandler
             return;
         }
 
-        app(TransactionService::class)->create($user->family, $this->type(), [
+        app(TransactionService::class)->create($user->group, $this->type(), [
             'description' => $data['description'],
             'amount' => $data['amount'],
             'occurred_on' => $data['occurred_on'],
@@ -474,8 +474,8 @@ abstract class TransactionFlowHandler extends BotHandler
     public function list(BotDriver $driver, IncomingMessage $msg, ?User $user): void
     {
         $mes = Fin::month();
-        $items = app(TransactionService::class)->list($user->family, $this->type(), ['mes' => $mes], 10);
-        $total = (float) Transaction::where('family_id', $user->family_id)
+        $items = app(TransactionService::class)->list($user->group, $this->type(), ['mes' => $mes], 10);
+        $total = (float) Transaction::where('group_id', $user->group_id)
             ->where('type', $this->type())->whereIn('status', ['pago', 'pendente'])
             ->whereYear('occurred_on', substr($mes, 0, 4))->whereMonth('occurred_on', substr($mes, 5, 2))->sum('amount');
 

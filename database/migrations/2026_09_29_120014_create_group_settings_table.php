@@ -8,9 +8,9 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('family_settings', function (Blueprint $table) {
+        Schema::create('group_settings', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('family_id')->unique()->constrained('families')->cascadeOnDelete();
+            $table->foreignId('group_id')->unique()->constrained('groups')->cascadeOnDelete();
             $table->string('currency', 3)->default('BRL');
             $table->string('timezone')->default('America/Sao_Paulo');
             $table->boolean('consolidate_dependent_yield')->default(true);
@@ -21,6 +21,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('family_settings');
+        Schema::dropIfExists('group_settings');
     }
 };

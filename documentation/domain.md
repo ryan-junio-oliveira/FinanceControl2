@@ -4,7 +4,8 @@
 
 | Entidade | Descrição |
 |----------|-----------|
-| `Family` | Conta da família (grupo) |
+| `Group` | Conta do grupo (tenancy por `group_id`) |
+| `GroupSetting` | Preferências do grupo (notificações, frase secreta) |
 | `User` | Membros (admin, co_admin, dependente, junior) |
 | `Category` | Categorias de despesa/receita |
 | `Account` | Contas bancárias (ligadas a um `Bank`) |
@@ -16,23 +17,24 @@
 | `Asset` | Ativos (renda fixa, FII, ação, ETF, previdência) |
 | `Contribution` | Aportes e rendimentos |
 | `Invitation` | Convites pendentes |
+| `Attachment` | Anexos/comprovantes (OCR via `ocr_status`: queued→done/failed) |
 | `AuditLog` | Trilha de auditoria |
 
 ## Relações
 
 ```
-Family 1───* User
-Family 1───* Category
-Family 1───* Account *───1 Bank
-Family 1───* Transaction *───1 User (membro)
+Group 1───* User
+Group 1───* Category
+Group 1───* Account *───1 Bank
+Group 1───* Transaction *───1 User (membro)
 Transaction *───1 Account
 Transaction *───1 Category
-Family 1───* CreditCard *───1 Account
+Group 1───* CreditCard *───1 Account
 CreditCard 1───* CardTransaction *───1 User
-Family 1───* Portfolio 1───* Asset
+Group 1───* Portfolio 1───* Asset
 Portfolio 1───* Contribution *───1 Asset
-Family 1───* Invitation
-Family 1───* AuditLog *───1 User
+Group 1───* Invitation
+Group 1───* AuditLog *───1 User
 ```
 
 ## Regras de negócio

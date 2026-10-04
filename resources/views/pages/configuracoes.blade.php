@@ -6,14 +6,14 @@
 <div class="flex flex-wrap items-end justify-between gap-3">
     <div>
         <h1 class="text-[24px] font-extrabold tracking-tight text-gray-900">Configurações da Conta</h1>
-        <p class="text-[13px] text-gray-400 mt-0.5 font-medium">{{ auth()->user()->family->name }} · preferências reais salvas no banco.</p>
+        <p class="text-[13px] text-gray-400 mt-0.5 font-medium">{{ auth()->user()->group->name }} · preferências reais salvas no banco.</p>
     </div>
 </div>
 
 {{-- Tabs --}}
 <div class="flex gap-1.5 overflow-x-auto pb-1" id="cfg-tabs">
     @php $tabs = [
-        ['id'=>'perfil','label'=>'Perfil da Conta','icon'=>'family_restroom'],
+        ['id'=>'perfil','label'=>'Perfil da Conta','icon'=>'group_restroom'],
         ['id'=>'notif','label'=>'Notificações','icon'=>'notifications_active'],
     ]; @endphp
     @foreach($tabs as $i=>$t)
@@ -33,7 +33,7 @@
             @csrf @method('PATCH')
             <div class="sm:col-span-2">
                 <x-form.field label="Nome da conta" :required="true">
-                    <x-form.input name="name" value="{{ old('name', auth()->user()->family->name) }}" required placeholder="Ex.: Família Silva" />
+                    <x-form.input name="name" value="{{ old('name', auth()->user()->group->name) }}" required placeholder="Ex.: Grupo Silva" />
                 </x-form.field>
             </div>
             <x-form.field label="Moeda base">
@@ -70,7 +70,7 @@
 </div>
 
 {{-- Painel: Segurança — DESATIVADO TEMPORARIAMENTE.
-     Futuro: o administrador poderá exigir 2FA de todos os membros da família.
+     Futuro: o administrador poderá exigir 2FA de todos os membros do grupo.
      O backend (configuracoes.sessoes) segue ativo; só a UI está oculta.
 <div data-panel="seg" class="cfg-panel hidden space-y-4">
     <x-section-card title="Encerrar Outras Sessões" subtitle="Exige sua senha atual para segurança">

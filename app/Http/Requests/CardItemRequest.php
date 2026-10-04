@@ -14,15 +14,15 @@ class CardItemRequest extends FormRequest
 
     public function rules(): array
     {
-        $fid = Auth::user()?->family_id;
+        $fid = Auth::user()?->group_id;
 
         return [
-            'credit_card_id' => ['required', Rule::exists('credit_cards', 'id')->where('family_id', $fid)],
+            'credit_card_id' => ['required', Rule::exists('credit_cards', 'id')->where('group_id', $fid)],
             'description' => ['required', 'string', 'max:255'],
             'amount' => ['required', 'numeric', 'min:0.01'],
             'occurred_on' => ['required', 'date'],
-            'user_id' => ['required', Rule::exists('users', 'id')->where('family_id', $fid)],
-            'category_id' => ['nullable', Rule::exists('categories', 'id')->where('family_id', $fid)],
+            'user_id' => ['required', Rule::exists('users', 'id')->where('group_id', $fid)],
+            'category_id' => ['nullable', Rule::exists('categories', 'id')->where('group_id', $fid)],
             'kind' => ['sometimes', 'in:compra,estorno'],
             'installments_total' => ['sometimes', 'nullable', 'integer', 'min:1', 'max:48'],
         ];

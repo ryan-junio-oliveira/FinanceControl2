@@ -9,7 +9,7 @@ use App\Models\CardTransaction;
 use App\Models\Category;
 use App\Models\Contribution;
 use App\Models\CreditCard;
-use App\Models\FamilySetting;
+use App\Models\GroupSetting;
 use App\Models\Invitation;
 use App\Models\Portfolio;
 use App\Models\Transaction;
@@ -20,7 +20,7 @@ use App\Observers\CardTransactionObserver;
 use App\Observers\CategoryObserver;
 use App\Observers\ContributionObserver;
 use App\Observers\CreditCardObserver;
-use App\Observers\FamilySettingObserver;
+use App\Observers\GroupSettingObserver;
 use App\Observers\InvitationObserver;
 use App\Observers\PortfolioObserver;
 use App\Observers\TransactionObserver;
@@ -79,7 +79,7 @@ class AppServiceProvider extends ServiceProvider
         Contribution::observe(ContributionObserver::class);
         Invitation::observe(InvitationObserver::class);
         User::observe(UserObserver::class);
-        FamilySetting::observe(FamilySettingObserver::class);
+        GroupSetting::observe(GroupSettingObserver::class);
 
         // Login/logout também entram na trilha.
         Event::listen(Login::class, fn (Login $event) => Audit::log('Entrou no sistema', 'login', null, $event->user));

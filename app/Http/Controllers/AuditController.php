@@ -13,9 +13,9 @@ class AuditController extends Controller
     {
         abort_unless(auth()->user()->role === 'admin', 403, 'Somente o administrador acessa os logs.');
 
-        $family = Fin::family();
+        $group = Fin::group();
 
-        $logs = $service->list($family, [
+        $logs = $service->list($group, [
             'q' => $request->query('q'),
             'acao' => $request->query('acao'),
             'membro' => $request->query('membro'),
@@ -25,7 +25,7 @@ class AuditController extends Controller
 
         return view('pages.admin.logs', [
             'logs' => $logs,
-            'membros' => $family->users()->orderBy('name')->get(),
+            'membros' => $group->users()->orderBy('name')->get(),
             'acoes' => $service->actionLabels(),
         ]);
     }

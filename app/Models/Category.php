@@ -8,16 +8,16 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Category extends Model
 {
-    protected $fillable = ['family_id', 'name', 'type', 'icon', 'archived', 'sort'];
+    protected $fillable = ['group_id', 'name', 'type', 'icon', 'archived', 'sort'];
 
     protected function casts(): array
     {
         return ['archived' => 'boolean'];
     }
 
-    public function family(): BelongsTo
+    public function group(): BelongsTo
     {
-        return $this->belongsTo(Family::class);
+        return $this->belongsTo(Group::class);
     }
 
     public function transactions(): HasMany

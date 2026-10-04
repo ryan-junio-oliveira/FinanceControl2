@@ -14,10 +14,10 @@ class AssetRequest extends FormRequest
 
     public function rules(): array
     {
-        $fid = Auth::user()?->family_id;
+        $fid = Auth::user()?->group_id;
 
         return [
-            'portfolio_id' => ['nullable', Rule::exists('portfolios', 'id')->where('family_id', $fid)],
+            'portfolio_id' => ['nullable', Rule::exists('portfolios', 'id')->where('group_id', $fid)],
             'code' => ['required', 'string', 'max:50'],
             'name' => ['required', 'string', 'max:255'],
             'institution' => ['nullable', 'string', 'max:255'],

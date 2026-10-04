@@ -1,20 +1,20 @@
 @extends('layouts.app')
 @section('title', 'Convidar Membro')
 @section('breadcrumb', 'Membros / Convidar')
-@section('nav-active', 'familia')
+@section('nav-active', 'grupo')
 
 @section('content')
 <div class="max-w-4xl mx-auto w-full">
     <x-form.header
         title="Convidar membro"
         subtitle="Geramos um link de primeiro acesso para o membro definir a senha."
-        :backUrl="route('familia')"
-        backLabel="Voltar para a família"
+        :backUrl="route('grupo')"
+        backLabel="Voltar para o grupo"
         icon="person_add"
         iconBg="linear-gradient(135deg,#FFF1F2,#FFE4E6)"
         iconColor="#E11D48" />
 
-    <form method="POST" action="{{ route('familia.convites.store') }}" class="form-card tint-rose">
+    <form method="POST" action="{{ route('grupo.convites.store') }}" class="form-card tint-rose">
         @csrf
         <div class="form-grid">
             <x-form.field label="Nome" for="f-nome" :required="true" :error="$errors->first('name')">
@@ -32,7 +32,7 @@
                 </x-form.select>
             </x-form.field>
         </div>
-        <x-form.actions :cancelUrl="route('familia')" submitLabel="Criar convite" submitIcon="person_add" color="rose" />
+        <x-form.actions :cancelUrl="route('grupo')" submitLabel="Criar convite" submitIcon="person_add" color="rose" />
     </form>
 </div>
 @endsection

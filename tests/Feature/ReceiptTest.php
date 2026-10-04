@@ -6,7 +6,7 @@ use App\Bot\ConversationState;
 use App\Bot\Drivers\NullDriver;
 use App\Models\Bank;
 use App\Models\BotIdentity;
-use App\Models\Family;
+use App\Models\Group;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Receipts\Contracts\ReceiptReader;
@@ -88,21 +88,21 @@ class ReceiptTest extends TestCase
         $this->assertSame('Salário de outubro', $out['description']);
     }
 
-    private function linkedFamily(): array
+    private function linkedGroup(): array
     {
-        $family = Family::create(['name' => 'Família Bot']);
+        $group = Group::create(['name' => 'Grupo Bot']);
         $admin = User::create([
             'name' => 'Admin', 'email' => 'admin@bot.com', 'password' => bcrypt('Senha@123'),
-            'family_id' => $family->id, 'role' => 'admin', 'bot_code' => '123456',
+            'group_id' => $group->id, 'role' => 'admin', 'bot_code' => '123456',
         ]);
-        CategoryCatalog::seedForFamily($family);
+        CategoryCatalog::seedForGroup($group);
         $bank = Bank::create(['code' => '341', 'name' => 'Itaú', 'color' => '#EC7000']);
-        $conta = $family->accounts()->create([
+        $conta = $group->accounts()->create([
             'bank_id' => $bank->id, 'name' => 'Conta', 'kind' => 'corrente', 'initial_balance' => 0,
         ]);
         BotIdentity::create(['user_id' => $admin->id, 'channel' => 'telegram', 'external_id' => '99']);
 
-        return [$family, $admin, $conta];
+        return [$group, $admin, $conta];
     }
 
     private function photo(string $chat = '99'): void
@@ -125,7 +125,7 @@ class ReceiptTest extends TestCase
 
     public function test_receipt_flow_creates_transaction_with_attachment(): void
     {
-        [$family, $admin] = $this->linkedFamily();
+        [$group, $admin] = $this->linkedGroup();
 
         $fixture = tempnam(sys_get_temp_dir(), 'rcp').'.png';
         file_put_contents($fixture, 'fake-bytes');
@@ -141,7 +141,7 @@ class ReceiptTest extends TestCase
         $this->assertSame('account', $state['step']);
 
         $this->send('1'); // conta
-        $cats = $family->categories()->where('type', 'despesa')->where('archived', false)->orderBy('name')->get();
+        $cats = $group->categories()->where('type', 'despesa')->where('archived', false)->orderBy('name')->get();
         $supermercado = $cats->firstWhere('name', 'Alimentação');
         $num = $cats->search(fn ($c) => $c->id === $supermercado->id) + 1;
         $this->send((string) $num); // categoria
@@ -159,9 +159,9 @@ class ReceiptTest extends TestCase
 
     public function test_receipt_auto_selects_account_by_bank(): void
     {
-        [$family, $admin] = $this->linkedFamily();
+        [$group, $admin] = $this->linkedGroup();
         $nubank = Bank::create(['code' => '260', 'name' => 'Nubank', 'color' => '#820AD1']);
-        $contaNubank = $family->accounts()->create([
+        $contaNubank = $group->accounts()->create([
             'bank_id' => $nubank->id, 'name' => 'Nubank Conta', 'kind' => 'digital', 'initial_balance' => 0,
         ]);
 
@@ -182,10 +182,10 @@ class ReceiptTest extends TestCase
 
     public function test_receipt_bank_with_multiple_accounts_asks_choice(): void
     {
-        [$family, $admin] = $this->linkedFamily();
+        [$group, $admin] = $this->linkedGroup();
         $nubank = Bank::create(['code' => '260', 'name' => 'Nubank', 'color' => '#820AD1']);
-        $family->accounts()->create(['bank_id' => $nubank->id, 'name' => 'Nubank A', 'kind' => 'digital', 'initial_balance' => 0]);
-        $family->accounts()->create(['bank_id' => $nubank->id, 'name' => 'Nubank B', 'kind' => 'digital', 'initial_balance' => 0]);
+        $group->accounts()->create(['bank_id' => $nubank->id, 'name' => 'Nubank A', 'kind' => 'digital', 'initial_balance' => 0]);
+        $group->accounts()->create(['bank_id' => $nubank->id, 'name' => 'Nubank B', 'kind' => 'digital', 'initial_balance' => 0]);
 
         $fixture = tempnam(sys_get_temp_dir(), 'rcp').'.png';
         file_put_contents($fixture, 'fake-bytes');
@@ -205,7 +205,7 @@ class ReceiptTest extends TestCase
 
     public function test_unreadable_receipt_falls_back_to_manual(): void
     {
-        [$family, $admin] = $this->linkedFamily();
+        [$group, $admin] = $this->linkedGroup();
 
         $fixture = tempnam(sys_get_temp_dir(), 'rcp').'.png';
         file_put_contents($fixture, 'x');

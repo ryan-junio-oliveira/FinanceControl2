@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>@yield('title', 'Visão Geral') · Prumo</title>
-    <meta name="description" content="Prumo — gestão financeira familiar: dashboard, despesas, receitas, investimentos, cartões, contas e grupo familiar.">
+    <meta name="description" content="Prumo — gestão financeira em grupo: dashboard, despesas, receitas, investimentos, cartões, contas e grupo.">
     <meta name="theme-color" content="#059669">
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="manifest" href="/manifest.webmanifest">
@@ -15,15 +15,15 @@
     <meta name="apple-mobile-web-app-title" content="Prumo">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?group=Montserrat:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?group=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @stack('head')
 </head>
 <body class="bg-[#F8FAFC] text-gray-900">
 @php
     $user = auth()->user();
-    $family = $user?->family;
+    $group = $user?->group;
     $isGestor = $user && $user->isAdmin();
     $mesRef = \App\Support\Fin::month();
     $mesLabel = ucfirst(\Carbon\Carbon::createFromFormat('Y-m', $mesRef)->locale('pt_BR')->translatedFormat('F, Y'));
@@ -51,13 +51,13 @@
             </button>
         </div>
 
-        {{-- Family pill --}}
-        <a href="{{ route('familia') }}" class="family-pill mx-3 mb-3 no-underline">
+        {{-- Group pill --}}
+        <a href="{{ route('grupo') }}" class="group-pill mx-3 mb-3 no-underline">
             <span class="w-9 h-9 rounded-full grid place-items-center text-white text-xs font-bold shrink-0 ring-2 ring-white/80"
-                style="background:linear-gradient(135deg,#8B5CF6,#EC4899)">{{ mb_substr($family->name ?? 'FF', 0, 2) }}</span>
+                style="background:linear-gradient(135deg,#8B5CF6,#EC4899)">{{ mb_substr($group->name ?? 'FF', 0, 2) }}</span>
             <div class="min-w-0 flex-1">
-                <p class="text-[13px] font-bold truncate text-gray-800">{{ $family->name ?? '—' }}</p>
-                <p class="text-[11px] text-gray-500">{{ $family?->users()->count() ?? 0 }} membro(s) na conta</p>
+                <p class="text-[13px] font-bold truncate text-gray-800">{{ $group->name ?? '—' }}</p>
+                <p class="text-[11px] text-gray-500">{{ $group?->users()->count() ?? 0 }} membro(s) na conta</p>
             </div>
             <span class="material-symbols-outlined text-emerald-500 text-[18px]">chevron_right</span>
         </a>
@@ -74,7 +74,7 @@
                     ['route'=>'cartoes','label'=>'Cartões','icon'=>'credit_card','color'=>'orange'],
                     ['route'=>'contas','label'=>'Contas','icon'=>'account_balance','color'=>'blue'],
                     ['route'=>'categorias','label'=>'Categorias','icon'=>'category','color'=>'violet'],
-                    ['route'=>'familia','label'=>'Membros','icon'=>'group','color'=>'rose'],
+                    ['route'=>'grupo','label'=>'Membros','icon'=>'group','color'=>'rose'],
                     ['route'=>'perfil','label'=>'Meu Perfil','icon'=>'person'],
                     ['route'=>'plans','label'=>'Plano','icon'=>'workspace_premium','color'=>'amber'],
                 ];
@@ -221,7 +221,7 @@
                         style="background: linear-gradient(135deg, #059669, #064E3B);">
                         <span class="material-symbols-outlined text-[13px]">savings</span>
                     </span>
-                    <span>© {{ date('Y') }} <b class="text-gray-500 font-bold">Prumo</b> · Gestão financeira familiar</span>
+                    <span>© {{ date('Y') }} <b class="text-gray-500 font-bold">Prumo</b> · Gestão financeira em grupo</span>
                 </div>
                 <nav class="flex items-center gap-4 text-[11px] font-semibold">
                     <a href="{{ route('termos') }}" class="text-gray-400 hover:text-emerald-600 transition">Termos de Uso</a>

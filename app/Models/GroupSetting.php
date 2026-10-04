@@ -5,10 +5,10 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class FamilySetting extends Model
+class GroupSetting extends Model
 {
     protected $fillable = [
-        'family_id', 'currency', 'timezone',
+        'group_id', 'currency', 'timezone',
         'consolidate_dependent_yield', 'notifications', 'secret_phrase',
     ];
 
@@ -20,9 +20,9 @@ class FamilySetting extends Model
         ];
     }
 
-    public function family(): BelongsTo
+    public function group(): BelongsTo
     {
-        return $this->belongsTo(Family::class);
+        return $this->belongsTo(Group::class);
     }
 
     public function notify(string $key): bool

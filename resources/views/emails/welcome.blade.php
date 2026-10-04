@@ -35,7 +35,7 @@
                 <p class="meta">Não solicitou este convite? Ignore este e-mail. Seus dados estão seguros.</p>
             </div>
             <div class="foot">
-                Prumo · Gestão financeira para você e sua família<br>
+                Prumo · Gestão financeira para você e seu grupo<br>
                 Seus dados pertencem a você — nunca solicitamos sua senha bancária por e-mail.
             </div>
         </div>

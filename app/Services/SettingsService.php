@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\Family;
+use App\Models\Group;
 
 /**
  * Regras de domínio das configurações da conta.
@@ -11,10 +11,10 @@ use App\Models\Family;
  */
 final class SettingsService
 {
-    public function update(Family $family, array $data, bool $consolidate): void
+    public function update(Group $group, array $data, bool $consolidate): void
     {
-        $family->update(['name' => $data['name']]);
-        $family->setting()->update([
+        $group->update(['name' => $data['name']]);
+        $group->setting()->update([
             'currency' => $data['currency'],
             'timezone' => $data['timezone'],
             'consolidate_dependent_yield' => $consolidate,
@@ -22,14 +22,14 @@ final class SettingsService
     }
 
     /** @return array<string, bool> */
-    public function updateNotifications(Family $family, callable $flag): array
+    public function updateNotifications(Group $group, callable $flag): array
     {
         $keys = ['fatura_vencimento', 'conta_vencimento'];
         $notifications = [];
         foreach ($keys as $k) {
             $notifications[$k] = (bool) $flag($k);
         }
-        $family->setting()->update(['notifications' => $notifications]);
+        $group->setting()->update(['notifications' => $notifications]);
 
         return $notifications;
     }

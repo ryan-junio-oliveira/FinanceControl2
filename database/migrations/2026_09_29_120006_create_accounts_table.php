@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('accounts', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('family_id')->constrained('families')->cascadeOnDelete();
+            $table->foreignId('group_id')->constrained('groups')->cascadeOnDelete();
             $table->foreignId('bank_id')->nullable()->constrained('banks')->nullOnDelete();
             $table->string('name'); // ex.: Itaú Conjunta
             $table->string('kind')->default('corrente'); // corrente|poupanca|digital|investimento|carteira

@@ -13,10 +13,12 @@ Bem-vindo à documentação técnica do Prumo. Aqui você encontra tudo para des
 | [Arquitetura](architecture.md) | Padrões, camadas, SOLID e decisões técnicas |
 | [Domínio](domain.md) | Regras de negócio, entidades e fluxos |
 | [Desenvolvimento](development.md) | Setup, comandos, testes e convenções |
+| [Infra Docker](infra-docker.md) | Produção: compose, backup, operação e troubleshooting |
+| [Backup](backup.md) | `db:backup`/`db:restore`, retenção e DR |
 
 ## Visão rápida
 
-- **Backend**: Laravel 13 + PHP 8.3, REST API v1 com Sanctum
+- **Backend**: Laravel 13 + PHP 8.5, REST API v1 com Sanctum
 - **Frontend**: Blade + Tailwind CSS via Vite
 - **Banco**: SQLite (dev) / MySQL (prod)
 - **Testes**: PHPUnit (`php artisan test`)

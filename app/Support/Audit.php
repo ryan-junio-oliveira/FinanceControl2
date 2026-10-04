@@ -35,7 +35,7 @@ final class Audit
         $description ??= self::frase($action, $label, $nome);
 
         return self::criar(
-            familyId: $model->family_id,
+            groupId: $model->group_id,
             action: $action,
             description: $description,
             changes: $changes,
@@ -52,11 +52,11 @@ final class Audit
             return null;
         }
 
-        return self::criar($user->family_id, $action, $description, $changes, null, null, $user);
+        return self::criar($user->group_id, $action, $description, $changes, null, null, $user);
     }
 
     private static function criar(
-        ?int $familyId,
+        ?int $groupId,
         string $action,
         string $description,
         mixed $changes = null,
@@ -74,13 +74,13 @@ final class Audit
         }
 
         $user ??= request()->user();
-        $familyId ??= $user?->family_id;
-        if ($familyId === null) {
+        $groupId ??= $user?->group_id;
+        if ($groupId === null) {
             return null;
         }
 
         return AuditLog::create([
-            'family_id' => $familyId,
+            'group_id' => $groupId,
             'user_id' => $user?->id,
             'action' => $action,
             'description' => $description,
@@ -119,7 +119,7 @@ final class Audit
             'App\Models\Contribution' => 'Aporte/Rendimento',
             'App\Models\Invitation' => 'Convite',
             'App\Models\User' => 'Membro',
-            'App\Models\FamilySetting' => 'Configurações',
+            'App\Models\GroupSetting' => 'Configurações',
         ];
     }
 }

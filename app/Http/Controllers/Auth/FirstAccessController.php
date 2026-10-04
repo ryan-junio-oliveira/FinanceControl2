@@ -19,7 +19,7 @@ class FirstAccessController extends Controller
 
         return view('pages.auth.primeiro-acesso', [
             'invitation' => $invitation,
-            'inviter' => $invitation->family->users()->where('role', 'admin')->first(),
+            'inviter' => $invitation->group->users()->where('role', 'admin')->first(),
         ]);
     }
 
@@ -33,6 +33,6 @@ class FirstAccessController extends Controller
         Auth::login($user);
         $request->session()->regenerate();
 
-        return redirect()->route('dashboard')->with('status', 'Senha definida! Bem-vindo à '.$invitation->family->name.'.');
+        return redirect()->route('dashboard')->with('status', 'Senha definida! Bem-vindo à '.$invitation->group->name.'.');
     }
 }

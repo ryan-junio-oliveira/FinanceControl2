@@ -1,11 +1,16 @@
-name: finfamilia
+name: prumo
+
+# Infra completa de produção: nginx → app (php-fpm) + MySQL 8.4 + Redis
+# (cache/sessão/filas leves) + RabbitMQ (filas pesadas) + workers +
+# scheduler (cron do Laravel: market:warm, notify:vencimentos, db:backup).
+# Subir: cp .env.docker.example .env.docker && docker compose up -d --build
 
 services:
   app:
     build:
       context: .
       dockerfile: docker/php/Dockerfile
-    container_name: finfamiglia-app
+    container_name: prumo-app
     restart: unless-stopped
     env_file:
       - .env.docker
@@ -13,19 +18,20 @@ services:
       CONTAINER_MODE: app
     volumes:
       - storage_data:/var/www/storage
+      - backup_data:/backups
     networks:
-      - finfam
+      - prumo
     depends_on:
       db:
         condition: service_healthy
       redis:
-        condition: service_started
+        condition: service_healthy
       rabbitmq:
         condition: service_healthy
 
   nginx:
     image: nginx:1.28-alpine
-    container_name: finfamiglia-nginx
+    container_name: prumo-nginx
     restart: unless-stopped
     ports:
       - "${NGINX_PORT:-8080}:80"
@@ -33,63 +39,77 @@ services:
       - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
       - ./public:/var/www/public:ro
     networks:
-      - finfam
+      - prumo
     depends_on:
       - app
 
   db:
-    image: mariadb:11.4
-    container_name: finfamiglia-db
+    image: mysql:8.4
+    container_name: prumo-db
     restart: unless-stopped
-    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --innodb-buffer-pool-size=${MYSQL_INNODB_BUFFER_POOL_SIZE:-512M}
+      - --max-connections=${MYSQL_MAX_CONNECTIONS:-200}
+      - --binlog-expire-logs-seconds=${MYSQL_BINLOG_EXPIRE:-604800}
     ports:
       - "${DB_PORT_PUBLISHED:-3306}:3306"
     environment:
-      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?Defina DB_ROOT_PASSWORD no .env.docker}
-      MARIADB_DATABASE: ${DB_DATABASE:?Defina DB_DATABASE no .env.docker}
-      MARIADB_USER: ${DB_USERNAME:?Defina DB_USERNAME no .env.docker}
-      MARIADB_PASSWORD: ${DB_PASSWORD:?Defina DB_PASSWORD no .env.docker}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?Defina DB_ROOT_PASSWORD no .env.docker}
+      MYSQL_DATABASE: ${DB_DATABASE:?Defina DB_DATABASE no .env.docker}
+      MYSQL_USER: ${DB_USERNAME:?Defina DB_USERNAME no .env.docker}
+      MYSQL_PASSWORD: ${DB_PASSWORD:?Defina DB_PASSWORD no .env.docker}
+      TZ: ${APP_TIMEZONE:-America/Sao_Paulo}
     volumes:
       - db_data:/var/lib/mysql
     networks:
-      - finfam
+      - prumo
     healthcheck:
-      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-p${DB_ROOT_PASSWORD}"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
+      start_period: 30s
 
   phpmyadmin:
     image: phpmyadmin:5.2
-    container_name: finfamiglia-pma
+    container_name: prumo-phpmyadmin
     restart: unless-stopped
     ports:
       - "${PMA_PORT:-8081}:80"
     environment:
+      # Auth por cookie: SEMPRE exige usuário+senha do MySQL a cada login.
+      # Nunca defina PMA_USER/PMA_PASSWORD (isso pularia a tela de login).
+      PMA_AUTH_TYPE: cookie
       PMA_HOST: db
       PMA_PORT: 3306
       UPLOAD_LIMIT: 64M
+      # Expira a sessão ociosa em 15 min.
+      PMA_ABSOLUTE_URI: ${PMA_ABSOLUTE_URI:-}
+      MEMORY_LIMIT: 512M
+      MAX_EXECUTION_TIME: 300
     networks:
-      - finfam
+      - prumo
     depends_on:
       db:
         condition: service_healthy
 
   rabbitmq:
     image: rabbitmq:4-management-alpine
-    container_name: finfamiglia-rabbit
+    container_name: prumo-rabbit
     restart: unless-stopped
     ports:
       - "${RABBITMQ_AMQP_PORT_PUBLISHED:-5672}:5672"
       - "${RABBITMQ_MGMT_PORT_PUBLISHED:-15672}:15672"
     environment:
-      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-finfam}
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-prumo}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:?Defina RABBITMQ_PASSWORD no .env.docker}
       RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_VHOST:-/}
     volumes:
       - rabbit_data:/var/lib/rabbitmq
     networks:
-      - finfam
+      - prumo
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
       interval: 15s
@@ -98,15 +118,15 @@ services:
 
   redis:
     image: redis:8-alpine
-    container_name: finfamiglia-redis
+    container_name: prumo-redis
     restart: unless-stopped
-    command: redis-server --appendonly yes
+    command: redis-server --appendonly yes --maxmemory ${REDIS_MAXMEMORY:-256mb} --maxmemory-policy allkeys-lru
     ports:
       - "${REDIS_PORT_PUBLISHED:-6379}:6379"
     volumes:
       - redis_data:/data
     networks:
-      - finfam
+      - prumo
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -117,7 +137,7 @@ services:
     build:
       context: .
       dockerfile: docker/php/Dockerfile
-    container_name: finfamiglia-worker
+    container_name: prumo-worker
     restart: unless-stopped
     env_file:
       - .env.docker
@@ -126,19 +146,41 @@ services:
     command: ["php", "artisan", "queue:work", "rabbitmq", "--sleep=3", "--tries=3", "--timeout=120"]
     volumes:
       - storage_data:/var/www/storage
+      - backup_data:/backups:ro
     networks:
-      - finfam
+      - prumo
     depends_on:
       app:
         condition: service_started
       rabbitmq:
         condition: service_healthy
 
+  worker-redis:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    container_name: prumo-worker-redis
+    restart: unless-stopped
+    env_file:
+      - .env.docker
+    environment:
+      CONTAINER_MODE: worker
+    command: ["php", "artisan", "queue:work", "redis", "--sleep=3", "--tries=3", "--timeout=60"]
+    volumes:
+      - storage_data:/var/www/storage
+    networks:
+      - prumo
+    depends_on:
+      app:
+        condition: service_started
+      redis:
+        condition: service_healthy
+
   scheduler:
     build:
       context: .
       dockerfile: docker/php/Dockerfile
-    container_name: finfamiglia-scheduler
+    container_name: prumo-scheduler
     restart: unless-stopped
     env_file:
       - .env.docker
@@ -147,18 +189,22 @@ services:
     command: ["php", "artisan", "schedule:work"]
     volumes:
       - storage_data:/var/www/storage
+      - backup_data:/backups
     networks:
-      - finfam
+      - prumo
     depends_on:
       app:
         condition: service_started
+      db:
+        condition: service_healthy
 
 volumes:
   db_data:
   redis_data:
   rabbit_data:
   storage_data:
+  backup_data:
 
 networks:
-  finfam:
+  prumo:
     driver: bridge

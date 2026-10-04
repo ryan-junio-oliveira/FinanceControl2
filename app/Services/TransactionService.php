@@ -2,16 +2,16 @@
 
 namespace App\Services;
 
+use App\Jobs\ProcessReceiptOcr;
 use App\Models\Attachment;
-use App\Models\Family;
+use App\Models\Group;
 use App\Models\Transaction;
-use Carbon\Carbon;
+use App\Support\Installments;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 
 /**
  * Regras de domínio dos lançamentos (despesas/receitas).
@@ -20,9 +20,83 @@ use Illuminate\Support\Str;
  */
 final class TransactionService
 {
-    public function list(Family $family, string $type, array $filters, int $perPage = 15): LengthAwarePaginator
+    public function __construct(
+        private readonly CardService $cards,
+        private readonly AccountService $accounts,
+    ) {}
+
+    /**
+     * Ponto único de criação respeitando payment_method (SRP: controller só orquestra).
+     * Elimina a divergência web x API — ambos chamam este método.
+     *
+     * @return array{kind: 'card'|'deposit'|'cash', items?: array, transactions?: Collection<int, Transaction>, message: string}
+     */
+    public function createForGroup(Group $group, string $type, array $data, ?UploadedFile $anexo, int $actorId): array
     {
-        $q = Transaction::ofFamily($family->id)->where('type', $type)->with(['member', 'category', 'account']);
+        $data['user_id'] = $data['user_id'] ?? $actorId;
+        $method = $data['payment_method'] ?? null;
+
+        // Cartão: lança direto na fatura (item pendente).
+        if ($type === 'despesa' && $method === 'cartao') {
+            $group->creditCards()->findOrFail($data['credit_card_id'] ?? 0);
+            $item = $this->cards->createItem($group, [
+                'credit_card_id' => $data['credit_card_id'],
+                'description' => $data['description'],
+                'amount' => $data['amount'],
+                'occurred_on' => $data['occurred_on'],
+                'user_id' => $data['user_id'],
+                'category_id' => $data['category_id'] ?? null,
+                'installments_total' => $data['installments_total'] ?? 1,
+            ]);
+
+            return [
+                'kind' => 'card',
+                'items' => $item,
+                'message' => $item['parcelas'] > 1 ? "Compra parcelada em {$item['parcelas']}x na fatura." : 'Compra lançada na fatura do cartão.',
+            ];
+        }
+
+        // Dinheiro físico: sempre na conta "carteira".
+        if ($method === 'dinheiro_fisico') {
+            $data['account_id'] = $this->accounts->dinheiroFisico($group)->id;
+        }
+
+        // Dinheiro digital / depósito: exige conta não-carteira.
+        if (in_array($method, ['dinheiro_digital', 'deposito'], true)) {
+            $conta = $group->accounts()->where('active', true)->where('kind', '!=', 'carteira')->find($data['account_id'] ?? null)
+                ?? $group->accounts()->where('active', true)->where('kind', '!=', 'carteira')->orderBy('name')->first();
+            abort_if(! $conta, 422, $method === 'deposito' ? 'Escolha a conta bancária de destino do depósito.' : 'Crie uma conta corrente/digital para lançar dinheiro digital.');
+            $data['account_id'] = $conta->id;
+
+            if ($type === 'receita' && $method === 'deposito') {
+                $this->accounts->transfer($group, [
+                    'from_account_id' => $this->accounts->dinheiroFisico($group)->id,
+                    'to_account_id' => $conta->id,
+                    'user_id' => $data['user_id'],
+                    'amount' => $data['amount'],
+                    'occurred_on' => $data['occurred_on'],
+                    'description' => $data['description'] ?: 'Depósito (dinheiro físico → conta)',
+                ]);
+
+                return ['kind' => 'deposit', 'message' => 'Depósito registrado.'];
+            }
+        }
+
+        // Sanitiza mass-assignment: type/group são definidos pelo servidor.
+        unset($data['type'], $data['group_id']);
+        $criados = $this->create($group, $type, $data, $anexo, $actorId);
+        $parcelas = $criados->first()->installments_total ?? 1;
+
+        return [
+            'kind' => 'cash',
+            'transactions' => $criados,
+            'message' => $parcelas > 1 ? "Lançamento parcelado em {$parcelas}x." : 'Lançamento registrado.',
+        ];
+    }
+
+    public function list(Group $group, string $type, array $filters, int $perPage = 15): LengthAwarePaginator
+    {
+        $q = Transaction::ofGroup($group->id)->where('type', $type)->with(['member', 'category', 'account']);
 
         if (! empty($filters['q'])) {
             $q->where('description', 'like', '%'.$filters['q'].'%');
@@ -48,13 +122,13 @@ final class TransactionService
      *
      * @return Collection<int, Transaction>
      */
-    public function create(Family $family, string $type, array $data, ?UploadedFile $anexo, int $actorId): Collection
+    public function create(Group $group, string $type, array $data, ?UploadedFile $anexo, int $actorId): Collection
     {
         if (! empty($data['account_id'])) {
-            $family->accounts()->findOrFail($data['account_id']);
+            $group->accounts()->findOrFail($data['account_id']);
         }
         if (! empty($data['category_id'])) {
-            $cat = $family->categories()->findOrFail($data['category_id']);
+            $cat = $group->categories()->findOrFail($data['category_id']);
             abort_if($cat->type !== $type, 422, 'Categoria de outro tipo.');
         }
 
@@ -66,59 +140,50 @@ final class TransactionService
         unset($data['credit_card_id']);
 
         $criados = collect();
-        DB::transaction(function () use ($family, $data, $type, $parcelas, $criados) {
+        DB::transaction(function () use ($group, $data, $type, $parcelas, $criados) {
             if ($parcelas === 1) {
                 $criados->push(Transaction::create($data + [
-                    'family_id' => $family->id,
+                    'group_id' => $group->id,
                     'type' => $type,
                 ]));
 
                 return;
             }
 
-            // Parcelado: divide em centavos (sem drift de float) e vence 1x ao mês.
-            $group = (string) Str::uuid();
-            $totalCents = (int) round((float) $data['amount'] * 100);
-            $base = intdiv($totalCents, $parcelas);
-            $resto = $totalCents % $parcelas;
-            $baseDate = Carbon::parse($data['occurred_on']);
-            $baseDue = ! empty($data['due_on']) ? Carbon::parse($data['due_on']) : null;
-
-            for ($i = 1; $i <= $parcelas; $i++) {
-                $cents = $base + ($i <= $resto ? 1 : 0);
-                $occ = $baseDate->copy()->addMonthsNoOverflow($i - 1)->toDateString();
+            // Parcelado via helper compartilhado (centavos, sem drift).
+            foreach (Installments::split((float) $data['amount'], $parcelas, $data['occurred_on'], $data['due_on'] ?? null, $data['description'], $data['status'] ?? 'pendente', 'pendente') as $p) {
                 $criados->push(Transaction::create($data + [
-                    'family_id' => $family->id,
+                    'group_id' => $group->id,
                     'type' => $type,
                     'is_fixed' => false,
-                    'description' => "{$data['description']} ({$i}/{$parcelas})",
-                    'amount' => $cents / 100,
-                    'occurred_on' => $occ,
-                    'due_on' => $baseDue ? $baseDue->copy()->addMonthsNoOverflow($i - 1)->toDateString() : $occ,
-                    'status' => $i === 1 ? $data['status'] : 'pendente',
-                    'installment_group_id' => $group,
-                    'installment_number' => $i,
-                    'installments_total' => $parcelas,
+                    'description' => $p['description'],
+                    'amount' => $p['amount'],
+                    'occurred_on' => $p['occurred_on'],
+                    'due_on' => $p['due_on'],
+                    'status' => $p['status'] ?? $data['status'],
+                    'installment_group_id' => $p['installment_group_id'],
+                    'installment_number' => $p['installment_number'],
+                    'installments_total' => $p['installments_total'],
                 ]));
             }
         });
 
         if ($anexo && $criados->isNotEmpty()) {
-            $this->guardarAnexo($anexo, $family->id, $criados->first(), $actorId);
+            $this->guardarAnexo($anexo, $group->id, $criados->first(), $actorId);
         }
 
         return $criados;
     }
 
-    public function update(Transaction $transaction, Family $family, array $data, ?UploadedFile $anexo, int $actorId): Transaction
+    public function update(Transaction $transaction, Group $group, array $data, ?UploadedFile $anexo, int $actorId): Transaction
     {
         $data['user_id'] = $data['user_id'] ?? $transaction->user_id;
-        $family->users()->findOrFail($data['user_id']);
+        $group->users()->findOrFail($data['user_id']);
         if (! empty($data['account_id'])) {
-            $family->accounts()->findOrFail($data['account_id']);
+            $group->accounts()->findOrFail($data['account_id']);
         }
         if (! empty($data['category_id'])) {
-            $cat = $family->categories()->findOrFail($data['category_id']);
+            $cat = $group->categories()->findOrFail($data['category_id']);
             abort_if($cat->type !== $transaction->type, 422, 'Categoria de outro tipo.');
         }
         $data['is_fixed'] = (bool) ($data['is_fixed'] ?? false);
@@ -127,7 +192,7 @@ final class TransactionService
         $transaction->update($data);
 
         if ($anexo) {
-            $this->guardarAnexo($anexo, $family->id, $transaction, $actorId);
+            $this->guardarAnexo($anexo, $group->id, $transaction, $actorId);
         }
 
         return $transaction->refresh();
@@ -147,18 +212,24 @@ final class TransactionService
         return $transaction->refresh();
     }
 
-    public function guardarAnexo(UploadedFile $file, int $familyId, Transaction $transaction, int $actorId): Attachment
+    public function guardarAnexo(UploadedFile $file, int $groupId, Transaction $transaction, int $actorId): Attachment
     {
-        $path = $file->store("anexos/{$familyId}", 'local');
+        $path = $file->store("anexos/{$groupId}", 'local');
 
-        return $transaction->attachments()->create([
-            'family_id' => $familyId,
+        $attachment = $transaction->attachments()->create([
+            'group_id' => $groupId,
             'user_id' => $actorId,
             'path' => $path,
             'original_name' => $file->getClientOriginalName(),
             'mime' => $file->getClientMimeType(),
             'size' => $file->getSize(),
+            'ocr_status' => 'queued',
         ]);
+
+        // OCR pesado roda no worker (fila ocr); a resposta HTTP volta imediatamente.
+        ProcessReceiptOcr::dispatch($attachment->id)->onQueue('ocr');
+
+        return $attachment;
     }
 
     public function attachmentPath(Attachment $attachment): string

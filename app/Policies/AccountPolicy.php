@@ -9,14 +9,14 @@ class AccountPolicy
 {
     public function view(User $user, Account $account): bool
     {
-        return $user->family_id !== null && $user->family_id === $account->family_id;
+        return $user->group_id !== null && $user->group_id === $account->group_id;
     }
 
     /** Criar/editar/excluir contas é ato de gestor. */
     public function manage(User $user, Account $account): bool
     {
-        return $user->family_id !== null
-            && $user->family_id === $account->family_id
+        return $user->group_id !== null
+            && $user->group_id === $account->group_id
             && $user->isAdmin();
     }
 }

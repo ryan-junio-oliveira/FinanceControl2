@@ -23,7 +23,7 @@ class Asset extends Model
     ];
 
     protected $fillable = [
-        'family_id', 'portfolio_id', 'code', 'name', 'institution',
+        'group_id', 'portfolio_id', 'code', 'name', 'institution',
         'holder', 'kind', 'current_value', 'yield_percent', 'yield_base',
     ];
 

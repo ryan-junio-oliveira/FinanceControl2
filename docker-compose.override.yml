@@ -1,0 +1,28 @@
+# Override carregado AUTOMATICAMENTE pelo Compose ao lado do
+# docker-compose.yml (somente ambiente local/manutenção).
+# Efeito: o código daqui (./app, ./routes, ...) vale na hora dentro dos
+# containers, sem rebuild. Produção: deploy com `up -d --build` IGNORANDO
+# este arquivo (`docker compose -f docker-compose.yml up -d --build`).
+
+services:
+  app:
+    volumes:
+      - .:/var/www
+      - /var/www/vendor
+      - /var/www/public/build
+      - ./docker/php/php-dev.ini:/usr/local/etc/php/conf.d/zz-dev.ini:ro
+
+  worker:
+    volumes:
+      - .:/var/www
+      - /var/www/vendor
+
+  worker-redis:
+    volumes:
+      - .:/var/www
+      - /var/www/vendor
+
+  scheduler:
+    volumes:
+      - .:/var/www
+      - /var/www/vendor

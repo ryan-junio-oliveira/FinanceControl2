@@ -21,7 +21,7 @@ class DashboardHandler extends BotHandler
         $mes = Fin::month();
         $dados = Dashboard::data($mes);
         $texto = BotPresenter::dashboardText($dados, $mes);
-        $frase = $user->family->setting()->secret_phrase ?? null;
+        $frase = $user->group->setting()->secret_phrase ?? null;
         if ($frase) {
             $texto .= "\n\n🔑 Palavra-chave: <b>".e($frase).'</b>';
         }

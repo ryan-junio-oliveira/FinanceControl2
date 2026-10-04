@@ -27,7 +27,7 @@ class CardController extends Controller
     )]
     public function index(CardService $service): AnonymousResourceCollection
     {
-        return CreditCardResource::collection($service->list(Fin::family()));
+        return CreditCardResource::collection($service->list(Fin::group()));
     }
 
     #[OA\Post(
@@ -53,7 +53,7 @@ class CardController extends Controller
     )]
     public function store(CreditCardRequest $request, CardService $service): JsonResponse
     {
-        $card = $service->createCard(Fin::family(), $request->validated());
+        $card = $service->createCard(Fin::group(), $request->validated());
 
         return (new CreditCardResource($card))->response()->setStatusCode(201);
     }
@@ -70,7 +70,7 @@ class CardController extends Controller
     )]
     public function show(CreditCard $card): CreditCardResource
     {
-        abort_unless($card->family_id === Fin::familyId(), 404);
+        abort_unless($card->group_id === Fin::groupId(), 404);
         $card->load(['holder', 'account.bank']);
 
         return new CreditCardResource($card);
@@ -99,10 +99,10 @@ class CardController extends Controller
     )]
     public function update(CreditCardRequest $request, CreditCard $card, CardService $service): CreditCardResource
     {
-        abort_unless($card->family_id === Fin::familyId(), 404);
+        abort_unless($card->group_id === Fin::groupId(), 404);
         $this->authorize('manage', $card);
 
-        return new CreditCardResource($service->updateCard($card, Fin::family(), $request->validated(), $request->boolean('active')));
+        return new CreditCardResource($service->updateCard($card, Fin::group(), $request->validated(), $request->boolean('active')));
     }
 
     #[OA\Delete(
@@ -117,7 +117,7 @@ class CardController extends Controller
     )]
     public function destroy(CreditCard $card, CardService $service): JsonResponse
     {
-        abort_unless($card->family_id === Fin::familyId(), 404);
+        abort_unless($card->group_id === Fin::groupId(), 404);
         $this->authorize('manage', $card);
         $service->deleteCard($card);
 
@@ -149,7 +149,7 @@ class CardController extends Controller
     )]
     public function storeItem(CardItemRequest $request, CardService $service): JsonResponse
     {
-        ['items' => $items] = $service->createItem(Fin::family(), $request->validated());
+        ['items' => $items] = $service->createItem(Fin::group(), $request->validated());
 
         return (new CardTransactionResource($items->first()))->response()->setStatusCode(201);
     }
@@ -166,9 +166,9 @@ class CardController extends Controller
     )]
     public function settleItem(CardTransaction $item, CardService $service): CardTransactionResource
     {
-        abort_unless($item->family_id === Fin::familyId(), 404);
+        abort_unless($item->group_id === Fin::groupId(), 404);
 
-        return new CardTransactionResource($service->settleItem($item, Fin::family()));
+        return new CardTransactionResource($service->settleItem($item, Fin::group()));
     }
 
     #[OA\Post(
@@ -183,10 +183,10 @@ class CardController extends Controller
     )]
     public function payInvoice(CreditCard $card, CardService $service): JsonResponse
     {
-        abort_unless($card->family_id === Fin::familyId(), 404);
+        abort_unless($card->group_id === Fin::groupId(), 404);
         $this->authorize('manage', $card);
 
-        $total = $service->payInvoice($card, Fin::family(), request()->user()->id);
+        $total = $service->payInvoice($card, Fin::group(), request()->user()->id);
         if ($total === null) {
             return response()->json(['message' => 'Nenhum item pendente nesta fatura.'], 422);
         }

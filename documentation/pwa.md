@@ -21,13 +21,13 @@ O app web é um **PWA instalável**: ícone na tela inicial, tela cheia e leitur
 ## Testando local
 
 1. Sirva com HTTPS (túnel) ou `http://localhost` (única exceção HTTP que o navegador aceita p/ SW).
-2. DevTools → Application → Manifest/Service Workers: confira registro e cache `finfamilia-v1`.
+2. DevTools → Application → Manifest/Service Workers: confira registro e cache `prumo-v1`.
 3. DevTools → Network → Offline: navegue — páginas visitadas abrem do cache; novas caem no `/offline`.
 4. No celular: “Adicionar à tela inicial” (o banner aparece automaticamente quando o navegador permite).
 
 ## Ao alterar o `sw.js`
 
-Suba a constante `CACHE` (`finfamilia-v1` → `v2`): o SW novo assume e limpa o cache antigo sozinho.
+Suba a constante `CACHE` (`prumo-v1` → `v2`): o SW novo assume e limpa o cache antigo sozinho.
 
 ## Limites honestos
 

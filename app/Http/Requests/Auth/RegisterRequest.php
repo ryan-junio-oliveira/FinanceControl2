@@ -11,7 +11,7 @@ class RegisterRequest extends FormRequest
         return [
             'manager_name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
-            'family_name' => ['required', 'string', 'max:255'],
+            'group_name' => ['required', 'string', 'max:255'],
             'password' => ['required', 'confirmed', $this->strongPassword()],
             'terms' => ['accepted'],
         ];
@@ -24,7 +24,7 @@ class RegisterRequest extends FormRequest
             'email.required' => 'Informe um e-mail válido para acessar a conta.',
             'email.email' => 'Esse e-mail não parece válido. Confira e tente de novo.',
             'email.unique' => 'Este e-mail já tem conta no Prumo. Tente fazer login.',
-            'family_name.required' => 'Dê um nome para a conta (ex.: Carlos ou Família Silva).',
+            'group_name.required' => 'Dê um nome para a conta (ex.: Carlos ou Grupo Silva).',
             'terms.accepted' => 'Para criar a conta, aceite os Termos de Uso e a Política de Privacidade.',
         ]);
     }

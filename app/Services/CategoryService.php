@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use App\Models\Category;
-use App\Models\Family;
+use App\Models\Group;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 /**
@@ -13,9 +13,9 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
  */
 final class CategoryService
 {
-    public function list(Family $family, array $filters, int $perPage = 20): LengthAwarePaginator
+    public function list(Group $group, array $filters, int $perPage = 20): LengthAwarePaginator
     {
-        $q = $family->categories();
+        $q = $group->categories();
         if (! empty($filters['tipo']) && in_array($filters['tipo'], ['despesa', 'receita'], true)) {
             $q->where('type', $filters['tipo']);
         }
@@ -31,13 +31,13 @@ final class CategoryService
         return $q->orderBy('sort')->orderBy('name')->paginate($perPage);
     }
 
-    public function create(Family $family, array $data): Category
+    public function create(Group $group, array $data): Category
     {
-        return $family->categories()->create([
+        return $group->categories()->create([
             'name' => $data['name'],
             'type' => $data['type'],
             'icon' => $data['icon'] ?? 'tag',
-            'sort' => ($family->categories()->max('sort') ?? 0) + 1,
+            'sort' => ($group->categories()->max('sort') ?? 0) + 1,
         ]);
     }
 

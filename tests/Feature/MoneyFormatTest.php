@@ -52,13 +52,13 @@ class MoneyFormatTest extends TestCase
     {
         $this->post('/register', [
             'manager_name' => 'M', 'email' => 'm@email.com',
-            'family_name' => 'Fam M', 'password' => 'Senha@123',
+            'group_name' => 'Fam M', 'password' => 'Senha@123',
             'password_confirmation' => 'Senha@123', 'terms' => '1',
         ])->assertRedirect(route('dashboard'));
 
         $admin = User::where('email', 'm@email.com')->first();
-        $cat = Category::where('family_id', $admin->family_id)->where('type', 'despesa')->first();
-        $conta = $admin->family->accounts()->create(['name' => 'Conta', 'kind' => 'corrente', 'initial_balance' => 0]);
+        $cat = Category::where('group_id', $admin->group_id)->where('type', 'despesa')->first();
+        $conta = $admin->group->accounts()->create(['name' => 'Conta', 'kind' => 'corrente', 'initial_balance' => 0]);
 
         // "7.000" digitado = sete mil, nunca 7 reais.
         $this->post('/expenses', [

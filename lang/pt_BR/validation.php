@@ -183,7 +183,7 @@ return [
 
     'attributes' => [
         'manager_name' => 'nome do gestor',
-        'family_name' => 'nome da conta',
+        'group_name' => 'nome da conta',
         'email' => 'e-mail',
         'password' => 'senha',
         'password_confirmation' => 'confirmação de senha',

@@ -4,7 +4,7 @@ namespace App\Observers;
 
 use App\Observers\Concerns\LogsModelActivity;
 
-class FamilySettingObserver
+class GroupSettingObserver
 {
     use LogsModelActivity;
 }

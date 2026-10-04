@@ -939,8 +939,8 @@ nav[role=navigation] a:hover {
 .toggle-switch input:checked ~ .toggle-track .toggle-thumb { transform: translateX(18px); }
 .toggle-label-text { font-size: .8125rem; font-weight: 600; color: #4b5563; }
 
-/* ── Sidebar family pill ── */
-.family-pill {
+/* ── Sidebar group pill ── */
+.group-pill {
     margin: 0 .75rem .75rem;
     border-radius: 8px;
     background: linear-gradient(135deg, #F8FAFC, #F1F5F9);
@@ -951,7 +951,7 @@ nav[role=navigation] a:hover {
     gap: .625rem;
     transition: all .18s ease;
 }
-.family-pill:hover {
+.group-pill:hover {
     background: linear-gradient(135deg, #ECFDF5, #D1FAE5);
     border-color: #A7F3D0;
 }

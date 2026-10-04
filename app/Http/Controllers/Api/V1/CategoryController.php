@@ -30,7 +30,7 @@ class CategoryController extends Controller
     )]
     public function index(Request $request, CategoryService $service): AnonymousResourceCollection
     {
-        return CategoryResource::collection($service->list(Fin::family(), [
+        return CategoryResource::collection($service->list(Fin::group(), [
             'tipo' => $request->query('tipo'),
             'q' => $request->query('q'),
             'arquivadas' => $request->boolean('arquivadas'),
@@ -57,7 +57,7 @@ class CategoryController extends Controller
     )]
     public function store(CategoryRequest $request, CategoryService $service): JsonResponse
     {
-        $categoria = $service->create(Fin::family(), $request->validated());
+        $categoria = $service->create(Fin::group(), $request->validated());
 
         return (new CategoryResource($categoria))->response()->setStatusCode(201);
     }
@@ -74,7 +74,7 @@ class CategoryController extends Controller
     )]
     public function show(Category $category): CategoryResource
     {
-        abort_unless($category->family_id === Fin::familyId(), 404);
+        abort_unless($category->group_id === Fin::groupId(), 404);
 
         return new CategoryResource($category);
     }
@@ -100,7 +100,7 @@ class CategoryController extends Controller
     )]
     public function update(CategoryRequest $request, Category $category, CategoryService $service): CategoryResource
     {
-        abort_unless($category->family_id === Fin::familyId(), 404);
+        abort_unless($category->group_id === Fin::groupId(), 404);
         $this->authorize('manage', $category);
 
         return new CategoryResource($service->update($category, $request->validated(), $request->boolean('archived')));
@@ -118,7 +118,7 @@ class CategoryController extends Controller
     )]
     public function destroy(Category $category, CategoryService $service): JsonResponse
     {
-        abort_unless($category->family_id === Fin::familyId(), 404);
+        abort_unless($category->group_id === Fin::groupId(), 404);
         $this->authorize('manage', $category);
         $service->destroy($category);
 

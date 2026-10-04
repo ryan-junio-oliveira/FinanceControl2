@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use App\Models\AuditLog;
-use App\Models\Family;
+use App\Models\Group;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 /**
@@ -30,9 +30,9 @@ final class AuditService
         ];
     }
 
-    public function list(Family $family, array $filters, int $perPage = 25): LengthAwarePaginator
+    public function list(Group $group, array $filters, int $perPage = 25): LengthAwarePaginator
     {
-        $q = AuditLog::where('family_id', $family->id)->with('member');
+        $q = AuditLog::where('group_id', $group->id)->with('member');
 
         if (! empty($filters['q'])) {
             $q->where('description', 'like', '%'.$filters['q'].'%');

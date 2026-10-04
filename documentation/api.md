@@ -50,19 +50,17 @@ O JSON OpenAPI é gerado automaticamente das anotações nos controllers (`app/H
 | GET | `/api/v1/categories/{id}` | Detalha categoria |
 | PATCH | `/api/v1/categories/{id}` | Atualiza categoria |
 | DELETE | `/api/v1/categories/{id}` | Exclui categoria |
-| GET | `/api/v1/portfolios` | Lista carteiras |
-| POST | `/api/v1/portfolios` | Cria carteira |
 | GET | `/api/v1/assets` | Lista ativos |
 | POST | `/api/v1/assets` | Cria ativo |
 | PATCH | `/api/v1/assets/{id}` | Atualiza ativo |
 | DELETE | `/api/v1/assets/{id}` | Exclui ativo |
 | POST | `/api/v1/contributions` | Registra aporte/rendimento |
-| GET | `/api/v1/family/members` | Lista membros |
-| GET | `/api/v1/family/invites` | Lista convites |
-| POST | `/api/v1/family/invites` | Convida membro |
-| DELETE | `/api/v1/family/invites/{id}` | Revoga convite |
-| DELETE | `/api/v1/family/members/{id}` | Remove membro |
-| PATCH | `/api/v1/family/members/{id}/role` | Altera papel |
+| GET | `/api/v1/group/members` | Lista membros |
+| GET | `/api/v1/group/invites` | Lista convites |
+| POST | `/api/v1/group/invites` | Convida membro |
+| DELETE | `/api/v1/group/invites/{id}` | Revoga convite |
+| DELETE | `/api/v1/group/members/{id}` | Remove membro |
+| PATCH | `/api/v1/group/members/{id}/role` | Altera papel |
 | GET | `/api/v1/dashboard` | KPIs e gráficos |
 | GET | `/api/v1/admin/logs` | Logs de auditoria (admin) |
 
@@ -71,7 +69,7 @@ O JSON OpenAPI é gerado automaticamente das anotações nos controllers (`app/H
 | Middleware | Ação |
 |------------|------|
 | `auth:sanctum` | Exige token válido |
-| `family.ownership:{param}` | Valida que o recurso pertence à família |
+| `group.ownership:{param}` | Valida que o recurso pertence ao grupo |
 
 ## Respostas
 

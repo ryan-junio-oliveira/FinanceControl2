@@ -63,7 +63,7 @@ class AccountHandler extends BotHandler
 
     public function show(BotDriver $driver, IncomingMessage $msg, ?User $user): void
     {
-        $contas = app(AccountService::class)->list($user->family);
+        $contas = app(AccountService::class)->list($user->group);
         $total = 0.0;
         $lines = [BotPresenter::header('Contas'), ''];
         foreach ($contas as $c) {
@@ -212,7 +212,7 @@ class AccountHandler extends BotHandler
             return;
         }
 
-        app(AccountService::class)->create($user->family, [
+        app(AccountService::class)->create($user->group, [
             'name' => $data['name'],
             'bank_id' => $data['bank_id'],
             'kind' => $data['kind'],

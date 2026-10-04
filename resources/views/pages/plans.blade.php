@@ -6,7 +6,7 @@
 @php use App\Support\Fin; @endphp
 
 <div class="max-w-4xl mx-auto w-full">
-    <x-form.header title="Assinatura Prumo" subtitle="Escolha um plano para manter sua família no controle financeiro."
+    <x-form.header title="Assinatura Prumo" subtitle="Escolha um plano para manter seu grupo no controle financeiro."
         :backUrl="route('dashboard')" backLabel="Voltar ao dashboard" icon="workspace_premium"
         iconBg="linear-gradient(135deg,#FEF3C7,#FDE68A)" iconColor="#B45309" />
 
@@ -60,7 +60,7 @@
             <p class="num text-[34px] font-extrabold text-gray-900 mt-2">{{ Fin::money($plano['price']) }}</p>
             <p class="text-[12px] text-gray-400 mt-1">{{ $chave === 'anual' ? 'Cobrado uma vez por ano' : 'Cobrado todo mês' }}</p>
             <ul class="mt-5 space-y-2 text-[13px] text-gray-600">
-                <li class="flex items-center gap-2"><span class="text-emerald-500 material-symbols-outlined text-[16px]">check_circle</span> Família ilimitada</li>
+                <li class="flex items-center gap-2"><span class="text-emerald-500 material-symbols-outlined text-[16px]">check_circle</span> Grupo ilimitada</li>
                 <li class="flex items-center gap-2"><span class="text-emerald-500 material-symbols-outlined text-[16px]">check_circle</span> Lançamentos ilimitados</li>
                 <li class="flex items-center gap-2"><span class="text-emerald-500 material-symbols-outlined text-[16px]">check_circle</span> Bot no Telegram + comprovantes</li>
                 <li class="flex items-center gap-2"><span class="text-emerald-500 material-symbols-outlined text-[16px]">check_circle</span> Cartões, investimentos e mercado</li>

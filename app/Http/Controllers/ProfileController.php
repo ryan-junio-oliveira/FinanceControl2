@@ -9,15 +9,16 @@ use App\Models\CardTransaction;
 use App\Models\Contribution;
 use App\Models\User;
 use App\Services\ProfileService;
+use App\Support\Audit;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Response;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ProfileController extends Controller
 {
     public function show(): View
     {
-        return view('pages.profile.show', ['user' => request()->user()->load('family')]);
+        return view('pages.profile.show', ['user' => request()->user()->load('group')]);
     }
 
     public function edit(): View
@@ -57,33 +58,52 @@ class ProfileController extends Controller
         return redirect()->route('perfil')->with('status', 'Código do bot gerado (vale por 15 minutos).');
     }
 
-    /** Portabilidade (LGPD, art. 18): baixa todos os dados da família em JSON. */
-    public function export(): Response
+    /** Portabilidade (LGPD, art. 18): baixa todos os dados do grupo em JSON (stream, sem OOM). */
+    public function export(): StreamedResponse
     {
         $user = request()->user();
-        $fid = $user->family_id;
+        $fid = $user->group_id;
+        Audit::log('Exportação LGPD dos dados do grupo.', 'export');
 
-        $dados = [
-            'exportado_em' => now()->toIso8601String(),
-            'usuario' => $user->only(['name', 'email', 'role', 'created_at']),
-            'familia' => ['nome' => $user->family->name, 'plano' => $user->family->plan],
-            'membros' => $user->family->users()->get(['name', 'email', 'role']),
-            'categorias' => $user->family->categories()->get(['name', 'type']),
-            'contas' => $user->family->accounts()->get(['name', 'kind', 'initial_balance']),
-            'cartoes' => $user->family->creditCards()->get(['name', 'brand', 'credit_limit', 'closing_day', 'due_day']),
-            'lancamentos' => $user->family->transactions()->get(['type', 'description', 'amount', 'occurred_on', 'due_on', 'status', 'payment_method']),
-            'itens_de_fatura' => CardTransaction::where('family_id', $fid)->get(['description', 'amount', 'occurred_on', 'status']),
-            'ativos' => Asset::where('family_id', $fid)->get(['name', 'code', 'kind', 'current_value']),
-            'aportes_e_rendimentos' => Contribution::where('family_id', $fid)->get(['kind', 'amount', 'occurred_on', 'note']),
-        ];
+        $filename = 'prumo-dados-'.now()->format('Y-m-d').'.json';
 
-        return response(json_encode($dados, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE))
-            ->header('Content-Type', 'application/json; charset=utf-8')
-            ->header('Content-Disposition', 'attachment; filename="prumo-dados-'.now()->format('Y-m-d').'.json"');
+        return response()->streamDownload(function () use ($user, $fid) {
+            echo '{"exportado_em":"'.now()->toIso8601String().'",';
+            echo '"usuario":'.json_encode($user->only(['name', 'email', 'role', 'created_at']), JSON_UNESCAPED_UNICODE).',';
+            echo '"grupo":'.json_encode(['nome' => $user->group->name, 'plano' => $user->group->plan], JSON_UNESCAPED_UNICODE).',';
+            $this->streamCursor('membros', $user->group->users()->select(['name', 'email', 'role'])->cursor());
+            echo ',';
+            $this->streamCursor('categorias', $user->group->categories()->select(['name', 'type'])->cursor());
+            echo ',';
+            $this->streamCursor('contas', $user->group->accounts()->select(['name', 'kind', 'initial_balance'])->cursor());
+            echo ',';
+            $this->streamCursor('cartoes', $user->group->creditCards()->select(['name', 'brand', 'credit_limit', 'closing_day', 'due_day'])->cursor());
+            echo ',';
+            $this->streamCursor('lancamentos', $user->group->transactions()->select(['type', 'description', 'amount', 'occurred_on', 'due_on', 'status', 'payment_method'])->cursor());
+            echo ',';
+            $this->streamCursor('itens_de_fatura', CardTransaction::where('group_id', $fid)->select(['description', 'amount', 'occurred_on', 'status'])->cursor());
+            echo ',';
+            $this->streamCursor('ativos', Asset::where('group_id', $fid)->select(['name', 'code', 'kind', 'current_value'])->cursor());
+            echo ',';
+            $this->streamCursor('aportes_e_rendimentos', Contribution::where('group_id', $fid)->select(['kind', 'amount', 'occurred_on', 'note'])->cursor());
+            echo '}';
+        }, $filename, ['Content-Type' => 'application/json; charset=utf-8']);
+    }
+
+    /** Serializa um cursor como array JSON sem carregar tudo em memória. */
+    private function streamCursor(string $key, iterable $cursor): void
+    {
+        echo json_encode($key).':[';
+        $first = true;
+        foreach ($cursor as $row) {
+            echo ($first ? '' : ',').json_encode($row->toArray(), JSON_UNESCAPED_UNICODE);
+            $first = false;
+        }
+        echo ']';
     }
 
     /** Encerra o cadastro: só o administrador principal pode.
-     * Apaga a conta da família inteira (todos os membros e registros).
+     * Apaga a conta do grupo inteira (todos os membros e registros).
      */
     public function destroy(ProfileService $service): RedirectResponse
     {

@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
-class Family extends Model
+class Group extends Model
 {
     protected $fillable = ['name', 'plan', 'trial_ends_at', 'mp_preapproval_id', 'plan_paid_until'];
 
@@ -22,7 +22,7 @@ class Family extends Model
 
     public function settings(): HasOne
     {
-        return $this->hasOne(FamilySetting::class);
+        return $this->hasOne(GroupSetting::class);
     }
 
     public function categories(): HasMany
@@ -55,8 +55,8 @@ class Family extends Model
         return $this->hasMany(Invitation::class);
     }
 
-    public function setting(): FamilySetting
+    public function setting(): GroupSetting
     {
-        return $this->settings()->firstOrCreate(['family_id' => $this->id]);
+        return $this->settings()->firstOrCreate(['group_id' => $this->id]);
     }
 }

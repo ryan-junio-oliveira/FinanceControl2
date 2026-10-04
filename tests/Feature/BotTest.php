@@ -8,7 +8,7 @@ use App\Bot\Drivers\NullDriver;
 use App\Models\Asset;
 use App\Models\Bank;
 use App\Models\BotIdentity;
-use App\Models\Family;
+use App\Models\Group;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Support\CategoryCatalog;
@@ -30,17 +30,17 @@ class BotTest extends TestCase
         NullDriver::flush();
     }
 
-    private function familyWithLinkedUser(): array
+    private function groupWithLinkedUser(): array
     {
-        $family = Family::create(['name' => 'Família Bot']);
+        $group = Group::create(['name' => 'Grupo Bot']);
         $admin = User::create([
             'name' => 'Admin', 'email' => 'admin@bot.com', 'password' => bcrypt('Senha@123'),
-            'family_id' => $family->id, 'role' => 'admin', 'bot_code' => '123456', 'bot_code_expires_at' => now()->addMinutes(15),
+            'group_id' => $group->id, 'role' => 'admin', 'bot_code' => '123456', 'bot_code_expires_at' => now()->addMinutes(15),
         ]);
-        CategoryCatalog::seedForFamily($family);
+        CategoryCatalog::seedForGroup($group);
         Bank::create(['code' => '341', 'name' => 'Itaú', 'color' => '#EC7000']);
 
-        return [$family, $admin];
+        return [$group, $admin];
     }
 
     private function send(string $text, string $chat = '99'): void
@@ -53,7 +53,7 @@ class BotTest extends TestCase
     public function test_bot_blocks_when_plan_expired(): void
     {
         config(['billing.enabled' => true]);
-        [$family, $admin] = $this->familyWithLinkedUser();
+        [$group, $admin] = $this->groupWithLinkedUser();
         BotIdentity::create(['user_id' => $admin->id, 'channel' => 'telegram', 'external_id' => '99']);
 
         NullDriver::flush();
@@ -67,10 +67,10 @@ class BotTest extends TestCase
     public function test_bot_warns_member_when_plan_expired(): void
     {
         config(['billing.enabled' => true]);
-        [$family, $admin] = $this->familyWithLinkedUser();
+        [$group, $admin] = $this->groupWithLinkedUser();
         $membro = User::create([
             'name' => 'Membro', 'email' => 'membro@bot.com', 'password' => bcrypt('Senha@123'),
-            'family_id' => $family->id, 'role' => 'dependente', 'bot_code' => '888888',
+            'group_id' => $group->id, 'role' => 'dependente', 'bot_code' => '888888',
         ]);
         BotIdentity::create(['user_id' => $membro->id, 'channel' => 'telegram', 'external_id' => '99']);
 
@@ -82,9 +82,9 @@ class BotTest extends TestCase
 
     public function test_bot_shows_secret_phrase(): void
     {
-        [$family, $admin] = $this->familyWithLinkedUser();
+        [$group, $admin] = $this->groupWithLinkedUser();
         BotIdentity::create(['user_id' => $admin->id, 'channel' => 'telegram', 'external_id' => '99']);
-        $family->setting()->update(['secret_phrase' => 'abacaxi e laranja']);
+        $group->setting()->update(['secret_phrase' => 'abacaxi e laranja']);
 
         $this->send('1'); // Dados financeiros mostra a palavra-chave.
         $this->assertStringContainsString('Palavra-chave', (string) NullDriver::lastText());
@@ -97,7 +97,7 @@ class BotTest extends TestCase
 
     public function test_link_code_brute_force_blocked(): void
     {
-        [$family, $admin] = $this->familyWithLinkedUser();
+        [$group, $admin] = $this->groupWithLinkedUser();
 
         for ($i = 0; $i < 11; $i++) {
             $this->send('000000', '98');
@@ -108,7 +108,7 @@ class BotTest extends TestCase
 
     public function test_link_code_expired_is_rejected(): void
     {
-        [$family, $admin] = $this->familyWithLinkedUser();
+        [$group, $admin] = $this->groupWithLinkedUser();
         $admin->update(['bot_code_expires_at' => now()->subMinute()]);
 
         NullDriver::flush();
@@ -120,7 +120,7 @@ class BotTest extends TestCase
 
     public function test_link_code_is_single_use(): void
     {
-        [$family, $admin] = $this->familyWithLinkedUser();
+        [$group, $admin] = $this->groupWithLinkedUser();
 
         $this->send('/start 123456', '97');
         $this->assertDatabaseHas('bot_identities', ['user_id' => $admin->id, 'external_id' => '97']);
@@ -134,7 +134,7 @@ class BotTest extends TestCase
 
     public function test_expense_invalid_amount_reasks(): void
     {
-        [$family, $admin] = $this->familyWithLinkedUser();
+        [$group, $admin] = $this->groupWithLinkedUser();
         BotIdentity::create(['user_id' => $admin->id, 'channel' => 'telegram', 'external_id' => '99']);
 
         $this->send('2');
@@ -147,7 +147,7 @@ class BotTest extends TestCase
 
     public function test_link_and_menu(): void
     {
-        [, $admin] = $this->familyWithLinkedUser();
+        [, $admin] = $this->groupWithLinkedUser();
 
         // Sem vínculo: pede o código.
         $this->send('oi');
@@ -168,7 +168,7 @@ class BotTest extends TestCase
 
     public function test_dashboard_query(): void
     {
-        [, $admin] = $this->familyWithLinkedUser();
+        [, $admin] = $this->groupWithLinkedUser();
         BotIdentity::create(['user_id' => $admin->id, 'channel' => 'telegram', 'external_id' => '99']);
 
         $this->send('1');
@@ -179,14 +179,14 @@ class BotTest extends TestCase
 
     public function test_expense_create_flow(): void
     {
-        [$family, $admin] = $this->familyWithLinkedUser();
+        [$group, $admin] = $this->groupWithLinkedUser();
         BotIdentity::create(['user_id' => $admin->id, 'channel' => 'telegram', 'external_id' => '99']);
         Bank::where('code', '341')->firstOrFail();
-        $conta = $admin->family->accounts()->create([
+        $conta = $admin->group->accounts()->create([
             'bank_id' => Bank::where('code', '341')->first()->id,
             'name' => 'Conta', 'kind' => 'corrente', 'initial_balance' => 0,
         ]);
-        $cat = $family->categories()->where('type', 'despesa')->firstOrFail();
+        $cat = $group->categories()->where('type', 'despesa')->firstOrFail();
 
         $this->send('2'); // Despesas
         $this->send('despesa:new'); // Lançar
@@ -201,7 +201,7 @@ class BotTest extends TestCase
         $this->assertSame('category', $state['step']);
 
         // Descobre o número da categoria criada.
-        $cats = $family->categories()->where('type', 'despesa')->where('archived', false)->orderBy('name')->get();
+        $cats = $group->categories()->where('type', 'despesa')->where('archived', false)->orderBy('name')->get();
         $num = $cats->search(fn ($c) => $c->id === $cat->id) + 1;
         $this->send((string) $num);
 
@@ -223,13 +223,13 @@ class BotTest extends TestCase
 
     public function test_expense_fixed_flow(): void
     {
-        [$family, $admin] = $this->familyWithLinkedUser();
+        [$group, $admin] = $this->groupWithLinkedUser();
         BotIdentity::create(['user_id' => $admin->id, 'channel' => 'telegram', 'external_id' => '99']);
-        $conta = $admin->family->accounts()->create([
+        $conta = $admin->group->accounts()->create([
             'bank_id' => Bank::where('code', '341')->first()->id,
             'name' => 'Conta', 'kind' => 'corrente', 'initial_balance' => 0,
         ]);
-        $cat = $family->categories()->where('type', 'despesa')->firstOrFail();
+        $cat = $group->categories()->where('type', 'despesa')->firstOrFail();
 
         $this->send('2');
         $this->send('despesa:new');
@@ -239,7 +239,7 @@ class BotTest extends TestCase
         $this->send('pix'); // Forma de pagamento.
         $this->send('1'); // Conta (só 1) → categoria.
 
-        $cats = $family->categories()->where('type', 'despesa')->where('archived', false)->orderBy('name')->get();
+        $cats = $group->categories()->where('type', 'despesa')->where('archived', false)->orderBy('name')->get();
         $num = $cats->search(fn ($c) => $c->id === $cat->id) + 1;
         $this->send((string) $num);
 
@@ -262,9 +262,9 @@ class BotTest extends TestCase
 
     public function test_expense_payment_card_flow(): void
     {
-        [$family, $admin] = $this->familyWithLinkedUser();
+        [$group, $admin] = $this->groupWithLinkedUser();
         BotIdentity::create(['user_id' => $admin->id, 'channel' => 'telegram', 'external_id' => '99']);
-        $family->creditCards()->create([
+        $group->creditCards()->create([
             'name' => 'Inter Mastercard', 'brand' => 'mastercard',
             'credit_limit' => 5000, 'closing_day' => 6, 'due_day' => 12, 'active' => true,
         ]);
@@ -292,9 +292,9 @@ class BotTest extends TestCase
 
     public function test_income_dinheiro_fisico_uses_carteira(): void
     {
-        [$family, $admin] = $this->familyWithLinkedUser();
+        [$group, $admin] = $this->groupWithLinkedUser();
         BotIdentity::create(['user_id' => $admin->id, 'channel' => 'telegram', 'external_id' => '99']);
-        $family->accounts()->create([
+        $group->accounts()->create([
             'bank_id' => Bank::where('code', '341')->first()->id,
             'name' => 'Corrente', 'kind' => 'corrente', 'initial_balance' => 0,
         ]);
@@ -315,16 +315,16 @@ class BotTest extends TestCase
         $tx = Transaction::where('description', 'Venda de garagem')->first();
         $this->assertNotNull($tx);
         $this->assertSame('dinheiro_fisico', $tx->payment_method);
-        $carteira = $family->accounts()->where('kind', 'carteira')->first();
+        $carteira = $group->accounts()->where('kind', 'carteira')->first();
         $this->assertNotNull($carteira);
         $this->assertSame($carteira->id, $tx->account_id);
     }
 
     public function test_investment_aporte_flow(): void
     {
-        [$family, $admin] = $this->familyWithLinkedUser();
+        [$group, $admin] = $this->groupWithLinkedUser();
         BotIdentity::create(['user_id' => $admin->id, 'channel' => 'telegram', 'external_id' => '99']);
-        $conta = $family->accounts()->create([
+        $conta = $group->accounts()->create([
             'bank_id' => Bank::where('code', '341')->first()->id,
             'name' => 'Corrente', 'kind' => 'corrente', 'initial_balance' => 0,
         ]);
@@ -347,10 +347,10 @@ class BotTest extends TestCase
 
     public function test_investment_rendimento_flow(): void
     {
-        [$family, $admin] = $this->familyWithLinkedUser();
+        [$group, $admin] = $this->groupWithLinkedUser();
         BotIdentity::create(['user_id' => $admin->id, 'channel' => 'telegram', 'external_id' => '99']);
         $ativo = Asset::create([
-            'family_id' => $family->id, 'code' => 'SELIC', 'name' => 'Tesouro Selic', 'kind' => 'renda_fixa', 'current_value' => 10000,
+            'group_id' => $group->id, 'code' => 'SELIC', 'name' => 'Tesouro Selic', 'kind' => 'renda_fixa', 'current_value' => 10000,
         ]);
 
         $this->send('6');
@@ -369,9 +369,9 @@ class BotTest extends TestCase
 
     public function test_income_deposito_transfers_carteira_to_account(): void
     {
-        [$family, $admin] = $this->familyWithLinkedUser();
+        [$group, $admin] = $this->groupWithLinkedUser();
         BotIdentity::create(['user_id' => $admin->id, 'channel' => 'telegram', 'external_id' => '99']);
-        $conta = $family->accounts()->create([
+        $conta = $group->accounts()->create([
             'bank_id' => Bank::where('code', '341')->first()->id,
             'name' => 'Corrente', 'kind' => 'corrente', 'initial_balance' => 0,
         ]);
@@ -391,14 +391,14 @@ class BotTest extends TestCase
 
         $this->assertDatabaseHas('transactions', ['type' => 'transferencia', 'amount' => 300]);
         $this->assertDatabaseMissing('transactions', ['type' => 'receita', 'description' => 'Depósito da feira']);
-        $carteira = $family->accounts()->where('kind', 'carteira')->first();
+        $carteira = $group->accounts()->where('kind', 'carteira')->first();
         $this->assertNotNull($carteira);
         $this->assertStringContainsString('Depósito registrado', (string) NullDriver::lastText());
     }
 
     public function test_account_create_flow(): void
     {
-        [, $admin] = $this->familyWithLinkedUser();
+        [, $admin] = $this->groupWithLinkedUser();
         BotIdentity::create(['user_id' => $admin->id, 'channel' => 'telegram', 'external_id' => '99']);
 
         $this->send('5'); // Contas → submenu.
@@ -424,7 +424,7 @@ class BotTest extends TestCase
 
     public function test_account_create_bank_multiple_choice(): void
     {
-        [, $admin] = $this->familyWithLinkedUser();
+        [, $admin] = $this->groupWithLinkedUser();
         BotIdentity::create(['user_id' => $admin->id, 'channel' => 'telegram', 'external_id' => '99']);
         Bank::create(['code' => '077', 'name' => 'Banco Inter', 'color' => '#FF6F00']);
 
@@ -445,9 +445,9 @@ class BotTest extends TestCase
 
     public function test_card_create_flow(): void
     {
-        [$family, $admin] = $this->familyWithLinkedUser();
+        [$group, $admin] = $this->groupWithLinkedUser();
         BotIdentity::create(['user_id' => $admin->id, 'channel' => 'telegram', 'external_id' => '99']);
-        $family->accounts()->create([
+        $group->accounts()->create([
             'bank_id' => Bank::where('code', '341')->first()->id,
             'name' => 'Conta', 'kind' => 'corrente', 'initial_balance' => 0,
         ]);
@@ -478,7 +478,7 @@ class BotTest extends TestCase
 
     public function test_cancel_clears_state(): void
     {
-        [, $admin] = $this->familyWithLinkedUser();
+        [, $admin] = $this->groupWithLinkedUser();
         BotIdentity::create(['user_id' => $admin->id, 'channel' => 'telegram', 'external_id' => '99']);
 
         $this->send('2');
@@ -491,17 +491,17 @@ class BotTest extends TestCase
 
     public function test_vencimento_alerts(): void
     {
-        [$family, $admin] = $this->familyWithLinkedUser();
+        [$group, $admin] = $this->groupWithLinkedUser();
         BotIdentity::create(['user_id' => $admin->id, 'channel' => 'telegram', 'external_id' => '99']);
-        $family->setting()->update(['notifications' => ['conta_vencimento' => true, 'fatura_vencimento' => false]]);
+        $group->setting()->update(['notifications' => ['conta_vencimento' => true, 'fatura_vencimento' => false]]);
 
         $bank = Bank::firstOrCreate(['code' => '341'], ['name' => 'Itaú', 'color' => '#EC7000']);
-        $conta = $admin->family->accounts()->create([
+        $conta = $admin->group->accounts()->create([
             'bank_id' => $bank->id, 'name' => 'Conta', 'kind' => 'corrente', 'initial_balance' => 0,
         ]);
-        $cat = $family->categories()->where('type', 'despesa')->firstOrFail();
+        $cat = $group->categories()->where('type', 'despesa')->firstOrFail();
         $mk = fn (string $desc, string $due) => Transaction::create([
-            'family_id' => $family->id, 'user_id' => $admin->id, 'account_id' => $conta->id,
+            'group_id' => $group->id, 'user_id' => $admin->id, 'account_id' => $conta->id,
             'category_id' => $cat->id, 'type' => 'despesa', 'description' => $desc,
             'amount' => 100, 'occurred_on' => now()->toDateString(), 'due_on' => $due, 'status' => 'pendente',
         ]);
@@ -526,7 +526,7 @@ class BotTest extends TestCase
 
     public function test_market_menu(): void
     {
-        [, $admin] = $this->familyWithLinkedUser();
+        [, $admin] = $this->groupWithLinkedUser();
         BotIdentity::create(['user_id' => $admin->id, 'channel' => 'telegram', 'external_id' => '99']);
 
         // Sem rede: snapshot vazio + ações vazias → mostra "indisponível" sem quebrar.

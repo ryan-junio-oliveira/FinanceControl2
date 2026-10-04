@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('portfolios', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('family_id')->constrained('families')->cascadeOnDelete();
+            $table->foreignId('group_id')->constrained('groups')->cascadeOnDelete();
             $table->string('name');
             $table->string('objective')->nullable();
             $table->string('kind')->default('livre'); // reserva|estudos|futuro|livre

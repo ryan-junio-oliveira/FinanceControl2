@@ -29,17 +29,17 @@ final class ProfileService
 
     /**
      * Encerra o cadastro: só o administrador principal.
-     * Apaga a conta da família inteira (todos os membros e registros).
+     * Apaga a conta do grupo inteira (todos os membros e registros).
      */
     public function destroy(User $user): void
     {
         abort_if($user->role !== 'admin', 403, 'Somente o administrador pode encerrar o cadastro.');
 
-        $family = $user->family()->firstOrFail();
-        $memberIds = $family->users()->pluck('id')->all();
+        $group = $user->group()->firstOrFail();
+        $memberIds = $group->users()->pluck('id')->all();
 
-        Audit::silence(function () use ($family, $memberIds) {
-            DB::transaction(function () use ($family, $memberIds) {
+        Audit::silence(function () use ($group, $memberIds) {
+            DB::transaction(function () use ($group, $memberIds) {
                 // Notificações e sessões não têm FK: limpar manualmente.
                 DB::table('notifications')
                     ->where('notifiable_type', User::class)
@@ -47,9 +47,9 @@ final class ProfileService
                     ->delete();
                 DB::table('sessions')->whereIn('user_id', $memberIds)->delete();
 
-                // Membros primeiro (lançamentos deles caem por cascata), depois a família (cascata no resto).
+                // Membros primeiro (lançamentos deles caem por cascata), depois o grupo (cascata no resto).
                 User::whereIn('id', $memberIds)->delete();
-                $family->delete();
+                $group->delete();
             });
         });
     }

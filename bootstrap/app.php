@@ -1,8 +1,8 @@
 <?php
 
 use App\Http\Middleware\EnsureActivePlan;
-use App\Http\Middleware\EnsureFamilyOwnership;
-use App\Http\Middleware\EnsureFamilyRole;
+use App\Http\Middleware\EnsureGroupOwnership;
+use App\Http\Middleware\EnsureGroupRole;
 use App\Http\Middleware\NoStoreHtml;
 use App\Http\Middleware\SecurityHeaders;
 use Illuminate\Foundation\Application;
@@ -19,8 +19,8 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
-            'family.role' => EnsureFamilyRole::class,
-            'family.ownership' => EnsureFamilyOwnership::class,
+            'group.role' => EnsureGroupRole::class,
+            'group.ownership' => EnsureGroupOwnership::class,
             'plan.active' => EnsureActivePlan::class,
         ]);
         $middleware->web(append: [

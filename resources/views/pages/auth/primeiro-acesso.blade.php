@@ -3,7 +3,7 @@
 @section('wide', '1')
 
 @section('content')
-<p class="text-[11px] font-bold uppercase tracking-[0.08em] text-emerald-700">Primeiro acesso · {{ $invitation->family->name }}</p>
+<p class="text-[11px] font-bold uppercase tracking-[0.08em] text-emerald-700">Primeiro acesso · {{ $invitation->group->name }}</p>
 <h1 class="text-xl font-bold tracking-tight text-gray-900 mt-1.5">Olá, {{ explode(' ', $invitation->name)[0] }}!</h1>
 <p class="text-[13px] text-gray-500 mt-1 leading-relaxed">
     Convite de <strong class="text-gray-700">{{ $inviter?->name ?? 'o administrador' }}</strong>

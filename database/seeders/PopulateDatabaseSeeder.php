@@ -22,11 +22,11 @@ use Illuminate\Support\Str;
 
 /**
  * Popula o banco com dados fake de referência para o ano de 2026
- * usando o usuário #1 (criado manualmente) e a família dele.
+ * usando o usuário #1 (criado manualmente) e o grupo dele.
  *
  * Uso: php artisan db:seed --class=PopulateDatabaseSeeder
  *
- * O seeder é reexecutável: limpa os registros de domínio da família
+ * O seeder é reexecutável: limpa os registros de domínio do grupo
  * (mantém usuários, bancos do catálogo e categorias) antes de repopular.
  */
 class PopulateDatabaseSeeder extends Seeder
@@ -34,16 +34,16 @@ class PopulateDatabaseSeeder extends Seeder
     public function run(): void
     {
         $admin = User::find((int) env('SEED_USER_ID', 1))
-            ?? User::where('role', 'admin')->whereNotNull('family_id')->orderBy('id')->first();
+            ?? User::where('role', 'admin')->whereNotNull('group_id')->orderBy('id')->first();
         if (! $admin) {
-            $this->command?->error('Nenhum usuário admin com família. Crie sua conta antes de popular (ou defina SEED_USER_ID).');
+            $this->command?->error('Nenhum usuário admin com grupo. Crie sua conta antes de popular (ou defina SEED_USER_ID).');
 
             return;
         }
 
-        $family = $admin->family;
-        if (! $family) {
-            $this->command?->error('O usuário #1 não pertence a uma família.');
+        $group = $admin->group;
+        if (! $group) {
+            $this->command?->error('O usuário #1 não pertence a um grupo.');
 
             return;
         }
@@ -53,18 +53,18 @@ class PopulateDatabaseSeeder extends Seeder
         $today = Carbon::today();
         $year = 2026;
 
-        DB::transaction(function () use ($family, $admin, $faker, $today, $year) {
-            $this->limpar($family);
+        DB::transaction(function () use ($group, $admin, $faker, $today, $year) {
+            $this->limpar($group);
 
             // Catálogo base (idempotente).
             BankCatalog::seed();
-            CategoryCatalog::seedForFamily($family);
+            CategoryCatalog::seedForGroup($group);
 
-            $membros = $this->membros($family, $admin);
-            $contas = $this->contas($family);
-            $cartoes = $this->cartoes($family, $contas, $membros);
+            $membros = $this->membros($group, $admin);
+            $contas = $this->contas($group);
+            $cartoes = $this->cartoes($group, $contas, $membros);
 
-            $cat = fn (string $tipo, string $nome) => $family->categories()
+            $cat = fn (string $tipo, string $nome) => $group->categories()
                 ->where('type', $tipo)->where('name', $nome)->first();
 
             $statusPorData = function (Carbon $data, bool $futuroPodePendente = true) use ($today) {
@@ -85,7 +85,7 @@ class PopulateDatabaseSeeder extends Seeder
             foreach ($salarios as [$membro, $valor, $desc]) {
                 for ($mes = 1; $mes <= 12; $mes++) {
                     $data = Carbon::create($year, $mes, 5);
-                    $this->transacao($family, [
+                    $this->transacao($group, [
                         'user_id' => $membro->id,
                         'type' => 'receita',
                         'description' => $desc,
@@ -102,7 +102,7 @@ class PopulateDatabaseSeeder extends Seeder
 
             // 13º em dezembro.
             $data13 = Carbon::create($year, 12, 20);
-            $this->transacao($family, [
+            $this->transacao($group, [
                 'user_id' => $membros['admin']->id,
                 'type' => 'receita',
                 'description' => '13º salário',
@@ -118,7 +118,7 @@ class PopulateDatabaseSeeder extends Seeder
             foreach ([['Freelance — site', 1800], ['Venda de usados', 650], ['Reembolso', 320], ['Dividendos FII', 210], ['Cashback', 84]] as [$desc, $valor]) {
                 $mes = random_int(1, 12);
                 $data = Carbon::create($year, $mes, random_int(1, 27));
-                $this->transacao($family, [
+                $this->transacao($group, [
                     'user_id' => $membros['admin']->id,
                     'type' => 'receita',
                     'description' => $desc,
@@ -152,7 +152,7 @@ class PopulateDatabaseSeeder extends Seeder
             foreach ($fixas as [$desc, $valor, $dia, $grupo, $nomeCat]) {
                 for ($mes = 1; $mes <= 12; $mes++) {
                     $data = Carbon::create($year, $mes, $dia);
-                    $this->transacao($family, [
+                    $this->transacao($group, [
                         'user_id' => $membros['admin']->id,
                         'type' => 'despesa',
                         'description' => $desc,
@@ -175,7 +175,7 @@ class PopulateDatabaseSeeder extends Seeder
                 ];
                 foreach ($consumo as [$desc, $valor, $dia]) {
                     $data = Carbon::create($year, $mes, $dia);
-                    $this->transacao($family, [
+                    $this->transacao($group, [
                         'user_id' => $membros['admin']->id,
                         'type' => 'despesa',
                         'description' => $desc,
@@ -210,7 +210,7 @@ class PopulateDatabaseSeeder extends Seeder
                 foreach (array_rand($variaveis, $qtd) as $i) {
                     [$desc, $min, $max, $catNome] = $variaveis[$i];
                     $data = Carbon::create($year, $mes, random_int(1, 28));
-                    $this->transacao($family, [
+                    $this->transacao($group, [
                         'user_id' => random_int(0, 3) === 0 ? $membros['parceiro']->id : $membros['admin']->id,
                         'type' => 'despesa',
                         'description' => $desc,
@@ -227,7 +227,7 @@ class PopulateDatabaseSeeder extends Seeder
             // Férias em janeiro e julho.
             foreach ([['Viagem — praia', 2600, 1, 12], ['Viagem — serra', 1900, 7, 18]] as [$desc, $valor, $mes, $dia]) {
                 $data = Carbon::create($year, $mes, $dia);
-                $this->transacao($family, [
+                $this->transacao($group, [
                     'user_id' => $membros['admin']->id,
                     'type' => 'despesa',
                     'description' => $desc,
@@ -247,13 +247,13 @@ class PopulateDatabaseSeeder extends Seeder
                 ['Notebook', 4200, 6, 8],         // de agosto/2026
             ];
             foreach ($parcelas as [$desc, $total, $qtd, $mesInicio]) {
-                $this->parcelas($family, $membros['admin'], $contas['itau'], $cat('despesa', 'Moradia')?->id, $desc, $total, $qtd, Carbon::create($year, $mesInicio, 5), $statusPorData);
+                $this->parcelas($group, $membros['admin'], $contas['itau'], $cat('despesa', 'Moradia')?->id, $desc, $total, $qtd, Carbon::create($year, $mesInicio, 5), $statusPorData);
             }
 
             // ───────────────────── TRANSFERÊNCIAS ─────────────────────
             foreach (range(1, 12) as $mes) {
                 $data = Carbon::create($year, $mes, 6);
-                $this->transacao($family, [
+                $this->transacao($group, [
                     'user_id' => $membros['admin']->id,
                     'type' => 'transferencia',
                     'description' => 'Investimento mensal',
@@ -283,7 +283,7 @@ class PopulateDatabaseSeeder extends Seeder
                     $data = Carbon::create($year, $mes, random_int(1, 27));
                     $status = $statusPorData($data);
                     CardTransaction::create([
-                        'family_id' => $family->id,
+                        'group_id' => $group->id,
                         'credit_card_id' => $cartao->id,
                         'user_id' => $membros['admin']->id,
                         'category_id' => $cat('despesa', $catNome)?->id,
@@ -303,7 +303,7 @@ class PopulateDatabaseSeeder extends Seeder
             ];
             foreach ($carteiras as [$nome, $tipo, $meta, $prazo, $objetivo]) {
                 Portfolio::create([
-                    'family_id' => $family->id,
+                    'group_id' => $group->id,
                     'name' => $nome,
                     'kind' => $tipo,
                     'target_amount' => $meta,
@@ -312,9 +312,9 @@ class PopulateDatabaseSeeder extends Seeder
                 ]);
             }
 
-            $reserva = Portfolio::where('family_id', $family->id)->where('kind', 'reserva')->first();
-            $futuro = Portfolio::where('family_id', $family->id)->where('kind', 'futuro')->first();
-            $viagem = Portfolio::where('family_id', $family->id)->where('kind', 'livre')->first();
+            $reserva = Portfolio::where('group_id', $group->id)->where('kind', 'reserva')->first();
+            $futuro = Portfolio::where('group_id', $group->id)->where('kind', 'futuro')->first();
+            $viagem = Portfolio::where('group_id', $group->id)->where('kind', 'livre')->first();
 
             $ativos = [
                 [$reserva, 'CDB Inter DI', 'CDB', 'renda_fixa', 105, 'cdi', 'Banco Inter', 12000],
@@ -327,7 +327,7 @@ class PopulateDatabaseSeeder extends Seeder
             $assetModels = [];
             foreach ($ativos as [$carteira, $nome, $codigo, $tipo, $yield, $base, $inst, $valor]) {
                 $assetModels[] = Asset::create([
-                    'family_id' => $family->id,
+                    'group_id' => $group->id,
                     'portfolio_id' => $carteira->id,
                     'code' => $codigo,
                     'name' => $nome,
@@ -344,7 +344,7 @@ class PopulateDatabaseSeeder extends Seeder
                 $data = Carbon::create($year, $mes, 6);
                 $aporte = random_int(800, 1200);
                 Contribution::create([
-                    'family_id' => $family->id,
+                    'group_id' => $group->id,
                     'portfolio_id' => $reserva->id,
                     'asset_id' => $assetModels[0]->id,
                     'account_id' => $contas['xp']->id,
@@ -353,7 +353,7 @@ class PopulateDatabaseSeeder extends Seeder
                     'occurred_on' => $data,
                     'note' => 'Aporte mensal',
                 ]);
-                $this->transacao($family, [
+                $this->transacao($group, [
                     'user_id' => $membros['admin']->id,
                     'type' => 'aporte',
                     'description' => "Aporte — {$reserva->name}",
@@ -370,7 +370,7 @@ class PopulateDatabaseSeeder extends Seeder
                     $rend = random_int(250, 550);
                     $alvo = $assetModels[random_int(0, count($assetModels) - 1)];
                     Contribution::create([
-                        'family_id' => $family->id,
+                        'group_id' => $group->id,
                         'portfolio_id' => $alvo->portfolio_id,
                         'asset_id' => $alvo->id,
                         'kind' => 'rendimento',
@@ -382,63 +382,63 @@ class PopulateDatabaseSeeder extends Seeder
                 }
             }
 
-            $this->command?->info("Populate concluído para '{$family->name}' (#{$family->id}).");
+            $this->command?->info("Populate concluído para '{$group->name}' (#{$group->id}).");
         });
     }
 
-    /** Apaga os registros de domínio da família (mantém usuários e catálogo). */
-    private function limpar($family): void
+    /** Apaga os registros de domínio do grupo (mantém usuários e catálogo). */
+    private function limpar($group): void
     {
-        CardTransaction::where('family_id', $family->id)->delete();
-        Contribution::where('family_id', $family->id)->delete();
-        Transaction::where('family_id', $family->id)->delete();
-        Asset::where('family_id', $family->id)->delete();
-        Portfolio::where('family_id', $family->id)->delete();
-        CreditCard::where('family_id', $family->id)->delete();
-        Account::where('family_id', $family->id)->delete();
-        $family->invitations()->delete();
-        DB::table('attachments')->where('family_id', $family->id)->delete();
-        DB::table('audit_logs')->where('family_id', $family->id)->delete();
+        CardTransaction::where('group_id', $group->id)->delete();
+        Contribution::where('group_id', $group->id)->delete();
+        Transaction::where('group_id', $group->id)->delete();
+        Asset::where('group_id', $group->id)->delete();
+        Portfolio::where('group_id', $group->id)->delete();
+        CreditCard::where('group_id', $group->id)->delete();
+        Account::where('group_id', $group->id)->delete();
+        $group->invitations()->delete();
+        DB::table('attachments')->where('group_id', $group->id)->delete();
+        DB::table('audit_logs')->where('group_id', $group->id)->delete();
     }
 
-    /** Garante os membros da família (admin, parceiro e filho). */
-    private function membros($family, User $admin): array
+    /** Garante os membros do grupo (admin, parceiro e filho). */
+    private function membros($group, User $admin): array
     {
         $parceiro = User::firstOrCreate(
-            ['email' => 'maria@finfamilia.local'],
+            ['email' => 'maria@prumo.local'],
             [
                 'name' => 'Maria Silva',
                 'password' => Hash::make('Senha@123'),
-                'family_id' => $family->id,
+                'group_id' => $group->id,
                 'role' => 'co_admin',
                 'phone' => '(11) 98888-7777',
                 'birthdate' => Carbon::create(1988, 4, 12),
             ]
         );
-        if ($parceiro->family_id !== $family->id) {
-            $parceiro->update(['family_id' => $family->id, 'role' => 'co_admin']);
+        if ($parceiro->group_id !== $group->id) {
+            $parceiro->update(['group_id' => $group->id, 'role' => 'co_admin']);
         }
 
         $filho = User::firstOrCreate(
-            ['email' => 'pedro@finfamilia.local'],
+            ['email' => 'pedro@prumo.local'],
             [
                 'name' => 'Pedro Silva',
                 'password' => Hash::make('Senha@123'),
-                'family_id' => $family->id,
+                'group_id' => $group->id,
                 'role' => 'junior',
                 'phone' => '(11) 97777-6666',
                 'birthdate' => Carbon::create(2012, 9, 3),
             ]
         );
-        if ($filho->family_id !== $family->id) {
-            $filho->update(['family_id' => $family->id, 'role' => 'junior']);
+        if ($filho->group_id !== $group->id) {
+            $filho->update(['group_id' => $group->id, 'role' => 'junior']);
         }
 
         return ['admin' => $admin, 'parceiro' => $parceiro, 'filho' => $filho];
     }
 
     /** Contas ligadas aos bancos do catálogo. */
-    private function contas($family): array
+    private function contas($group): array
     {
         $porCodigo = fn (string $cod) => Bank::where('code', $cod)->first();
         $itau = $porCodigo('341');
@@ -446,9 +446,9 @@ class PopulateDatabaseSeeder extends Seeder
         $inter = $porCodigo('077');
         $xp = $porCodigo('102');
 
-        $criar = function (string $nome, $banco, string $tipo, float $saldo) use ($family) {
+        $criar = function (string $nome, $banco, string $tipo, float $saldo) use ($group) {
             return Account::create([
-                'family_id' => $family->id,
+                'group_id' => $group->id,
                 'bank_id' => $banco?->id,
                 'name' => $nome,
                 'kind' => $tipo,
@@ -466,10 +466,10 @@ class PopulateDatabaseSeeder extends Seeder
     }
 
     /** Cartões vinculados às contas. */
-    private function cartoes($family, array $contas, array $membros): array
+    private function cartoes($group, array $contas, array $membros): array
     {
         $criar = fn (string $nome, $conta, string $bandeira, float $limite, int $fecha, int $vence) => CreditCard::create([
-            'family_id' => $family->id,
+            'group_id' => $group->id,
             'holder_user_id' => $membros['admin']->id,
             'account_id' => $conta->id,
             'name' => $nome,
@@ -488,14 +488,14 @@ class PopulateDatabaseSeeder extends Seeder
     }
 
     /** Cria um lançamento comum. */
-    private function transacao($family, array $dados): void
+    private function transacao($group, array $dados): void
     {
-        $dados['family_id'] = $family->id;
+        $dados['group_id'] = $group->id;
         Transaction::create($dados);
     }
 
     /** Cria um parcelamento (divide em centavos, 1x ao mês). */
-    private function parcelas($family, User $membro, Account $conta, ?int $categoriaId, string $desc, float $total, int $qtd, Carbon $inicio, callable $statusPorData): void
+    private function parcelas($group, User $membro, Account $conta, ?int $categoriaId, string $desc, float $total, int $qtd, Carbon $inicio, callable $statusPorData): void
     {
         $group = (string) Str::uuid();
         $totalCents = (int) round($total * 100);
@@ -506,7 +506,7 @@ class PopulateDatabaseSeeder extends Seeder
             $cents = $base + ($i <= $resto ? 1 : 0);
             $data = $inicio->copy()->addMonthsNoOverflow($i - 1);
             Transaction::create([
-                'family_id' => $family->id,
+                'group_id' => $group->id,
                 'user_id' => $membro->id,
                 'account_id' => $conta->id,
                 'category_id' => $categoriaId,

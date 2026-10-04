@@ -38,7 +38,7 @@ class TransactionController extends Controller
         abort_unless(in_array($type, ['despesa', 'receita'], true), 404);
 
         return TransactionResource::collection(
-            $service->list(Fin::family(), $type, [
+            $service->list(Fin::group(), $type, [
                 'q' => $request->query('q'),
                 'status' => $request->query('status'),
                 'fixa' => $request->query('fixa'),
@@ -83,15 +83,25 @@ class TransactionController extends Controller
     {
         abort_unless(in_array($type, ['despesa', 'receita'], true), 404);
 
-        $criados = $service->create(
-            Fin::family(),
+        $result = $service->createForGroup(
+            Fin::group(),
             $type,
             $request->validated(),
             $request->hasFile('anexo') ? $request->file('anexo') : null,
             $request->user()->id,
         );
 
-        return (new TransactionResource($criados->first()))
+        if ($result['kind'] === 'card') {
+            /** @var array{items: array} $items */
+            $items = $result['items'];
+
+            return response()->json([
+                'message' => $result['message'],
+                'parcelas' => $items['parcelas'],
+            ], 201);
+        }
+
+        return (new TransactionResource($result['transactions']->first()))
             ->response()
             ->setStatusCode(201);
     }
@@ -110,7 +120,7 @@ class TransactionController extends Controller
     public function show(string $type, Transaction $transaction): TransactionResource
     {
         abort_unless(in_array($type, ['despesa', 'receita'], true), 404);
-        abort_unless($transaction->family_id === Fin::familyId() && $transaction->type === $type, 404);
+        abort_unless($transaction->group_id === Fin::groupId() && $transaction->type === $type, 404);
         $transaction->load(['member', 'category', 'account']);
 
         return new TransactionResource($transaction);
@@ -143,11 +153,11 @@ class TransactionController extends Controller
     public function update(string $type, TransactionRequest $request, Transaction $transaction, TransactionService $service): TransactionResource
     {
         abort_unless(in_array($type, ['despesa', 'receita'], true), 404);
-        abort_unless($transaction->family_id === Fin::familyId() && $transaction->type === $type, 404);
+        abort_unless($transaction->group_id === Fin::groupId() && $transaction->type === $type, 404);
         $this->authorize('update', $transaction);
 
         return new TransactionResource(
-            $service->update($transaction, Fin::family(), $request->validated(), $request->hasFile('anexo') ? $request->file('anexo') : null, $request->user()->id)
+            $service->update($transaction, Fin::group(), $request->validated(), $request->hasFile('anexo') ? $request->file('anexo') : null, $request->user()->id)
         );
     }
 
@@ -165,7 +175,7 @@ class TransactionController extends Controller
     public function destroy(string $type, Transaction $transaction, TransactionService $service): JsonResponse
     {
         abort_unless(in_array($type, ['despesa', 'receita'], true), 404);
-        abort_unless($transaction->family_id === Fin::familyId() && $transaction->type === $type, 404);
+        abort_unless($transaction->group_id === Fin::groupId() && $transaction->type === $type, 404);
         $this->authorize('delete', $transaction);
         $service->destroy($transaction);
 
@@ -186,7 +196,7 @@ class TransactionController extends Controller
     public function settle(string $type, Transaction $transaction, TransactionService $service): TransactionResource
     {
         abort_unless(in_array($type, ['despesa', 'receita'], true), 404);
-        abort_unless($transaction->family_id === Fin::familyId() && $transaction->type === $type, 404);
+        abort_unless($transaction->group_id === Fin::groupId() && $transaction->type === $type, 404);
         $this->authorize('settle', $transaction);
 
         return new TransactionResource($service->settle($transaction));

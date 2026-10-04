@@ -4,7 +4,7 @@ chcp 65001 >nul
 cd /d "%~dp0.."
 
 echo ================================================
-echo   FinFamilia — Bot (servidor + tunel + webhook)
+echo   Prumo — Bot (servidor + tunel + webhook)
 echo ================================================
 
 REM 1) Servidor
@@ -13,7 +13,7 @@ if %errorlevel% equ 0 (
     echo [1/3] Servidor ja rodando na porta 8000.
 ) else (
     echo [1/3] Iniciando php artisan serve...
-    start "FinFamilia-Server" cmd /k "cd /d %~dp0.. && php artisan serve --host=0.0.0.0 --port=8000"
+    start "Prumo-Server" cmd /k "cd /d %~dp0.. && php artisan serve --host=0.0.0.0 --port=8000"
     powershell -NoProfile -Command "Start-Sleep -Seconds 6" >nul
 )
 
@@ -32,7 +32,7 @@ if "%CLOUD%"=="" (
 REM 3) Tunel
 if exist "%~dp0..\storage\logs\cloudflared.log" del "%~dp0..\storage\logs\cloudflared.log"
 echo [2/3] Iniciando cloudflared (aguarde a URL)...
-start "FinFamilia-Tunel" cmd /k ""%CLOUD%" tunnel --url http://localhost:8000 --loglevel warn --logfile "%~dp0..\storage\logs\cloudflared.log""
+start "Prumo-Tunel" cmd /k ""%CLOUD%" tunnel --url http://localhost:8000 --loglevel warn --logfile "%~dp0..\storage\logs\cloudflared.log""
 
 echo Aguardando URL publica...
 set "URL="
@@ -53,6 +53,6 @@ echo [3/3] Registrando webhook...
 php artisan bot:telegram-webhook "%URL%/api/bot/telegram"
 
 echo.
-echo Bot no ar. Teste no celular o @finfamiliaapp_bot.
-echo Para parar, feche as janelas "FinFamilia-Tunel" e "FinFamilia-Server".
+echo Bot no ar. Teste no celular o @prumoapp_bot.
+echo Para parar, feche as janelas "Prumo-Tunel" e "Prumo-Server".
 pause

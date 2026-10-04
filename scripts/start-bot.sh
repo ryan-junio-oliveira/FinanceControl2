@@ -43,4 +43,4 @@ echo "[3/3] Registrando webhook..."
 php artisan bot:telegram-webhook "$URL/api/bot/telegram"
 
 echo
-echo "Bot no ar. Teste no celular o @finfamiliaapp_bot."
+echo "Bot no ar. Teste no celular o @prumoapp_bot."

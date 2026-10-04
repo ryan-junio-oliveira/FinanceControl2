@@ -29,7 +29,7 @@ class InvestmentController extends Controller
     )]
     public function assets(Request $request, InvestmentService $service): AnonymousResourceCollection
     {
-        return AssetResource::collection($service->listAssets(Fin::family(), [
+        return AssetResource::collection($service->listAssets(Fin::group(), [
             'q' => $request->query('q'),
         ]));
     }
@@ -59,7 +59,7 @@ class InvestmentController extends Controller
     )]
     public function storeAsset(AssetRequest $request, InvestmentService $service): JsonResponse
     {
-        $asset = $service->createAsset(Fin::family(), $request->validated());
+        $asset = $service->createAsset(Fin::group(), $request->validated());
 
         return (new AssetResource($asset))->response()->setStatusCode(201);
     }
@@ -86,9 +86,9 @@ class InvestmentController extends Controller
     )]
     public function updateAsset(AssetRequest $request, Asset $asset, InvestmentService $service): AssetResource
     {
-        abort_unless($asset->family_id === Fin::familyId(), 404);
+        abort_unless($asset->group_id === Fin::groupId(), 404);
 
-        return new AssetResource($service->updateAsset($asset, Fin::family(), $request->validated()));
+        return new AssetResource($service->updateAsset($asset, Fin::group(), $request->validated()));
     }
 
     #[OA\Delete(
@@ -103,7 +103,7 @@ class InvestmentController extends Controller
     )]
     public function destroyAsset(Asset $asset, InvestmentService $service): JsonResponse
     {
-        abort_unless($asset->family_id === Fin::familyId(), 404);
+        abort_unless($asset->group_id === Fin::groupId(), 404);
         $service->destroyAsset($asset);
 
         return response()->json(null, 204);
@@ -134,7 +134,7 @@ class InvestmentController extends Controller
     public function storeContribution(ContributionRequest $request, InvestmentService $service): JsonResponse
     {
         $data = $request->validated();
-        $service->createContribution(Fin::family(), $data, $request->user()->id);
+        $service->createContribution(Fin::group(), $data, $request->user()->id);
 
         return response()->json(['message' => $data['kind'] === 'aporte' ? 'Aporte registrado.' : 'Rendimento registrado.'], 201);
     }

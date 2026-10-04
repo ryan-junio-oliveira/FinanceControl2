@@ -2,35 +2,35 @@
 
 namespace App\Console\Commands;
 
-use App\Models\Family;
+use App\Models\Group;
 use App\Support\CategoryCatalog;
 use Illuminate\Console\Command;
 
 class SeedCategories extends Command
 {
-    protected $signature = 'categories:seed {--family= : ID da família (padrão: todas as famílias)}';
+    protected $signature = 'categories:seed {--group= : ID do grupo (padrão: todos os grupos)}';
 
     protected $description = 'Semeia o catálogo padrão de categorias (idempotente, sem duplicar)';
 
     public function handle(): int
     {
-        $query = Family::query();
-        if ($this->option('family')) {
-            $query->where('id', $this->option('family'));
+        $query = Group::query();
+        if ($this->option('group')) {
+            $query->where('id', $this->option('group'));
         }
 
-        $families = $query->get();
-        if ($families->isEmpty()) {
-            $this->warn('Nenhuma família encontrada.');
+        $groups = $query->get();
+        if ($groups->isEmpty()) {
+            $this->warn('Nenhum grupo encontrado.');
 
             return self::FAILURE;
         }
 
         $total = 0;
-        foreach ($families as $family) {
-            $created = CategoryCatalog::seedForFamily($family);
+        foreach ($groups as $group) {
+            $created = CategoryCatalog::seedForGroup($group);
             $total += $created;
-            $this->line("Família #{$family->id} ({$family->name}): {$created} categorias criadas.");
+            $this->line("Grupo #{$group->id} ({$group->name}): {$created} categorias criadas.");
         }
 
         $this->info("Concluído. Total de categorias criadas: {$total}.");

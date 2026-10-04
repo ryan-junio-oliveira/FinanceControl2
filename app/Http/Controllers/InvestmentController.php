@@ -18,7 +18,7 @@ class InvestmentController extends Controller
     public function index(Request $request, InvestmentService $service): View
     {
         return view('pages.investimentos', $service->dashboard(
-            Fin::family(),
+            Fin::group(),
             ['q' => $request->query('q')],
             (int) $request->query('per_page', 12),
             $request->query('mes'),
@@ -33,31 +33,31 @@ class InvestmentController extends Controller
 
     public function createAsset(): View
     {
-        $family = Fin::family();
+        $group = Fin::group();
 
         return view('pages.investments.asset-form', [
             'asset' => null,
-            'portfolios' => $family->portfolios()->orderBy('name')->get(),
+            'portfolios' => $group->portfolios()->orderBy('name')->get(),
             'selected' => request()->query('carteira'),
         ]);
     }
 
     public function createContribution(): View
     {
-        $family = Fin::family();
+        $group = Fin::group();
 
         return view('pages.investments.contribution-form', [
-            'portfolios' => $family->portfolios()->orderBy('name')->get(),
-            'ativos' => Asset::where('family_id', $family->id)->with('portfolio')->orderBy('name')->get(),
-            'contas' => $family->accounts()->where('active', true)->orderBy('name')->get(),
+            'portfolios' => $group->portfolios()->orderBy('name')->get(),
+            'ativos' => Asset::where('group_id', $group->id)->with('portfolio')->orderBy('name')->get(),
+            'contas' => $group->accounts()->where('active', true)->orderBy('name')->get(),
             'selected' => request()->query('carteira'),
         ]);
     }
 
     public function storeAsset(AssetRequest $request, InvestmentService $service): RedirectResponse
     {
-        $family = Fin::family();
-        $service->createAsset($family, $request->validated());
+        $group = Fin::group();
+        $service->createAsset($group, $request->validated());
 
         return redirect()->route('investimentos')->with('status', 'Ativo adicionado.');
     }
@@ -65,22 +65,22 @@ class InvestmentController extends Controller
     /** Novo aporte: cria contribuição + saída da conta (tipo aporte). Rendimento atualiza o ativo. */
     public function storeContribution(ContributionRequest $request, InvestmentService $service): RedirectResponse
     {
-        $family = Fin::family();
+        $group = Fin::group();
         $data = $request->validated();
 
-        $service->createContribution($family, $data, $request->user()->id);
+        $service->createContribution($group, $data, $request->user()->id);
 
         return redirect()->route('investimentos')->with('status', $data['kind'] === 'aporte' ? 'Aporte registrado.' : 'Rendimento registrado.');
     }
 
     public function editAsset(Asset $asset): View
     {
-        abort_if($asset->family_id !== Fin::familyId(), 404);
-        $family = Fin::family();
+        abort_if($asset->group_id !== Fin::groupId(), 404);
+        $group = Fin::group();
 
         return view('pages.investments.asset-form', [
             'asset' => $asset,
-            'portfolios' => $family->portfolios()->orderBy('name')->get(),
+            'portfolios' => $group->portfolios()->orderBy('name')->get(),
             'selected' => $asset->portfolio_id,
         ]);
     }
@@ -88,16 +88,16 @@ class InvestmentController extends Controller
     /** Corrige o cadastro do ativo (valor inicial errado, rentabilidade, etc.). */
     public function updateAsset(AssetRequest $request, Asset $asset, InvestmentService $service): RedirectResponse
     {
-        abort_if($asset->family_id !== Fin::familyId(), 404);
-        $family = Fin::family();
-        $service->updateAsset($asset, $family, $request->validated());
+        abort_if($asset->group_id !== Fin::groupId(), 404);
+        $group = Fin::group();
+        $service->updateAsset($asset, $group, $request->validated());
 
         return redirect()->route('investimentos')->with('status', 'Ativo atualizado.');
     }
 
     public function destroyAsset(Asset $asset, InvestmentService $service): RedirectResponse
     {
-        abort_if($asset->family_id !== Fin::familyId(), 404);
+        abort_if($asset->group_id !== Fin::groupId(), 404);
         $service->destroyAsset($asset);
 
         return redirect()->route('investimentos')->with('status', 'Ativo removido.');

@@ -74,7 +74,7 @@ class CardHandler extends BotHandler
 
     public function faturas(BotDriver $driver, IncomingMessage $msg, ?User $user): void
     {
-        $cards = app(CardService::class)->list($user->family);
+        $cards = app(CardService::class)->list($user->group);
         $lines = [BotPresenter::header('Faturas em aberto'), ''];
         foreach ($cards as $c) {
             $open = (float) $c->open_invoice;
@@ -89,7 +89,7 @@ class CardHandler extends BotHandler
 
     private function startFlow(BotDriver $driver, IncomingMessage $msg, ?User $user): void
     {
-        $cards = app(CardService::class)->list($user->family);
+        $cards = app(CardService::class)->list($user->group);
         if ($cards->isEmpty()) {
             $this->done($driver, $msg, $user, '❌ Você ainda não tem cartões. Crie um no sistema primeiro.');
 
@@ -135,7 +135,7 @@ class CardHandler extends BotHandler
         }
         $data['amount'] = $amount;
 
-        $cats = app(CategoryService::class)->list($user->family, ['tipo' => 'despesa'], 100);
+        $cats = app(CategoryService::class)->list($user->group, ['tipo' => 'despesa'], 100);
         if ($cats->isEmpty()) {
             $this->done($driver, $msg, $user, '❌ Sem categorias cadastradas.');
 
@@ -157,8 +157,8 @@ class CardHandler extends BotHandler
         $data['category_id'] = $ids[$num - 1];
         unset($data['_categories']);
 
-        $card = $user->family->creditCards()->find($data['credit_card_id']);
-        $cat = $user->family->categories()->find($data['category_id']);
+        $card = $user->group->creditCards()->find($data['credit_card_id']);
+        $cat = $user->group->categories()->find($data['category_id']);
         $summary = "🧾 <b>Confirmar compra?</b>\n"
             .BotPresenter::divider()."\n"
             .'💳 '.($card->name ?? '—')."\n"
@@ -181,7 +181,7 @@ class CardHandler extends BotHandler
             return;
         }
 
-        app(CardService::class)->createItem($user->family, [
+        app(CardService::class)->createItem($user->group, [
             'credit_card_id' => $data['credit_card_id'],
             'description' => $data['description'],
             'amount' => $data['amount'],
@@ -224,7 +224,7 @@ class CardHandler extends BotHandler
         $data['brand'] = $brands[$num - 1];
         unset($data['_brands']);
 
-        $members = $user->family->users()->orderBy('name')->get();
+        $members = $user->group->users()->orderBy('name')->get();
         if ($members->count() <= 1) {
             $data['holder_user_id'] = $user->id;
             $this->askAccountLink($driver, $msg, $data, $user);
@@ -256,7 +256,7 @@ class CardHandler extends BotHandler
 
     private function askAccountLink(BotDriver $driver, IncomingMessage $msg, array $data, ?User $user): void
     {
-        $accounts = app(CardService::class)->activeAccounts($user->family);
+        $accounts = app(CardService::class)->activeAccounts($user->group);
         if ($accounts->isEmpty()) {
             $data['account_id'] = null;
             $this->stepLimit($driver, $msg, $data, '');
@@ -327,8 +327,8 @@ class CardHandler extends BotHandler
         }
         $data['due_day'] = $day;
 
-        $holder = $user->family->users()->find($data['holder_user_id']);
-        $account = $user->family->accounts()->find($data['account_id']);
+        $holder = $user->group->users()->find($data['holder_user_id']);
+        $account = $user->group->accounts()->find($data['account_id']);
         $brand = CardBrand::tryFrom($data['brand'])->label();
         $summary = '🧾 <b>Confirmar novo cartão?</b>'."\n"
             .BotPresenter::divider()."\n"
@@ -353,7 +353,7 @@ class CardHandler extends BotHandler
             return;
         }
 
-        app(CardService::class)->createCard($user->family, [
+        app(CardService::class)->createCard($user->group, [
             'name' => $data['name'],
             'brand' => $data['brand'],
             'holder_user_id' => $data['holder_user_id'],

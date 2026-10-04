@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Contribution extends Model
 {
-    protected $fillable = ['family_id', 'portfolio_id', 'asset_id', 'account_id', 'kind', 'amount', 'occurred_on', 'note'];
+    protected $fillable = ['group_id', 'portfolio_id', 'asset_id', 'account_id', 'kind', 'amount', 'occurred_on', 'note'];
 
     protected function casts(): array
     {

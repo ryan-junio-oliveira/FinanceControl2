@@ -8,30 +8,31 @@ use App\Support\Fin;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class SettingsController extends Controller
 {
     public function index(): View
     {
-        $family = Fin::family();
-        $settings = $family->setting();
+        $group = Fin::group();
+        $settings = $group->setting();
 
         return view('pages.configuracoes', compact('settings'));
     }
 
     public function update(SettingsRequest $request, SettingsService $service): RedirectResponse
     {
-        $family = Fin::family();
-        $service->update($family, $request->validated(), $request->boolean('consolidate_dependent_yield'));
+        $group = Fin::group();
+        $service->update($group, $request->validated(), $request->boolean('consolidate_dependent_yield'));
 
         return back()->with('status', 'Configurações salvas.');
     }
 
     public function updateNotifications(Request $request, SettingsService $service): RedirectResponse
     {
-        $family = Fin::family();
-        $service->updateNotifications($family, fn (string $k) => $request->boolean("notifications.$k"));
+        $group = Fin::group();
+        $service->updateNotifications($group, fn (string $k) => $request->boolean("notifications.$k"));
 
         return back()->with('status', 'Notificações atualizadas.');
     }

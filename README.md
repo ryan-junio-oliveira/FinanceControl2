@@ -1,6 +1,6 @@
 # Prumo
 
-Sistema de gestão financeira familiar — dashboard, despesas, receitas, contas, cartões, investimentos e membros da família.
+Sistema de gestão financeira em grupo — dashboard, despesas, receitas, contas, cartões, investimentos e membros do grupo.
 
 ## Documentação
 
@@ -13,6 +13,8 @@ Sistema de gestão financeira familiar — dashboard, despesas, receitas, contas
 | [Arquitetura](documentation/architecture.md) | Padrões, camadas, SOLID e decisões técnicas |
 | [Domínio](documentation/domain.md) | Regras de negócio, entidades e fluxos |
 | [Desenvolvimento](documentation/development.md) | Setup, comandos, testes e convenções |
+| [Infra Docker](documentation/infra-docker.md) | Produção: compose, backup, operação e troubleshooting |
+| [Backup](documentation/backup.md) | `db:backup`/`db:restore`, retenção e DR |
 
 ## Swagger UI
 
@@ -24,7 +26,7 @@ GET /api/documentation
 
 ## Stack
 
-- **Backend**: Laravel 13 + PHP 8.3
+- **Backend**: Laravel 13 + PHP 8.5
 - **Frontend**: Blade + Tailwind CSS (Vite)
 - **API**: REST v1 com Sanctum (Bearer token)
 - **Banco**: SQLite (dev) / MySQL (prod)

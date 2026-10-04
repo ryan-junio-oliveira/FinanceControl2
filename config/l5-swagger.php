@@ -10,7 +10,7 @@ return [
         'default' => [
             'api' => [
                 'title' => 'Prumo API',
-                'description' => 'REST API do Prumo — gestão financeira familiar para o bot (smartphone).',
+                'description' => 'REST API do Prumo — gestão financeira em grupo para o bot (smartphone).',
                 'version' => '1.0.0',
             ],
 

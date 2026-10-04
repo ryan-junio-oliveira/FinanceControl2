@@ -28,7 +28,7 @@
 - **FormRequests**: validação e mensagens pt-BR centralizadas
 - **Resources**: transformação de models para JSON (API)
 - **Observers**: auditoria automática (AuditLog)
-- **Middleware**: `family.role` (papéis) + `family.ownership` (posse do recurso)
+- **Middleware**: `group.role` (papéis) + `group.ownership` (posse do recurso)
 
 ## SOLID
 
@@ -43,7 +43,7 @@
 ## Fluxo de requisição
 
 ```
-Request → Middleware (auth, family) → Controller → Service → Model → Response
+Request → Middleware (auth, group) → Controller → Service → Model → Response
 ```
 
 ## Autenticação

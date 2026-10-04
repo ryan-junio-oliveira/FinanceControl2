@@ -30,6 +30,11 @@ class ParsingTest extends TestCase
     #[DataProvider('botDateProvider')]
     public function test_bot_parse_date(string $input, ?string $expected): void
     {
+        // Avaliado no instante do assert: o provider roda no carregamento e
+        // a suíte pode cruzar a meia-noite entre um e outro.
+        if ($input === 'hoje') {
+            $expected = date('Y-m-d');
+        }
         $this->assertSame($expected, BotPresenter::parseDate($input));
     }
 

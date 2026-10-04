@@ -11,7 +11,7 @@ class AuditLog extends Model
     public const UPDATED_AT = null;
 
     protected $fillable = [
-        'family_id', 'user_id', 'action', 'description',
+        'group_id', 'user_id', 'action', 'description',
         'auditable_type', 'auditable_id', 'changes',
         'ip_address', 'user_agent', 'method', 'url',
     ];
@@ -81,7 +81,7 @@ class AuditLog extends Model
             'App\Models\Contribution' => 'Aporte/Rendimento',
             'App\Models\Invitation' => 'Convite',
             'App\Models\User' => 'Membro',
-            'App\Models\FamilySetting' => 'Configurações',
+            'App\Models\GroupSetting' => 'Configurações',
         ];
 
         return ($map[$this->auditable_type] ?? class_basename($this->auditable_type)).' #'.$this->auditable_id;

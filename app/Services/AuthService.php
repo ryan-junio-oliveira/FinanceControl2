@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\Family;
+use App\Models\Group;
 use App\Models\Invitation;
 use App\Models\TrialBlacklist;
 use App\Models\User;
@@ -24,21 +24,21 @@ final class AuthService
         $this->assertTrialAllowed($data['email'], $ip);
 
         $user = DB::transaction(function () use ($data) {
-            $family = Family::create([
-                'name' => $data['family_name'],
+            $group = Group::create([
+                'name' => $data['group_name'],
                 'plan' => 'pro_trial',
                 'trial_ends_at' => now()->addDays((int) config('billing.trial_days', 14)),
             ]);
-            $family->settings()->create([]);
+            $group->settings()->create([]);
 
-            // Catálogo padrão: a família já nasce com os temas.
-            CategoryCatalog::seedForFamily($family);
+            // Catálogo padrão: o grupo já nasce com os temas.
+            CategoryCatalog::seedForGroup($group);
 
             return User::create([
                 'name' => $data['manager_name'],
                 'email' => $data['email'],
                 'password' => Hash::make($data['password']),
-                'family_id' => $family->id,
+                'group_id' => $group->id,
                 'role' => 'admin',
                 'terms_accepted_at' => now(),
             ]);
@@ -59,7 +59,7 @@ final class AuthService
                 'name' => $invitation->name,
                 'email' => $invitation->email,
                 'password' => Hash::make($password),
-                'family_id' => $invitation->family_id,
+                'group_id' => $invitation->group_id,
                 'role' => $invitation->role,
                 'terms_accepted_at' => now(),
             ]);
@@ -68,7 +68,7 @@ final class AuthService
             return $user;
         });
 
-        // Membro da família também fica marcado: não pode criar trial próprio depois.
+        // Membro do grupo também fica marcado: não pode criar trial próprio depois.
         TrialBlacklist::firstOrCreate(
             ['identifier' => $invitation->email, 'type' => 'email'],
             ['created_at' => now()]

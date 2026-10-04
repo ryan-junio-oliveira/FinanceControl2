@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('transactions', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('family_id')->constrained('families')->cascadeOnDelete();
+            $table->foreignId('group_id')->constrained('groups')->cascadeOnDelete();
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete(); // membro responsável
             $table->foreignId('account_id')->nullable()->constrained('accounts')->nullOnDelete();
             $table->foreignId('category_id')->nullable()->constrained('categories')->nullOnDelete();
@@ -29,8 +29,8 @@ return new class extends Migration
             $table->unsignedTinyInteger('installments_total')->nullable();
             $table->timestamps();
 
-            $table->index(['family_id', 'type', 'occurred_on']);
-            $table->index(['family_id', 'status', 'due_on']);
+            $table->index(['group_id', 'type', 'occurred_on']);
+            $table->index(['group_id', 'status', 'due_on']);
             $table->index('installment_group_id');
         });
     }

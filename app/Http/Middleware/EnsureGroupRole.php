@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
 
-class EnsureFamilyRole
+class EnsureGroupRole
 {
     /**
      * @param  string  ...$roles  Papéis permitidos (admin, co_admin, dependente, junior).
@@ -26,9 +26,9 @@ class EnsureFamilyRole
 
         // Usuário sem conta vinculada: sai daqui com mensagem clara,
         // em vez de um loop silencioso login → dashboard → login.
-        if (! $user->family_id) {
+        if (! $user->group_id) {
             if ($api) {
-                return response()->json(['message' => 'Sua conta não está vinculada a nenhuma família.'], 422);
+                return response()->json(['message' => 'Sua conta não está vinculada a nenhum grupo.'], 422);
             }
 
             Auth::logout();

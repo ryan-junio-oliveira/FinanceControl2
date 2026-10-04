@@ -2,30 +2,30 @@
 
 namespace App\Support;
 
-use App\Models\Family;
+use App\Models\Group;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 
 class Fin
 {
-    /** Família do usuário autenticado (ou null). */
-    public static function family(): ?Family
+    /** Grupo do usuário autenticado (ou null). */
+    public static function group(): ?Group
     {
         $user = Auth::user();
 
-        return $user?->family;
+        return $user?->group;
     }
 
-    public static function familyId(): ?int
+    public static function groupId(): ?int
     {
-        return self::family()?->id;
+        return self::group()?->id;
     }
 
-    /** Timezone da família (config) ou padrão da app. */
+    /** Timezone do grupo (config) ou padrão da app. */
     public static function timezone(): string
     {
         try {
-            $tz = self::family()?->settings?->timezone;
+            $tz = self::group()?->settings?->timezone;
         } catch (\Throwable) {
             $tz = null;
         }

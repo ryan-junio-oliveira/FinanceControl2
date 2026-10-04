@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>@yield('title', 'Entrar') · Prumo</title>
-    <meta name="description" content="Prumo — gestão financeira para você e sua família.">
+    <meta name="description" content="Prumo — gestão financeira para você e seu grupo.">
     <meta name="theme-color" content="#064E3B">
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="manifest" href="/manifest.webmanifest">
@@ -15,8 +15,8 @@
     <meta name="apple-mobile-web-app-title" content="Prumo">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?group=Montserrat:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?group=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @stack('head')
 </head>
@@ -34,7 +34,7 @@
             </a>
 
             <div data-hero>
-                <h2 class="text-[26px] leading-tight font-bold tracking-tight max-w-md">Gestão financeira para você e sua família.</h2>
+                <h2 class="text-[26px] leading-tight font-bold tracking-tight max-w-md">Gestão financeira para você e seu grupo.</h2>
                 <p class="text-[13px] text-emerald-100/75 mt-2 leading-relaxed max-w-sm">Contas, cartões, investimentos e orçamento em um só lugar.</p>
                 <ul class="mt-5 pt-5 border-t border-white/15 grid gap-3">
                     <li class="flex items-center gap-2.5 text-[13px] font-semibold"><span class="material-symbols-outlined text-[18px] text-emerald-300">check_circle</span> Lançamentos por pessoa</li>

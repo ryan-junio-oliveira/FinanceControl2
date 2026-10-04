@@ -5,7 +5,7 @@
  * - Nunca intercepta POST/API fora de GET nem outros domínios.
  * Bump CACHE ao mudar este arquivo.
  */
-const CACHE = 'finfamilia-v1';
+const CACHE = 'prumo-v1';
 const OFFLINE_URL = '/offline';
 
 self.addEventListener('install', (event) => {

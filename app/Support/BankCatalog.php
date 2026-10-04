@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\DB;
 /**
  * Catálogo padrão de bancos do Prumo.
  *
- * Tabela global `banks` (não é por família): semeada via
+ * Tabela global `banks` (não é por grupo): semeada via
  * `php artisan banks:seed` de forma idempotente (não duplica;
  * atualiza cor e status dos já existentes), nos mesmos moldes
  * do CategoryCatalog.

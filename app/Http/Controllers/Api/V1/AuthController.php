@@ -13,8 +13,8 @@ use OpenApi\Attributes as OA;
 #[OA\Info(
     title: 'Prumo API',
     version: '1.0.0',
-    description: 'REST API do Prumo — gestão financeira familiar para o bot (smartphone).',
-    contact: new OA\Contact(email: 'suporte@finfamilia.com.br')
+    description: 'REST API do Prumo — gestão financeira em grupo para o bot (smartphone).',
+    contact: new OA\Contact(email: 'suporte@prumo.com.br')
 )]
 #[OA\Server(url: '/api/v1')]
 #[OA\SecurityScheme(securityScheme: 'bearerAuth', type: 'http', scheme: 'bearer', bearerFormat: 'JWT')]

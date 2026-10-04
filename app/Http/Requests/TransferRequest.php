@@ -14,14 +14,14 @@ class TransferRequest extends FormRequest
 
     public function rules(): array
     {
-        $fid = Auth::user()?->family_id;
+        $fid = Auth::user()?->group_id;
 
         return [
-            'from_account_id' => ['required', Rule::exists('accounts', 'id')->where('family_id', $fid)],
-            'to_account_id' => ['required', Rule::exists('accounts', 'id')->where('family_id', $fid), 'different:from_account_id'],
+            'from_account_id' => ['required', Rule::exists('accounts', 'id')->where('group_id', $fid)],
+            'to_account_id' => ['required', Rule::exists('accounts', 'id')->where('group_id', $fid), 'different:from_account_id'],
             'amount' => ['required', 'numeric', 'min:0.01'],
             'occurred_on' => ['required', 'date'],
-            'user_id' => ['required', Rule::exists('users', 'id')->where('family_id', $fid)],
+            'user_id' => ['required', Rule::exists('users', 'id')->where('group_id', $fid)],
             'description' => ['nullable', 'string', 'max:255'],
         ];
     }

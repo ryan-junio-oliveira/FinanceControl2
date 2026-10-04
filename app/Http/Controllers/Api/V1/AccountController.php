@@ -26,7 +26,7 @@ class AccountController extends Controller
     )]
     public function index(AccountService $service): AnonymousResourceCollection
     {
-        return AccountResource::collection($service->list(Fin::family()));
+        return AccountResource::collection($service->list(Fin::group()));
     }
 
     #[OA\Post(
@@ -50,7 +50,7 @@ class AccountController extends Controller
     )]
     public function store(AccountRequest $request, AccountService $service): JsonResponse
     {
-        $conta = $service->create(Fin::family(), $request->validated());
+        $conta = $service->create(Fin::group(), $request->validated());
 
         return (new AccountResource($conta))->response()->setStatusCode(201);
     }
@@ -67,7 +67,7 @@ class AccountController extends Controller
     )]
     public function show(Account $account): AccountResource
     {
-        abort_unless($account->family_id === Fin::familyId(), 404);
+        abort_unless($account->group_id === Fin::groupId(), 404);
         $account->load('bank');
 
         return new AccountResource($account);
@@ -95,7 +95,7 @@ class AccountController extends Controller
     )]
     public function update(AccountRequest $request, Account $account, AccountService $service): AccountResource
     {
-        abort_unless($account->family_id === Fin::familyId(), 404);
+        abort_unless($account->group_id === Fin::groupId(), 404);
         $this->authorize('manage', $account);
 
         return new AccountResource($service->update($account, $request->validated(), $request->boolean('active')));
@@ -113,7 +113,7 @@ class AccountController extends Controller
     )]
     public function destroy(Account $account, AccountService $service): JsonResponse
     {
-        abort_unless($account->family_id === Fin::familyId(), 404);
+        abort_unless($account->group_id === Fin::groupId(), 404);
         $this->authorize('manage', $account);
         $service->destroy($account);
 
@@ -143,7 +143,7 @@ class AccountController extends Controller
     )]
     public function transfer(TransferRequest $request, AccountService $service): JsonResponse
     {
-        $transaction = $service->transfer(Fin::family(), $request->validated());
+        $transaction = $service->transfer(Fin::group(), $request->validated());
 
         return (new TransactionResource($transaction))->response()->setStatusCode(201);
     }

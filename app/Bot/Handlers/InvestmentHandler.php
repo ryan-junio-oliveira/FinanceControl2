@@ -64,7 +64,7 @@ class InvestmentHandler extends BotHandler
 
     public function show(BotDriver $driver, IncomingMessage $msg, ?User $user): void
     {
-        $dados = app(InvestmentService::class)->dashboard($user->family);
+        $dados = app(InvestmentService::class)->dashboard($user->group);
         $lines = [
             BotPresenter::header('Investimentos'),
             'Patrimônio: <b>'.BotPresenter::money((float) $dados['patrimonio']).'</b>',
@@ -109,7 +109,7 @@ class InvestmentHandler extends BotHandler
 
     private function askAccount(BotDriver $driver, IncomingMessage $msg, array $data, ?User $user): void
     {
-        $accounts = app(AccountService::class)->list($user->family)->values();
+        $accounts = app(AccountService::class)->list($user->group)->values();
         if ($accounts->isEmpty()) {
             $this->done($driver, $msg, $user, '❌ Você ainda não tem contas. Crie uma no sistema primeiro.');
 
@@ -134,7 +134,7 @@ class InvestmentHandler extends BotHandler
 
     private function askAsset(BotDriver $driver, IncomingMessage $msg, array $data, ?User $user): void
     {
-        $ativos = Asset::where('family_id', $user->family_id)->orderBy('name')->get();
+        $ativos = Asset::where('group_id', $user->group_id)->orderBy('name')->get();
         if ($ativos->isEmpty()) {
             $this->done($driver, $msg, $user, '❌ Nenhum ativo cadastrado. Adicione no sistema primeiro.');
 
@@ -185,8 +185,8 @@ class InvestmentHandler extends BotHandler
         $data['occurred_on'] = $date;
 
         $isAporte = $data['kind'] === 'aporte';
-        $conta = $user->family->accounts()->find($data['account_id'] ?? null);
-        $ativo = Asset::where('family_id', $user->family_id)->find($data['asset_id'] ?? 0);
+        $conta = $user->group->accounts()->find($data['account_id'] ?? null);
+        $ativo = Asset::where('group_id', $user->group_id)->find($data['asset_id'] ?? 0);
         $summary = '🧾 <b>Confirmar '.($isAporte ? 'aporte' : 'rendimento').'?</b>'."\n"
             .BotPresenter::divider()."\n"
             .($isAporte ? '💰 Aporte' : '📈 Rendimento').' · <b>'.BotPresenter::money($data['amount']).'</b>'."\n"
@@ -208,7 +208,7 @@ class InvestmentHandler extends BotHandler
             return;
         }
 
-        app(InvestmentService::class)->createContribution($user->family, [
+        app(InvestmentService::class)->createContribution($user->group, [
             'kind' => $data['kind'],
             'amount' => $data['amount'],
             'occurred_on' => $data['occurred_on'],

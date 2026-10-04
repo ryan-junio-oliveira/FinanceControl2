@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('card_transactions', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('family_id')->constrained('families')->cascadeOnDelete();
+            $table->foreignId('group_id')->constrained('groups')->cascadeOnDelete();
             $table->foreignId('credit_card_id')->constrained('credit_cards')->cascadeOnDelete();
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
             $table->foreignId('category_id')->nullable()->constrained('categories')->nullOnDelete();
@@ -24,7 +24,7 @@ return new class extends Migration
             $table->unsignedTinyInteger('installments_total')->nullable();
             $table->timestamps();
 
-            $table->index(['family_id', 'credit_card_id', 'status']);
+            $table->index(['group_id', 'credit_card_id', 'status']);
             $table->index('installment_group_id');
         });
     }

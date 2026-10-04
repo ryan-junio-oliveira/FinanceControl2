@@ -11,7 +11,7 @@ use App\Http\Controllers\BillingController;
 use App\Http\Controllers\CardController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\FamilyController;
+use App\Http\Controllers\GroupController;
 use App\Http\Controllers\InvestmentController;
 use App\Http\Controllers\LandingController;
 use App\Http\Controllers\LegalController;
@@ -62,7 +62,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/plans/cancel', [BillingController::class, 'cancel'])->name('plans.cancel');
 
     Route::middleware('plan.active')->group(function () {
-        Route::middleware('family.role')->group(function () {
+        Route::middleware('group.role')->group(function () {
             Route::post('/notifications/read', [NotificationController::class, 'readAll'])->name('notificacoes.lidas');
             Route::post('/notifications/{notification}/read', [NotificationController::class, 'read'])->name('notificacoes.ler');
             Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -74,7 +74,7 @@ Route::middleware('auth')->group(function () {
             Route::get('/profile/password', [ProfileController::class, 'editPassword'])->name('perfil.senha');
             Route::patch('/profile/password', [ProfileController::class, 'updatePassword'])->name('perfil.senha.update');
             Route::post('/profile/bot-code', [ProfileController::class, 'regenerateBotCode'])->name('perfil.botcode');
-            Route::get('/profile/export', [ProfileController::class, 'export'])->name('perfil.export');
+            Route::get('/profile/export', [ProfileController::class, 'export'])->middleware('throttle:6,1')->name('perfil.export');
             Route::delete('/profile', [ProfileController::class, 'destroy'])->name('perfil.destroy');
 
             // Expenses & Incomes
@@ -104,11 +104,11 @@ Route::middleware('auth')->group(function () {
             // Categories (read for everyone)
             Route::get('/categories', [CategoryController::class, 'index'])->name('categorias');
 
-            // Family (read for everyone)
-            Route::get('/family', [FamilyController::class, 'index'])->name('familia');
+            // Group (read for everyone)
+            Route::get('/group', [GroupController::class, 'index'])->name('grupo');
 
             // ----- Managers (admin / co_admin) -----
-            Route::middleware('family.role:admin,co_admin')->group(function () {
+            Route::middleware('group.role:admin,co_admin')->group(function () {
                 Route::delete('/transactions/{transaction}', [TransactionController::class, 'destroy'])->name('lancamentos.destroy');
 
                 Route::get('/accounts/create', [AccountController::class, 'create'])->name('contas.create');
@@ -134,7 +134,7 @@ Route::middleware('auth')->group(function () {
                 Route::get('/investments/market', [InvestmentController::class, 'market'])->name('investimentos.mercado');
 
                 Route::get('/market', [MercadoController::class, 'index'])->name('mercado');
-                Route::get('/market/data', [MercadoController::class, 'dados'])->name('mercado.dados');
+                Route::get('/market/data', [MercadoController::class, 'dados'])->middleware('throttle:30,1')->name('mercado.dados');
                 Route::get('/investments/assets/create', [InvestmentController::class, 'createAsset'])->name('investimentos.ativos.create');
                 Route::post('/investments/assets', [InvestmentController::class, 'storeAsset'])->name('investimentos.ativos.store');
                 Route::get('/investments/assets/{asset}/edit', [InvestmentController::class, 'editAsset'])->name('investimentos.ativos.edit');
@@ -143,12 +143,12 @@ Route::middleware('auth')->group(function () {
                 Route::post('/investments/contributions', [InvestmentController::class, 'storeContribution'])->name('investimentos.aportes.store');
                 Route::delete('/investments/assets/{asset}', [InvestmentController::class, 'destroyAsset'])->name('investimentos.ativos.destroy');
 
-                Route::get('/family/invites/create', [FamilyController::class, 'createInvite'])->name('familia.convites.create');
-                Route::post('/family/invites', [FamilyController::class, 'invite'])->name('familia.convites.store');
-                Route::delete('/family/invites/{invite}', [FamilyController::class, 'revokeInvite'])->name('familia.convites.destroy');
-                Route::delete('/family/members/{member}', [FamilyController::class, 'removeMember'])->name('familia.membros.destroy');
-                Route::patch('/family/members/{member}/role', [FamilyController::class, 'updateRole'])->name('familia.membros.papel');
-                Route::post('/family/secret', [FamilyController::class, 'updateSecret'])->name('familia.secret');
+                Route::get('/group/invites/create', [GroupController::class, 'createInvite'])->name('grupo.convites.create');
+                Route::post('/group/invites', [GroupController::class, 'invite'])->name('grupo.convites.store');
+                Route::delete('/group/invites/{invite}', [GroupController::class, 'revokeInvite'])->name('grupo.convites.destroy');
+                Route::delete('/group/members/{member}', [GroupController::class, 'removeMember'])->name('grupo.membros.destroy');
+                Route::patch('/group/members/{member}/role', [GroupController::class, 'updateRole'])->name('grupo.membros.papel');
+                Route::post('/group/secret', [GroupController::class, 'updateSecret'])->name('grupo.secret');
 
                 Route::post('/cards/{card}/pay-invoice', [CardController::class, 'payInvoice'])->name('cartoes.fatura.pagar');
 

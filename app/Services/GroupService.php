@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use App\Mail\WelcomeEmail;
-use App\Models\Family;
+use App\Models\Group;
 use App\Models\Invitation;
 use App\Models\Transaction;
 use App\Models\User;
@@ -12,41 +12,43 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
 /**
- * Regras de domínio da família (convites, membros, papéis).
+ * Regras de domínio do grupo (convites, membros, papéis).
  *
  * Usada pelos controllers web e API — mesma regra, duas apresentações.
  */
-final class FamilyService
+final class GroupService
 {
-    /** Membros com gasto do mês + convites pendentes (tela de família). */
-    public function dashboard(Family $family, string $mes): array
+    /** Membros com gasto do mês + convites pendentes (tela de grupo). */
+    public function dashboard(Group $group, string $mes): array
     {
-        $membros = $family->users()->orderBy('name')->get()->map(function ($u) use ($family, $mes) {
-            $gasto = (float) Transaction::where('family_id', $family->id)->where('user_id', $u->id)
-                ->where('type', 'despesa')->whereIn('status', ['pago', 'pendente'])
-                ->whereYear('occurred_on', substr($mes, 0, 4))->whereMonth('occurred_on', substr($mes, 5, 2))->sum('amount');
-            $u->gasto_mes = $gasto;
+        [$ano, $m] = array_map('intval', explode('-', $mes));
+        $gastos = Transaction::where('group_id', $group->id)
+            ->where('type', 'despesa')->whereIn('status', ['pago', 'pendente'])
+            ->whereYear('occurred_on', $ano)->whereMonth('occurred_on', $m)
+            ->groupBy('user_id')->selectRaw('user_id, SUM(amount) as total')
+            ->pluck('total', 'user_id');
 
-            return $u;
+        $membros = $group->users()->orderBy('name')->get()->each(function ($u) use ($gastos) {
+            $u->gasto_mes = (float) ($gastos[$u->id] ?? 0);
         });
 
         return [
             'mes' => $mes,
             'membros' => $membros,
-            'convites' => $family->invitations()->whereNull('accepted_at')->orderByDesc('created_at')->get(),
+            'convites' => $group->invitations()->whereNull('accepted_at')->orderByDesc('created_at')->get(),
         ];
     }
 
-    /** Membros da família (para API). */
-    public function members(Family $family): Collection
+    /** Membros do grupo (para API). */
+    public function members(Group $group): Collection
     {
-        return $family->users()->orderBy('name')->get();
+        return $group->users()->orderBy('name')->get();
     }
 
     /** Convites pendentes (para API). */
-    public function invites(Family $family): Collection
+    public function invites(Group $group): Collection
     {
-        return $family->invitations()->whereNull('accepted_at')->orderByDesc('created_at')->get();
+        return $group->invitations()->whereNull('accepted_at')->orderByDesc('created_at')->get();
     }
 
     /**
@@ -54,12 +56,12 @@ final class FamilyService
      *
      * @return array{invitation: Invitation, mailed: bool}
      */
-    public function invite(Family $family, array $data): array
+    public function invite(Group $group, array $data): array
     {
-        abort_if($family->users()->where('email', $data['email'])->exists(), 422, 'Este e-mail já pertence à sua conta.');
-        abort_if($family->invitations()->where('email', $data['email'])->whereNull('accepted_at')->exists(), 422, 'Já existe um convite pendente para este e-mail.');
+        abort_if($group->users()->where('email', $data['email'])->exists(), 422, 'Este e-mail já pertence à sua conta.');
+        abort_if($group->invitations()->where('email', $data['email'])->whereNull('accepted_at')->exists(), 422, 'Já existe um convite pendente para este e-mail.');
 
-        $invitation = $family->invitations()->create($data + ['token' => Str::random(48), 'expires_at' => now()->addDays(7)]);
+        $invitation = $group->invitations()->create($data + ['token' => Str::random(48), 'expires_at' => now()->addDays(7)]);
 
         try {
             Mail::to($data['email'])->queue(new WelcomeEmail($invitation));

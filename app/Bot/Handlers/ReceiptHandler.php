@@ -189,7 +189,7 @@ class ReceiptHandler extends BotHandler
      */
     private function askAccount(BotDriver $driver, IncomingMessage $msg, array $data, ?User $user): void
     {
-        $contas = app(AccountService::class)->list($user->family)->values();
+        $contas = app(AccountService::class)->list($user->group)->values();
         $bank = $data['bank'] ?? null;
 
         if ($bank) {
@@ -239,11 +239,11 @@ class ReceiptHandler extends BotHandler
     private function askCategory(BotDriver $driver, IncomingMessage $msg, array $data, ?User $user): void
     {
         $type = $data['type'] ?? 'despesa';
-        $cats = app(CategoryService::class)->list($user->family, ['tipo' => $type], 100);
+        $cats = app(CategoryService::class)->list($user->group, ['tipo' => $type], 100);
         $suggested = CategoryKeywords::guessName($data['description'] ?? '');
         $suggestedId = null;
         if ($suggested) {
-            $suggestedId = $user->family->categories()->where('type', $type)->where('name', $suggested)->value('id');
+            $suggestedId = $user->group->categories()->where('type', $type)->where('name', $suggested)->value('id');
         }
         $lines = [];
         foreach ($cats as $c) {
@@ -264,8 +264,8 @@ class ReceiptHandler extends BotHandler
         $data['category_id'] = $ids[$num - 1];
         unset($data['_categories']);
 
-        $account = $user->family->accounts()->find($data['account_id']);
-        $cat = $user->family->categories()->find($data['category_id']);
+        $account = $user->group->accounts()->find($data['account_id']);
+        $cat = $user->group->categories()->find($data['category_id']);
         $extra = [];
         if (! empty($data['bank'])) {
             $extra[] = '🏛️ '.$data['bank'];
@@ -302,7 +302,7 @@ class ReceiptHandler extends BotHandler
             $anexo = new UploadedFile($data['path'], basename($data['path']), $data['mime'] ?? null, null, true);
         }
 
-        app(TransactionService::class)->create($user->family, $data['type'] ?? 'despesa', [
+        app(TransactionService::class)->create($user->group, $data['type'] ?? 'despesa', [
             'description' => $data['description'],
             'amount' => $data['amount'],
             'occurred_on' => $data['date'],

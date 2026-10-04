@@ -9,8 +9,16 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 class Attachment extends Model
 {
     protected $fillable = [
-        'family_id', 'user_id', 'attachable_type', 'attachable_id', 'path', 'original_name', 'mime', 'size',
+        'group_id', 'user_id', 'attachable_type', 'attachable_id', 'path', 'original_name', 'mime', 'size',
+        'ocr_status', 'ocr_text', 'ocr_data',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'ocr_data' => 'array',
+        ];
+    }
 
     public function attachable(): MorphTo
     {

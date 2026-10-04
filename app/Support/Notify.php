@@ -2,47 +2,47 @@
 
 namespace App\Support;
 
-use App\Models\Family;
+use App\Models\Group;
 use App\Models\User;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Collection;
 
 /**
- * Envio de notificações respeitando as preferências da família.
+ * Envio de notificações respeitando as preferências do grupo.
  *
- * Chaves de `family_settings.notifications`: fatura_vencimento
+ * Chaves de `group_settings.notifications`: fatura_vencimento
  * (fatura do cartão próxima do vencimento), conta_vencimento
  * (conta/lançamento próximo do pagamento).
  */
 final class Notify
 {
-    public static function enabled(Family $family, string $key): bool
+    public static function enabled(Group $group, string $key): bool
     {
-        $prefs = $family->setting()->notifications ?? [];
+        $prefs = $group->setting()->notifications ?? [];
 
         return (bool) ($prefs[$key] ?? false);
     }
 
-    /** Gestores (admin/co_admin) da família. */
-    public static function gestores(Family $family): Collection
+    /** Gestores (admin/co_admin) do grupo. */
+    public static function gestores(Group $group): Collection
     {
-        return $family->users()->whereIn('role', ['admin', 'co_admin'])->get();
+        return $group->users()->whereIn('role', ['admin', 'co_admin'])->get();
     }
 
-    public static function gestoresIf(Family $family, string $key, Notification $notification): void
+    public static function gestoresIf(Group $group, string $key, Notification $notification): void
     {
-        if (! self::enabled($family, $key)) {
+        if (! self::enabled($group, $key)) {
             return;
         }
 
-        foreach (self::gestores($family) as $gestor) {
+        foreach (self::gestores($group) as $gestor) {
             $gestor->notify($notification);
         }
     }
 
-    public static function memberIf(User $member, Family $family, string $key, Notification $notification): void
+    public static function memberIf(User $member, Group $group, string $key, Notification $notification): void
     {
-        if (! self::enabled($family, $key)) {
+        if (! self::enabled($group, $key)) {
             return;
         }
 

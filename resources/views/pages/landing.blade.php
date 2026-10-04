@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prumo — Gestão financeira para você e sua família</title>
-    <meta name="description" content="Prumo: contas, cartões, investimentos e orçamento da família em um só lugar. Bot no Telegram, gráficos inteligentes e 14 dias grátis.">
+    <title>Prumo — Gestão financeira para você e seu grupo</title>
+    <meta name="description" content="Prumo: contas, cartões, investimentos e orçamento do grupo em um só lugar. Bot no Telegram, gráficos inteligentes e 14 dias grátis.">
     <meta name="theme-color" content="#064E3B">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?group=Montserrat:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?group=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
         body { font-family: 'Montserrat', system-ui, sans-serif; }
@@ -74,10 +74,10 @@
                 Novo · Bot no Telegram com OCR de comprovantes
             </span>
             <h1 class="mt-5 text-[38px] md:text-[54px] leading-[1.04] font-black tracking-tight">
-                O dinheiro da família, <span class="grad-text">no prumo.</span>
+                O dinheiro do grupo, <span class="grad-text">no prumo.</span>
             </h1>
             <p class="mt-5 text-[15.5px] md:text-[17px] text-slate-500 leading-relaxed max-w-lg">
-                Gestão financeira para você e sua família: contas, cartões, investimentos e orçamento em um só lugar — com gráficos claros e lançamentos até pelo Telegram.
+                Gestão financeira para você e seu grupo: contas, cartões, investimentos e orçamento em um só lugar — com gráficos claros e lançamentos até pelo Telegram.
             </p>
             <div class="mt-7 flex flex-wrap items-center gap-3">
                 <a href="{{ route('cadastro') }}" class="h-12 px-7 inline-flex items-center gap-2 text-[15px] font-extrabold text-white bg-emerald-600 hover:bg-emerald-700 rounded-2xl shadow-xl shadow-emerald-600/25 transition">
@@ -184,7 +184,7 @@
     <div class="max-w-6xl mx-auto px-5 py-5 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-[12.5px] font-extrabold text-slate-500">
         <span class="inline-flex items-center gap-1.5"><span class="material-symbols-outlined text-[17px] text-emerald-600">lock</span> Senhas com criptografia</span>
         <span class="inline-flex items-center gap-1.5"><span class="material-symbols-outlined text-[17px] text-emerald-600">verified_user</span> Conformidade LGPD</span>
-        <span class="inline-flex items-center gap-1.5"><span class="material-symbols-outlined text-[17px] text-emerald-600">groups</span> Feito para famílias</span>
+        <span class="inline-flex items-center gap-1.5"><span class="material-symbols-outlined text-[17px] text-emerald-600">groups</span> Feito para grupos</span>
         <span class="inline-flex items-center gap-1.5"><span class="material-symbols-outlined text-[17px] text-emerald-600">smartphone</span> Funciona no celular</span>
     </div>
 </section>
@@ -193,7 +193,7 @@
 <section id="recursos" class="max-w-6xl mx-auto px-5 py-20">
     <div class="reveal max-w-2xl">
         <p class="text-[12px] font-extrabold uppercase tracking-[0.18em] text-emerald-600">Recursos</p>
-        <h2 class="mt-2 text-[30px] md:text-[38px] font-black tracking-tight leading-tight">Tudo que a sua família precisa para sair do aperto</h2>
+        <h2 class="mt-2 text-[30px] md:text-[38px] font-black tracking-tight leading-tight">Tudo que a seu grupo precisa para sair do aperto</h2>
         <p class="mt-3 text-[15px] text-slate-500 leading-relaxed">Sem planilha, sem papel, sem briga no fim do mês. Cada pessoa lança o seu — e todo mundo enxerga o todo.</p>
     </div>
 
@@ -229,7 +229,7 @@
         <div class="reveal rounded-3xl bg-gradient-to-br from-emerald-600 to-emerald-800 text-white p-8">
             <span class="w-11 h-11 rounded-xl bg-white/15 grid place-items-center"><span class="material-symbols-outlined text-[22px]">key</span></span>
             <h3 class="font-extrabold text-[17px] mt-4">Proteção contra golpes</h3>
-            <p class="text-[13.5px] text-emerald-50/90 mt-2 leading-relaxed">Palavra-chave da família: ninguém se passa por ninguém para pedir dinheiro.</p>
+            <p class="text-[13.5px] text-emerald-50/90 mt-2 leading-relaxed">Palavra-chave do grupo: ninguém se passa por ninguém para pedir dinheiro.</p>
         </div>
     </div>
 </section>
@@ -244,7 +244,7 @@
         <div class="mt-10 grid md:grid-cols-3 gap-5">
             @php
                 $steps = [
-                    ['n' => '01', 'icon' => 'person_add', 'title' => 'Crie a conta da família', 'text' => 'Leva 1 minuto. Convide quem mora com você — cada um com seu acesso.'],
+                    ['n' => '01', 'icon' => 'person_add', 'title' => 'Crie a conta do grupo', 'text' => 'Leva 1 minuto. Convide quem mora com você — cada um com seu acesso.'],
                     ['n' => '02', 'icon' => 'add_circle', 'title' => 'Cadastre contas e cartões', 'text' => 'Informe saldos, limites e vencimentos. O Prumo calcula o resto sozinho.'],
                     ['n' => '03', 'icon' => 'insights', 'title' => 'Lance e acompanhe', 'text' => 'Pelo site ou pelo Telegram. Gráficos mostram para onde o dinheiro vai.'],
                 ];
@@ -315,7 +315,7 @@
                     ['q' => 'Como funciona o bot no Telegram?', 'a' => 'Você vincula com um código gerado no seu perfil e passa a lançar pelo chat (“Mercado 120,50 hoje”) ou enviando a foto do comprovante, que é lida automaticamente.'],
                     ['q' => 'Meus dados estão seguros?', 'a' => 'Sim. Senhas com criptografia, acesso por perfil (admin, membro), hospedagem com HTTPS e tratamento de dados conforme a LGPD — com exportação e exclusão garantidas.'],
                     ['q' => 'Posso cancelar quando quiser?', 'a' => 'Pode. Não há fidelidade nem multa: você cancela a assinatura e mantém o acesso até o fim do período já pago.'],
-                    ['q' => 'Serve para quem mora sozinho?', 'a' => 'Serve. Apesar do foco em família, quem mora sozinho usa do mesmo jeito — e quando formar família, é só convidar.'],
+                    ['q' => 'Serve para quem mora sozinho?', 'a' => 'Serve. Apesar do foco em grupo, quem mora sozinho usa do mesmo jeito — e quando formar grupo, é só convidar.'],
                 ];
             @endphp
             @foreach($faqs as $f)
@@ -337,7 +337,7 @@
         <div class="absolute -top-28 left-1/2 -translate-x-1/2 w-[560px] h-[280px] rounded-full bg-emerald-500/25 blur-3xl"></div>
         <div class="absolute inset-0 hero-grid-bg opacity-40"></div>
         <h2 class="relative text-[26px] md:text-[36px] font-black tracking-tight max-w-2xl mx-auto leading-tight">Feche o mês no verde — começando hoje, de graça</h2>
-        <p class="relative text-[14px] text-slate-300 mt-3 max-w-lg mx-auto">Junte a família, organize as contas e veja o dinheiro render. Leva menos de 2 minutos.</p>
+        <p class="relative text-[14px] text-slate-300 mt-3 max-w-lg mx-auto">Junte o grupo, organize as contas e veja o dinheiro render. Leva menos de 2 minutos.</p>
         <a href="{{ route('cadastro') }}" class="relative mt-8 inline-flex items-center gap-2 px-9 py-4 text-[15px] font-extrabold text-slate-900 bg-white hover:bg-emerald-50 rounded-2xl transition shadow-xl">
             Criar minha conta grátis <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
         </a>
@@ -354,7 +354,7 @@
             </span>
             <div>
                 <p class="font-extrabold leading-none">Prumo</p>
-                <p class="text-[11px] text-slate-400 font-medium mt-0.5">© {{ date('Y') }} · Gestão financeira para você e sua família</p>
+                <p class="text-[11px] text-slate-400 font-medium mt-0.5">© {{ date('Y') }} · Gestão financeira para você e seu grupo</p>
             </div>
         </div>
         <div class="flex items-center gap-5 text-[13px] font-bold text-slate-500">

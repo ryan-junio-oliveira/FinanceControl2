@@ -10,16 +10,16 @@ class Portfolio extends Model
 {
     public const KINDS = ['reserva' => 'Reserva de Emergência', 'estudos' => 'Educação', 'futuro' => 'Futuro', 'livre' => 'Livre'];
 
-    protected $fillable = ['family_id', 'name', 'objective', 'kind', 'target_amount', 'deadline'];
+    protected $fillable = ['group_id', 'name', 'objective', 'kind', 'target_amount', 'deadline'];
 
     protected function casts(): array
     {
         return ['target_amount' => 'decimal:2', 'deadline' => 'date'];
     }
 
-    public function family(): BelongsTo
+    public function group(): BelongsTo
     {
-        return $this->belongsTo(Family::class);
+        return $this->belongsTo(Group::class);
     }
 
     public function assets(): HasMany

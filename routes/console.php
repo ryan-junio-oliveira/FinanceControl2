@@ -13,3 +13,7 @@ Schedule::command('market:warm')->everyFifteenMinutes();
 
 // Avisos de vencimento (faturas e contas) todo dia às 08:00.
 Schedule::command('notify:vencimentos')->dailyAt('08:00');
+
+// Backup lógico do MySQL todo dia às 03:00 (sem sobrepor execuções).
+// Em dev/sqlite o comando só avisa e sai (sem falhar o scheduler).
+Schedule::command('db:backup')->dailyAt('03:00')->withoutOverlapping(60);

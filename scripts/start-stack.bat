@@ -78,7 +78,7 @@ echo [3/3] Registrando webhook do bot...
 cd /d "%ROOT%" && php artisan bot:telegram-webhook "%URL%/api/bot/telegram"
 echo webhook %URL% >> "%LOG%"
 echo.
-echo Pilha no ar. Bot: @finfamiliaapp_bot
+echo Pilha no ar. Bot: @prumoapp_bot
 exit /b 0
 
 :extrai_url

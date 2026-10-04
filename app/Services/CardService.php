@@ -4,13 +4,13 @@ namespace App\Services;
 
 use App\Models\CardTransaction;
 use App\Models\CreditCard;
-use App\Models\Family;
+use App\Models\Group;
 use App\Models\Transaction;
 use App\Support\Fin;
+use App\Support\Installments;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 
 /**
  * Regras de domínio dos cartões e itens de fatura.
@@ -19,49 +19,67 @@ use Illuminate\Support\Str;
  */
 final class CardService
 {
-    /** Cartões ativos da família (com banco da conta vinculada). */
-    public function list(Family $family): Collection
+    /** Cartões ativos do grupo (com banco da conta vinculada). */
+    public function list(Group $group): Collection
     {
-        return $family->creditCards()->with(['holder', 'account.bank'])->where('active', true)->orderBy('name')->get();
+        return $group->creditCards()->with(['holder', 'account.bank'])->where('active', true)->orderBy('name')->get();
     }
 
     /** Membros + categorias de despesa para o formulário de item. */
-    public function itemOptions(Family $family): array
+    public function itemOptions(Group $group): array
     {
         return [
-            'cartoes' => $family->creditCards()->where('active', true)->orderBy('name')->get(),
-            'membros' => $family->users()->orderBy('name')->get(),
-            'categorias' => $family->categories()->where('type', 'despesa')->where('archived', false)->orderBy('name')->get(),
+            'cartoes' => $group->creditCards()->where('active', true)->orderBy('name')->get(),
+            'membros' => $group->users()->orderBy('name')->get(),
+            'categorias' => $group->categories()->where('type', 'despesa')->where('archived', false)->orderBy('name')->get(),
         ];
     }
 
     /** Contas ativas com banco (para formulários de cartão). */
-    public function activeAccounts(Family $family): Collection
+    public function activeAccounts(Group $group): Collection
     {
-        return $family->accounts()->with('bank')->where('active', true)->orderBy('name')->get();
+        return $group->accounts()->with('bank')->where('active', true)->orderBy('name')->get();
     }
 
     /** Dados completos da tela de cartões (faturas, por membro, opções). */
-    public function dashboard(Family $family, ?string $mes = null): array
+    public function dashboard(Group $group, ?string $mes = null): array
     {
         $hoje = Carbon::today();
 
-        $cartoes = $family->creditCards()->with(['holder', 'account.bank'])
+        $cartoes = $group->creditCards()->with(['holder', 'account.bank'])
             ->withSum(['items as open_invoice_sum' => fn ($q) => $q->where('status', 'pendente')], 'amount')
             ->where('active', true)->get();
 
-        // Fatura atual (período corrente) x próxima fatura por cartão.
-        $cartoes->each(function ($c) use ($hoje) {
+        // Fatura atual x próxima em 2 queries agrupadas (evita 2 SUM por cartão).
+        $ranges = [];
+        foreach ($cartoes as $c) {
             [$ini, $fim] = $c->currentInvoiceRange($hoje);
-            $c->setAttribute('fatura_atual', (float) $c->items()->where('status', 'pendente')
-                ->whereBetween('occurred_on', [$ini->toDateString(), $fim->toDateString()])->sum('amount'));
-            $c->setAttribute('proxima_fatura', (float) $c->items()->where('status', 'pendente')
-                ->whereDate('occurred_on', '>', $fim->toDateString())->sum('amount'));
+            $ranges[$c->id] = [$ini->toDateString(), $fim->toDateString()];
+        }
+        $atualMap = $ranges === [] ? collect() : CardTransaction::where('group_id', $group->id)
+            ->where('status', 'pendente')
+            ->where(function ($q) use ($ranges) {
+                foreach ($ranges as $cardId => [$ini, $fim]) {
+                    $q->orWhere(fn ($qq) => $qq->where('credit_card_id', $cardId)->whereBetween('occurred_on', [$ini, $fim]));
+                }
+            })->groupBy('credit_card_id')->selectRaw('credit_card_id, SUM(amount) as total')->pluck('total', 'credit_card_id');
+        $proxMap = $ranges === [] ? collect() : CardTransaction::where('group_id', $group->id)
+            ->where('status', 'pendente')
+            ->where(function ($q) use ($ranges) {
+                foreach ($ranges as $cardId => [$ini, $fim]) {
+                    $q->orWhere(fn ($qq) => $qq->where('credit_card_id', $cardId)->whereDate('occurred_on', '>', $fim));
+                }
+            })->groupBy('credit_card_id')->selectRaw('credit_card_id, SUM(amount) as total')->pluck('total', 'credit_card_id');
+
+        // Fatura atual (período corrente) x próxima fatura por cartão.
+        $cartoes->each(function ($c) use ($hoje, $atualMap, $proxMap) {
+            $c->setAttribute('fatura_atual', (float) ($atualMap[$c->id] ?? 0));
+            $c->setAttribute('proxima_fatura', (float) ($proxMap[$c->id] ?? 0));
             $c->setAttribute('prox_fechamento', $c->nextClosingDate($hoje));
             $c->setAttribute('prox_vencimento', $c->nextDueDate($hoje));
         });
 
-        $fatura = CardTransaction::where('family_id', $family->id)
+        $fatura = CardTransaction::where('group_id', $group->id)
             ->with(['member', 'category', 'card']);
         if ($mes) {
             [$y, $m] = array_map('intval', explode('-', $mes));
@@ -72,35 +90,51 @@ final class CardService
             'mes' => $mes ?? Fin::month(),
             'cartoes' => $cartoes,
             'fatura' => $fatura->orderByDesc('occurred_on')->paginate(12),
-            'porMembro' => CardTransaction::where('family_id', $family->id)->where('status', 'pendente')
-                ->selectRaw('user_id, SUM(amount) as total')->groupBy('user_id')
-                ->orderByDesc('total')->with('member')->get(),
-            'categorias' => $family->categories()->where('type', 'despesa')->where('archived', false)->orderBy('name')->get(),
-            'membros' => $family->users()->orderBy('name')->get(),
-            'contas' => $family->accounts()->where('active', true)->orderBy('name')->get(),
+            'porMembro' => $this->gastoPorMembro($group),
+            'categorias' => $group->categories()->where('type', 'despesa')->where('archived', false)->orderBy('name')->get(),
+            'membros' => $group->users()->orderBy('name')->get(),
+            'contas' => $group->accounts()->where('active', true)->orderBy('name')->get(),
         ];
     }
 
-    public function createCard(Family $family, array $data): CreditCard
+    /** Total pendente por membro com nome hidratado (1 agregação + 1 query de usuários). */
+    private function gastoPorMembro(Group $group): Collection
     {
-        if (! empty($data['holder_user_id'])) {
-            $family->users()->findOrFail($data['holder_user_id']);
+        $totais = CardTransaction::where('group_id', $group->id)->where('status', 'pendente')
+            ->selectRaw('user_id, SUM(amount) as total')->groupBy('user_id')
+            ->orderByDesc('total')->pluck('total', 'user_id');
+        if ($totais->isEmpty()) {
+            return collect();
         }
-        if (! empty($data['account_id'])) {
-            $family->accounts()->findOrFail($data['account_id']);
-        }
+        $users = $group->users()->whereIn('id', $totais->keys())->get()->keyBy('id');
 
-        return $family->creditCards()->create($data);
+        return $totais->map(fn ($total, $uid) => (object) [
+            'user_id' => $uid,
+            'total' => (float) $total,
+            'member' => $users[$uid] ?? null,
+        ])->values();
     }
 
-    public function updateCard(CreditCard $card, Family $family, array $data, bool $active): CreditCard
+    public function createCard(Group $group, array $data): CreditCard
+    {
+        if (! empty($data['holder_user_id'])) {
+            $group->users()->findOrFail($data['holder_user_id']);
+        }
+        if (! empty($data['account_id'])) {
+            $group->accounts()->findOrFail($data['account_id']);
+        }
+
+        return $group->creditCards()->create($data);
+    }
+
+    public function updateCard(CreditCard $card, Group $group, array $data, bool $active): CreditCard
     {
         $data['active'] = $active;
         if (! empty($data['holder_user_id'])) {
-            $family->users()->findOrFail($data['holder_user_id']);
+            $group->users()->findOrFail($data['holder_user_id']);
         }
         if (! empty($data['account_id'])) {
-            $family->accounts()->findOrFail($data['account_id']);
+            $group->accounts()->findOrFail($data['account_id']);
         }
         $card->update($data);
 
@@ -118,10 +152,10 @@ final class CardService
      *
      * @return array{items: Collection<int, CardTransaction>, parcelas: int}
      */
-    public function createItem(Family $family, array $data): array
+    public function createItem(Group $group, array $data): array
     {
-        $card = $family->creditCards()->findOrFail($data['credit_card_id']);
-        $family->users()->findOrFail($data['user_id']);
+        $card = $group->creditCards()->findOrFail($data['credit_card_id']);
+        $group->users()->findOrFail($data['user_id']);
 
         // Estorno entra com valor negativo e sem parcelamento.
         $isEstorno = ($data['kind'] ?? 'compra') === 'estorno';
@@ -134,29 +168,22 @@ final class CardService
         unset($data['installments_total']);
 
         $items = collect();
-        DB::transaction(function () use ($card, $family, $data, $parcelas, $items) {
+        DB::transaction(function () use ($card, $group, $data, $parcelas, $items) {
             if ($parcelas === 1) {
-                $items->push($card->items()->create($data + ['family_id' => $family->id, 'status' => 'pendente']));
+                $items->push($card->items()->create($data + ['group_id' => $group->id, 'status' => 'pendente']));
 
                 return;
             }
-            $group = (string) Str::uuid();
-            $totalCents = (int) round((float) $data['amount'] * 100);
-            $base = intdiv($totalCents, $parcelas);
-            $resto = $totalCents % $parcelas;
-            $baseDate = Carbon::parse($data['occurred_on']);
-
-            for ($i = 1; $i <= $parcelas; $i++) {
-                $cents = $base + ($i <= $resto ? 1 : 0);
+            foreach (Installments::split((float) $data['amount'], $parcelas, $data['occurred_on'], null, $data['description']) as $p) {
                 $items->push($card->items()->create($data + [
-                    'family_id' => $family->id,
+                    'group_id' => $group->id,
                     'status' => 'pendente',
-                    'description' => "{$data['description']} ({$i}/{$parcelas})",
-                    'amount' => $cents / 100,
-                    'occurred_on' => $baseDate->copy()->addMonthsNoOverflow($i - 1)->toDateString(),
-                    'installment_group_id' => $group,
-                    'installment_number' => $i,
-                    'installments_total' => $parcelas,
+                    'description' => $p['description'],
+                    'amount' => $p['amount'],
+                    'occurred_on' => $p['occurred_on'],
+                    'installment_group_id' => $p['installment_group_id'],
+                    'installment_number' => $p['installment_number'],
+                    'installments_total' => $p['installments_total'],
                 ]));
             }
         });
@@ -164,22 +191,22 @@ final class CardService
         return ['items' => $items, 'parcelas' => $parcelas];
     }
 
-    public function settleItem(CardTransaction $item, Family $family): CardTransaction
+    public function settleItem(CardTransaction $item, Group $group): CardTransaction
     {
         if ($item->status === 'pago') {
             return $item;
         }
 
-        DB::transaction(function () use ($family, $item) {
+        DB::transaction(function () use ($group, $item) {
             $item->update(['status' => 'pago']);
 
             // Baixa financeira: se o cartão tem conta vinculada e o valor é positivo, gera a despesa.
             // Estornos e cartões sem conta vinculada mantêm só a marcação.
             $card = $item->card()->with('account')->first();
             if ($card?->account_id && (float) $item->amount > 0) {
-                $family->accounts()->findOrFail($card->account_id);
+                $group->accounts()->findOrFail($card->account_id);
                 Transaction::create([
-                    'family_id' => $family->id,
+                    'group_id' => $group->id,
                     'user_id' => $item->user_id,
                     'account_id' => $card->account_id,
                     'category_id' => $item->category_id,
@@ -198,7 +225,7 @@ final class CardService
     }
 
     /** Paga a fatura cheia. Retorna o total liquidado (null se não havia pendentes). */
-    public function payInvoice(CreditCard $cartao, Family $family, int $actorId): ?float
+    public function payInvoice(CreditCard $cartao, Group $group, int $actorId): ?float
     {
         $pendentes = $cartao->items()->where('status', 'pendente')->orderBy('occurred_on')->get();
         if ($pendentes->isEmpty()) {
@@ -207,14 +234,14 @@ final class CardService
 
         $total = (float) $pendentes->sum('amount');
 
-        DB::transaction(function () use ($family, $cartao, $pendentes, $total, $actorId) {
+        DB::transaction(function () use ($group, $cartao, $pendentes, $total, $actorId) {
             $cartao->items()->where('status', 'pendente')->update(['status' => 'pago']);
 
             // Só gera despesa se o líquido for positivo e houver conta vinculada.
             if ($cartao->account_id && $total > 0) {
-                $family->accounts()->findOrFail($cartao->account_id);
+                $group->accounts()->findOrFail($cartao->account_id);
                 Transaction::create([
-                    'family_id' => $family->id,
+                    'group_id' => $group->id,
                     'user_id' => $cartao->holder_user_id ?? $actorId,
                     'account_id' => $cartao->account_id,
                     'category_id' => $pendentes->first()->category_id,

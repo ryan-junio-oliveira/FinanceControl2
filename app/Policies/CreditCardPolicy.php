@@ -9,14 +9,14 @@ class CreditCardPolicy
 {
     public function view(User $user, CreditCard $card): bool
     {
-        return $user->family_id !== null && $user->family_id === $card->family_id;
+        return $user->group_id !== null && $user->group_id === $card->group_id;
     }
 
     /** Criar/editar/excluir cartões é ato de gestor. */
     public function manage(User $user, CreditCard $card): bool
     {
-        return $user->family_id !== null
-            && $user->family_id === $card->family_id
+        return $user->group_id !== null
+            && $user->group_id === $card->group_id
             && $user->isAdmin();
     }
 }

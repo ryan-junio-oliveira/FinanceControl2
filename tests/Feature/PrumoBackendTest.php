@@ -73,7 +73,7 @@ class PrumoBackendTest extends TestCase
         // Service worker com cache versionado e fallback offline.
         $sw = public_path('sw.js');
         $this->assertFileExists($sw);
-        $this->assertStringContainsString('finfamilia-v1', (string) file_get_contents($sw));
+        $this->assertStringContainsString('prumo-v1', (string) file_get_contents($sw));
 
         // Ícones gerados.
         foreach (['icon-192.png', 'icon-512.png', 'apple-touch-icon.png'] as $icon) {
@@ -90,7 +90,7 @@ class PrumoBackendTest extends TestCase
         $this->post('/register', [
             'manager_name' => 'Admin Logs',
             'email' => 'adminlogs@email.com',
-            'family_name' => 'Família Logs',
+            'group_name' => 'Grupo Logs',
             'password' => 'Senha@123',
             'password_confirmation' => 'Senha@123',
             'terms' => '1',
@@ -101,7 +101,7 @@ class PrumoBackendTest extends TestCase
         foreach (['dependente', 'co_admin'] as $role) {
             $membro = User::create([
                 'name' => 'Membro', 'email' => $role.'@email.com', 'password' => bcrypt('Senha@123'),
-                'family_id' => $admin->family_id, 'role' => $role,
+                'group_id' => $admin->group_id, 'role' => $role,
             ]);
             $this->actingAs($membro)->get('/admin/logs')->assertForbidden();
         }
@@ -111,7 +111,7 @@ class PrumoBackendTest extends TestCase
         $banco = Bank::create(['code' => '341', 'name' => 'Itaú']);
         $this->post('/accounts', ['name' => 'Conta Logs', 'bank_id' => $banco->id, 'kind' => 'corrente', 'initial_balance' => '0'])->assertSessionHasNoErrors();
         $conta = Account::where('name', 'Conta Logs')->first();
-        $cat = $admin->family->categories()->where('type', 'despesa')->first();
+        $cat = $admin->group->categories()->where('type', 'despesa')->first();
         $this->post('/expenses', [
             'description' => 'Compra auditada', 'amount' => '99', 'occurred_on' => now()->toDateString(),
             'status' => 'pago', 'user_id' => $admin->id, 'category_id' => $cat->id, 'account_id' => $conta->id,
@@ -128,18 +128,18 @@ class PrumoBackendTest extends TestCase
     public function test_expense_dinheiro_fisico_uses_carteira(): void
     {
         $this->post('/register', [
-            'manager_name' => 'Bia Lima', 'email' => 'bia@email.com', 'family_name' => 'Família Bia',
+            'manager_name' => 'Bia Lima', 'email' => 'bia@email.com', 'group_name' => 'Grupo Bia',
             'password' => 'Senha@123', 'password_confirmation' => 'Senha@123', 'terms' => '1',
         ]);
         $admin = User::where('email', 'bia@email.com')->first();
-        $cat = $admin->family->categories()->where('type', 'despesa')->first();
+        $cat = $admin->group->categories()->where('type', 'despesa')->first();
 
         $this->post('/expenses', [
             'description' => 'Feira', 'amount' => '45,50', 'occurred_on' => now()->toDateString(),
             'status' => 'pago', 'category_id' => $cat->id, 'payment_method' => 'dinheiro_fisico',
         ])->assertSessionHasNoErrors();
 
-        $carteira = Account::where('family_id', $admin->family_id)->where('kind', 'carteira')->first();
+        $carteira = Account::where('group_id', $admin->group_id)->where('kind', 'carteira')->first();
         $this->assertNotNull($carteira);
         $this->assertDatabaseHas('transactions', [
             'description' => 'Feira', 'payment_method' => 'dinheiro_fisico', 'account_id' => $carteira->id,
@@ -149,12 +149,12 @@ class PrumoBackendTest extends TestCase
     public function test_income_deposito_creates_transfer(): void
     {
         $this->post('/register', [
-            'manager_name' => 'Cadu Reis', 'email' => 'cadu@email.com', 'family_name' => 'Família Cadu',
+            'manager_name' => 'Cadu Reis', 'email' => 'cadu@email.com', 'group_name' => 'Grupo Cadu',
             'password' => 'Senha@123', 'password_confirmation' => 'Senha@123', 'terms' => '1',
         ]);
         $admin = User::where('email', 'cadu@email.com')->first();
         $bank = Bank::create(['code' => '341', 'name' => 'Itaú', 'color' => '#EC7000']);
-        $conta = $admin->family->accounts()->create([
+        $conta = $admin->group->accounts()->create([
             'bank_id' => $bank->id,
             'name' => 'Corrente', 'kind' => 'corrente', 'initial_balance' => 0,
         ]);
@@ -172,12 +172,12 @@ class PrumoBackendTest extends TestCase
     public function test_expense_via_card_creates_invoice_item(): void
     {
         $this->post('/register', [
-            'manager_name' => 'Ana Souza', 'email' => 'ana@email.com', 'family_name' => 'Família Ana',
+            'manager_name' => 'Ana Souza', 'email' => 'ana@email.com', 'group_name' => 'Grupo Ana',
             'password' => 'Senha@123', 'password_confirmation' => 'Senha@123', 'terms' => '1',
         ]);
         $admin = User::where('email', 'ana@email.com')->first();
-        $cat = $admin->family->categories()->where('type', 'despesa')->first();
-        $cartao = $admin->family->creditCards()->create([
+        $cat = $admin->group->categories()->where('type', 'despesa')->first();
+        $cartao = $admin->group->creditCards()->create([
             'name' => 'Nubank', 'brand' => 'visa', 'credit_limit' => 5000,
             'closing_day' => 10, 'due_day' => 15, 'active' => true,
         ]);
@@ -201,17 +201,17 @@ class PrumoBackendTest extends TestCase
         $this->get('/expenses')->assertRedirect('/login');
     }
 
-    public function test_admin_defines_family_secret_phrase(): void
+    public function test_admin_defines_group_secret_phrase(): void
     {
         $this->post('/register', [
-            'manager_name' => 'Dona Alice', 'email' => 'alice@email.com', 'family_name' => 'Família Alice',
+            'manager_name' => 'Dona Alice', 'email' => 'alice@email.com', 'group_name' => 'Grupo Alice',
             'password' => 'Senha@123', 'password_confirmation' => 'Senha@123', 'terms' => '1',
         ])->assertRedirect(route('dashboard'));
         $admin = User::where('email', 'alice@email.com')->first();
 
-        $this->post('/family/secret', ['secret_phrase' => 'abacaxi'])->assertSessionHasNoErrors();
-        $this->assertSame('abacaxi', $admin->family->setting()->secret_phrase);
-        $this->get('/family')->assertSee('abacaxi');
+        $this->post('/group/secret', ['secret_phrase' => 'abacaxi'])->assertSessionHasNoErrors();
+        $this->assertSame('abacaxi', $admin->group->setting()->secret_phrase);
+        $this->get('/group')->assertSee('abacaxi');
     }
 
     public function test_landing_page_is_public(): void
@@ -222,7 +222,7 @@ class PrumoBackendTest extends TestCase
     public function test_profile_export_returns_json(): void
     {
         $this->post('/register', [
-            'manager_name' => 'Eva', 'email' => 'eva@email.com', 'family_name' => 'Família Eva',
+            'manager_name' => 'Eva', 'email' => 'eva@email.com', 'group_name' => 'Grupo Eva',
             'password' => 'Senha@123', 'password_confirmation' => 'Senha@123', 'terms' => '1',
         ])->assertRedirect(route('dashboard'));
 
@@ -234,20 +234,20 @@ class PrumoBackendTest extends TestCase
     public function test_register_records_terms_acceptance(): void
     {
         $this->post('/register', [
-            'manager_name' => 'Fábio', 'email' => 'fabio@email.com', 'family_name' => 'Família Fábio',
+            'manager_name' => 'Fábio', 'email' => 'fabio@email.com', 'group_name' => 'Grupo Fábio',
             'password' => 'Senha@123', 'password_confirmation' => 'Senha@123', 'terms' => '1',
         ])->assertRedirect(route('dashboard'));
 
         $this->assertNotNull(User::where('email', 'fabio@email.com')->first()->terms_accepted_at);
     }
 
-    public function test_full_family_flow(): void
+    public function test_full_group_flow(): void
     {
-        // --- registro cria família + admin ---
+        // --- registro cria grupo + admin ---
         $res = $this->post('/register', [
             'manager_name' => 'Carlos Silva',
             'email' => 'carlos@email.com',
-            'family_name' => 'Família Silva',
+            'group_name' => 'Grupo Silva',
             'password' => 'Senha@123',
             'password_confirmation' => 'Senha@123',
             'terms' => '1',
@@ -255,13 +255,13 @@ class PrumoBackendTest extends TestCase
         $res->assertRedirect(route('dashboard'));
         $this->assertAuthenticated();
         $admin = User::where('email', 'carlos@email.com')->first();
-        $this->assertNotNull($admin->family_id);
+        $this->assertNotNull($admin->group_id);
         $this->assertEquals('admin', $admin->role);
 
         $mes = now()->format('Y-m');
 
         // --- páginas com estado vazio ---
-        foreach (['/dashboard', '/expenses', '/incomes', '/accounts', '/cards', '/categories', '/family', '/investments', '/settings'] as $uri) {
+        foreach (['/dashboard', '/expenses', '/incomes', '/accounts', '/cards', '/categories', '/group', '/investments', '/settings'] as $uri) {
             $this->get($uri)->assertOk();
         }
 
@@ -330,7 +330,7 @@ class PrumoBackendTest extends TestCase
 
         // --- convite + primeiro acesso (convidado abre o link deslogado) ---
         Mail::fake();
-        $this->post('/family/invites', ['name' => 'Lucas Silva', 'email' => 'lucas@email.com', 'role' => 'dependente'])->assertSessionHasNoErrors();
+        $this->post('/group/invites', ['name' => 'Lucas Silva', 'email' => 'lucas@email.com', 'role' => 'dependente'])->assertSessionHasNoErrors();
         $convite = Invitation::where('email', 'lucas@email.com')->first();
         $this->assertNotNull($convite);
         // e-mail de boas-vindas enfileirado com o link de primeiro acesso
@@ -353,7 +353,7 @@ class PrumoBackendTest extends TestCase
 
         // --- sistema é só registro: sem aprovação, status informado é mantido ---
         $this->actingAs($admin)->patch('/settings', [
-            'name' => 'Família Silva', 'currency' => 'BRL', 'timezone' => 'America/Sao_Paulo',
+            'name' => 'Grupo Silva', 'currency' => 'BRL', 'timezone' => 'America/Sao_Paulo',
         ])->assertSessionHasNoErrors();
         $this->actingAs($lucas)->post('/expenses', [
             'description' => 'Videogame', 'amount' => '2000', 'occurred_on' => now()->toDateString(),
@@ -368,7 +368,7 @@ class PrumoBackendTest extends TestCase
         // --- reuniões finais de render ---
         $this->get('/dashboard')->assertOk();
         $this->get("/expenses?mes={$mes}&status=pendente")->assertOk();
-        $this->get('/family')->assertOk();
+        $this->get('/group')->assertOk();
     }
 
     public function test_login_invalido(): void
@@ -388,7 +388,7 @@ class PrumoBackendTest extends TestCase
         $this->post('/register', [
             'manager_name' => 'Lembrado',
             'email' => 'lembrado@email.com',
-            'family_name' => 'Família Lembrada',
+            'group_name' => 'Grupo Lembrada',
             'password' => 'Senha@123',
             'password_confirmation' => 'Senha@123',
             'terms' => '1',
@@ -438,7 +438,7 @@ class PrumoBackendTest extends TestCase
         $this->post('/register', [
             'manager_name' => 'Teste',
             'email' => 'fraco@email.com',
-            'family_name' => 'Família Teste',
+            'group_name' => 'Grupo Teste',
             'password' => 'senhafraca',
             'password_confirmation' => 'senhafraca',
             'terms' => '1',
@@ -454,7 +454,7 @@ class PrumoBackendTest extends TestCase
         $this->post('/register', [
             'manager_name' => 'Teste',
             'email' => 'outro@email.com',
-            'family_name' => 'Família Teste',
+            'group_name' => 'Grupo Teste',
             'password' => 'Senha@123',
             'password_confirmation' => 'Diferente@123',
             'terms' => '1',
@@ -465,7 +465,7 @@ class PrumoBackendTest extends TestCase
         $this->post('/register', [
             'manager_name' => 'Base',
             'email' => 'base@email.com',
-            'family_name' => 'Família Base',
+            'group_name' => 'Grupo Base',
             'password' => 'Senha@123',
             'password_confirmation' => 'Senha@123',
             'terms' => '1',
@@ -474,7 +474,7 @@ class PrumoBackendTest extends TestCase
         $this->post('/register', [
             'manager_name' => 'Cópia',
             'email' => 'base@email.com',
-            'family_name' => 'Família Cópia',
+            'group_name' => 'Grupo Cópia',
             'password' => 'Senha@123',
             'password_confirmation' => 'Senha@123',
             'terms' => '1',
@@ -486,7 +486,7 @@ class PrumoBackendTest extends TestCase
         $this->post('/register', [
             'manager_name' => 'Sem Termos',
             'email' => 'semtermos@email.com',
-            'family_name' => 'Família ST',
+            'group_name' => 'Grupo ST',
             'password' => 'Senha@123',
             'password_confirmation' => 'Senha@123',
         ])->assertSessionHasErrors('terms');
@@ -501,7 +501,7 @@ class PrumoBackendTest extends TestCase
         $this->post('/register', [
             'manager_name' => 'Dono',
             'email' => 'dono@email.com',
-            'family_name' => 'Família Dona',
+            'group_name' => 'Grupo Dona',
             'password' => 'Senha@123',
             'password_confirmation' => 'Senha@123',
             'terms' => '1',
@@ -525,7 +525,7 @@ class PrumoBackendTest extends TestCase
         $this->post('/register', [
             'manager_name' => 'Dona',
             'email' => 'dona@email.com',
-            'family_name' => 'Família Dona',
+            'group_name' => 'Grupo Dona',
             'password' => 'Senha@123',
             'password_confirmation' => 'Senha@123',
             'terms' => '1',
@@ -537,7 +537,7 @@ class PrumoBackendTest extends TestCase
             '/expenses/create', '/incomes/create', '/accounts/create', '/accounts/transfer',
             '/cards/create', '/cards/items/create', '/categories/create',
             '/investments/assets/create', '/investments/contributions/create',
-            '/family/invites/create',
+            '/group/invites/create',
             '/profile', '/profile/edit', '/profile/password',
         ] as $uri) {
             $this->get($uri)->assertOk($uri);
@@ -594,7 +594,7 @@ class PrumoBackendTest extends TestCase
         $this->post('/register', [
             'manager_name' => 'Admin',
             'email' => 'admin@email.com',
-            'family_name' => 'Família Admin',
+            'group_name' => 'Grupo Admin',
             'password' => 'Senha@123',
             'password_confirmation' => 'Senha@123',
             'terms' => '1',
@@ -622,7 +622,7 @@ class PrumoBackendTest extends TestCase
         ])->assertSessionHasNoErrors();
         $this->assertEquals(
             ['fatura_vencimento' => true, 'conta_vencimento' => true],
-            $admin->family->setting()->notifications
+            $admin->group->setting()->notifications
         );
 
         // --- sidebar: clicar na notificação marca como lida e redireciona ---
@@ -635,15 +635,15 @@ class PrumoBackendTest extends TestCase
         // --- membro comum não pode encerrar o cadastro ---
         $membro = User::factory()->create([
             'name' => 'Membro', 'email' => 'membro@email.com',
-            'family_id' => $admin->family_id, 'role' => 'dependente',
+            'group_id' => $admin->group_id, 'role' => 'dependente',
         ]);
         $this->actingAs($membro)->delete('/profile', ['password' => 'password'])->assertForbidden();
 
-        // --- admin encerra: apaga família inteira (membros + registros) ---
-        $familyId = $admin->family_id;
+        // --- admin encerra: apaga grupo inteira (membros + registros) ---
+        $groupId = $admin->group_id;
         $this->actingAs($admin)->delete('/profile', ['password' => 'Senha@123'])->assertRedirect(route('login'));
         $this->assertGuest();
-        $this->assertDatabaseMissing('families', ['id' => $familyId]);
+        $this->assertDatabaseMissing('groups', ['id' => $groupId]);
         $this->assertDatabaseMissing('users', ['email' => 'admin@email.com']);
         $this->assertDatabaseMissing('users', ['email' => 'membro@email.com']);
     }

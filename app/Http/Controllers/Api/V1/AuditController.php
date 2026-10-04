@@ -34,7 +34,7 @@ class AuditController extends Controller
     {
         abort_unless(request()->user()->role === 'admin', 403, 'Somente o administrador acessa os logs.');
 
-        return AuditLogResource::collection($service->list(Fin::family(), [
+        return AuditLogResource::collection($service->list(Fin::group(), [
             'q' => $request->query('q'),
             'acao' => $request->query('acao'),
             'membro' => $request->query('membro'),

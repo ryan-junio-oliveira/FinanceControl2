@@ -7,7 +7,7 @@ use App\Models\Bank;
 use App\Models\CardTransaction;
 use App\Models\Category;
 use App\Models\CreditCard;
-use App\Models\Family;
+use App\Models\Group;
 use App\Models\Invitation;
 use App\Models\User;
 use App\Support\CategoryCatalog;
@@ -24,21 +24,21 @@ class ApiTest extends TestCase
         config(['billing.enabled' => false]);
     }
 
-    private function familyWithAdmin(): array
+    private function groupWithAdmin(): array
     {
-        $family = Family::create(['name' => 'Família API']);
+        $group = Group::create(['name' => 'Grupo API']);
         $admin = User::create([
             'name' => 'Admin', 'email' => 'admin@api.com', 'password' => bcrypt('Senha@123'),
-            'family_id' => $family->id, 'role' => 'admin',
+            'group_id' => $group->id, 'role' => 'admin',
         ]);
-        CategoryCatalog::seedForFamily($family);
+        CategoryCatalog::seedForGroup($group);
 
-        return [$family, $admin];
+        return [$group, $admin];
     }
 
     public function test_token_authentication(): void
     {
-        [, $admin] = $this->familyWithAdmin();
+        [, $admin] = $this->groupWithAdmin();
 
         $this->postJson('/api/v1/auth/token', ['email' => 'admin@api.com', 'password' => 'Senha@123', 'device_name' => 'bot'])
             ->assertOk()
@@ -53,12 +53,12 @@ class ApiTest extends TestCase
 
     public function test_transactions_crud(): void
     {
-        [$family, $admin] = $this->familyWithAdmin();
+        [$group, $admin] = $this->groupWithAdmin();
         $this->actingAs($admin);
         $bank = Bank::create(['code' => '341', 'name' => 'Itaú']);
         $this->postJson('/api/v1/accounts', ['name' => 'Conta', 'bank_id' => $bank->id, 'kind' => 'corrente', 'initial_balance' => '0'])->assertCreated();
         $conta = Account::first();
-        $cat = Category::where('family_id', $family->id)->where('type', 'despesa')->first();
+        $cat = Category::where('group_id', $group->id)->where('type', 'despesa')->first();
 
         // create
         $res = $this->postJson('/api/v1/transactions/despesa', [
@@ -89,7 +89,7 @@ class ApiTest extends TestCase
 
     public function test_accounts_and_transfer(): void
     {
-        [$family, $admin] = $this->familyWithAdmin();
+        [$group, $admin] = $this->groupWithAdmin();
         $this->actingAs($admin);
         $bank = Bank::create(['code' => '341', 'name' => 'Itaú']);
         $this->postJson('/api/v1/accounts', ['name' => 'A', 'bank_id' => $bank->id, 'kind' => 'corrente', 'initial_balance' => '1000'])->assertCreated();
@@ -108,14 +108,14 @@ class ApiTest extends TestCase
 
     public function test_cards_and_items(): void
     {
-        [$family, $admin] = $this->familyWithAdmin();
+        [$group, $admin] = $this->groupWithAdmin();
         $this->actingAs($admin);
         $bank = Bank::create(['code' => '341', 'name' => 'Itaú']);
         $this->postJson('/api/v1/accounts', ['name' => 'C', 'bank_id' => $bank->id, 'kind' => 'corrente', 'initial_balance' => '0'])->assertCreated();
         $conta = Account::first();
         $this->postJson('/api/v1/cards', ['name' => 'Nubank', 'credit_limit' => '5000', 'closing_day' => 1, 'due_day' => 10, 'holder_user_id' => $admin->id, 'account_id' => $conta->id])->assertCreated();
         $card = CreditCard::first();
-        $cat = Category::where('family_id', $family->id)->where('type', 'despesa')->first();
+        $cat = Category::where('group_id', $group->id)->where('type', 'despesa')->first();
 
         $this->postJson('/api/v1/cards/items', [
             'credit_card_id' => $card->id, 'description' => 'Compra', 'amount' => '120',
@@ -130,7 +130,7 @@ class ApiTest extends TestCase
 
     public function test_dashboard_and_audit_logs(): void
     {
-        [$family, $admin] = $this->familyWithAdmin();
+        [$group, $admin] = $this->groupWithAdmin();
         $this->actingAs($admin);
 
         $this->getJson('/api/v1/dashboard')
@@ -141,27 +141,27 @@ class ApiTest extends TestCase
         $this->getJson('/api/v1/admin/logs')->assertOk();
 
         // co_admin não vê
-        $co = User::create(['name' => 'Co', 'email' => 'co@api.com', 'password' => bcrypt('Senha@123'), 'family_id' => $family->id, 'role' => 'co_admin']);
+        $co = User::create(['name' => 'Co', 'email' => 'co@api.com', 'password' => bcrypt('Senha@123'), 'group_id' => $group->id, 'role' => 'co_admin']);
         $this->actingAs($co);
         $this->getJson('/api/v1/admin/logs')->assertForbidden();
     }
 
-    public function test_family_members_and_invites(): void
+    public function test_group_members_and_invites(): void
     {
-        [$family, $admin] = $this->familyWithAdmin();
+        [$group, $admin] = $this->groupWithAdmin();
         $this->actingAs($admin);
 
-        $this->postJson('/api/v1/family/invites', ['name' => 'Maria', 'email' => 'maria@api.com', 'role' => 'dependente'])->assertCreated();
-        $this->getJson('/api/v1/family/invites')
+        $this->postJson('/api/v1/group/invites', ['name' => 'Maria', 'email' => 'maria@api.com', 'role' => 'dependente'])->assertCreated();
+        $this->getJson('/api/v1/group/invites')
             ->assertOk()->assertJsonFragment(['email' => 'maria@api.com']);
 
         $invite = Invitation::first();
-        $this->deleteJson("/api/v1/family/invites/{$invite->id}")->assertNoContent();
+        $this->deleteJson("/api/v1/group/invites/{$invite->id}")->assertNoContent();
     }
 
     public function test_logout_revokes_token(): void
     {
-        [, $admin] = $this->familyWithAdmin();
+        [, $admin] = $this->groupWithAdmin();
         $token = $admin->createToken('bot')->plainTextToken;
 
         $this->withToken($token)->deleteJson('/api/v1/auth/token')->assertOk();

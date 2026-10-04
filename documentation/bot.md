@@ -14,8 +14,14 @@ Detalhe do WhatsApp: desde 11/2024 as conversas de serviço (usuário chama → 
 ## Arquitetura (driver trocável)
 
 ```
-Webhook → BotDriver::parseWebhook → IncomingMessage → BotRouter → Handler → app/Services/*
+Webhook → valida secret → dispatch ProcessTelegramUpdate (fila `bot`)
+  → BotDriver::parseWebhook → IncomingMessage → BotRouter → Handler → app/Services/*
 ```
+
+O webhook responde `<200ms` e o processamento (incluindo OCR) roda no
+worker — sem isso o Telegram dá retry e duplica. Jobs em `app/Jobs/`:
+`ProcessTelegramUpdate`, `ProcessReceiptOcr` (fila `ocr`, timeout 300s),
+`SendGroupVencimentos` (1 por grupo, fila `notifications`).
 
 - `app/Bot/Contracts/BotDriver.php` — contrato do canal (Strategy)
 - `app/Bot/Drivers/TelegramDriver.php` — Bot API via HTTP
@@ -43,6 +49,10 @@ Trocar de canal = implementar `BotDriver` + `BOT_DRIVER=whatsapp`. As conversas 
 ## Comprovantes (foto/PDF)
 
 Envie a **foto do comprovante** (ou o **PDF**) no chat e o bot lê com OCR local (Tesseract, grátis/offline), identifica **banco, valor, data, canal (Pix/TED/boleto/cartão) e direção (despesa/receita)** — e **pergunta o que não entendeu** (valor? data? tipo? conta? categoria?) antes de confirmar. O arquivo vira **anexo do lançamento**. PDFs com texto embarcado são lidos direto; PDF escaneado pede foto.
+
+Uploads pela web seguem o mesmo caminho assíncrono: o anexo é salvo com
+`ocr_status=queued` e o `ProcessReceiptOcr` preenche `ocr_text`/`ocr_data`
+— a API pode fazer polling do status.
 
 ## Alertas proativos
 

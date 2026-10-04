@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('assets', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('family_id')->constrained('families')->cascadeOnDelete();
+            $table->foreignId('group_id')->constrained('groups')->cascadeOnDelete();
             $table->foreignId('portfolio_id')->nullable()->constrained('portfolios')->nullOnDelete();
             $table->string('code'); // ticker / identificador
             $table->string('name');
