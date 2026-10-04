@@ -9,20 +9,29 @@ services:
     volumes:
       - .:/var/www
       - /var/www/vendor
-      - /var/www/public/build
+      # Mesmo build do host (ver docker-compose.yml): `npm run build` reflete
+      # na hora no app e no nginx, sem rebuild da imagem.
+      - ./public/build:/var/www/public/build
+      # Cache Laravel do container (sem deps dev): sem isso, o
+      # bootstrap/cache do host (com providers dev, ex. Pail) sombreia o da
+      # imagem e o boot quebra com "Class not found".
+      - /var/www/bootstrap/cache
       - ./docker/php/php-dev.ini:/usr/local/etc/php/conf.d/zz-dev.ini:ro
 
   worker:
     volumes:
       - .:/var/www
       - /var/www/vendor
+      - /var/www/bootstrap/cache
 
   worker-redis:
     volumes:
       - .:/var/www
       - /var/www/vendor
+      - /var/www/bootstrap/cache
 
   scheduler:
     volumes:
       - .:/var/www
       - /var/www/vendor
+      - /var/www/bootstrap/cache

@@ -33,16 +33,16 @@ if errorlevel 1 (
 )
 echo IP local: !LANIP!
 
-powershell -NoProfile -ExecutionPolicy Bypass -Command "(Get-Content .env.docker) -replace '^APP_URL=.*', 'APP_URL=http://!LANIP!:8080' | Set-Content .env.docker"
-echo APP_URL ajustado para http://!LANIP!:8080
+powershell -NoProfile -ExecutionPolicy Bypass -Command "(Get-Content .env.docker) -replace '^APP_URL=.*', 'APP_URL=http://!LANIP!:50000' | Set-Content .env.docker"
+echo APP_URL ajustado para http://!LANIP!:50000
 
-echo Liberando porta 8080 no firewall do Windows (se possivel)...
-netsh advfirewall firewall delete rule name="Prumo App 8080" >nul 2>&1
-netsh advfirewall firewall add rule name="Prumo App 8080" dir=in action=allow protocol=TCP localport=8080 >nul 2>&1
+echo Liberando porta 50000 no firewall do Windows (se possivel)...
+netsh advfirewall firewall delete rule name="Prumo App 50000" >nul 2>&1
+netsh advfirewall firewall add rule name="Prumo App 50000" dir=in action=allow protocol=TCP localport=50000 >nul 2>&1
 if errorlevel 1 (
-    echo [AVISO] Sem permissao de administrador: libere a porta 8080 manualmente se nao abrir no celular.
+    echo [AVISO] Sem permissao de administrador: libere a porta 50000 manualmente se nao abrir no celular.
 ) else (
-    echo Firewall liberado para a porta 8080.
+    echo Firewall liberado para a porta 50000.
 )
 
 echo Derrubando containers antigos (SEM -v: preserva banco e volumes)...
@@ -54,7 +54,7 @@ if errorlevel 1 exit /b 1
 echo Aguardando o app responder (ate ~3 min na primeira subida)...
 set OK=0
 for /L %%t in (1,1,36) do (
-    curl -s -o nul -m 5 http://localhost:8080/login >nul 2>&1
+    curl -s -o nul -m 5 http://localhost:50000/login >nul 2>&1
     if not errorlevel 1 set OK=1
     if !OK!==1 goto :up
     timeout /t 5 /nobreak >nul
@@ -72,8 +72,8 @@ docker compose --env-file .env.docker ps
 echo.
 echo ============================================
 echo  Prumo no ar na rede local:
-echo    App:        http://!LANIP!:8080
-echo    phpMyAdmin: http://!LANIP!:8081
+echo    App:        http://!LANIP!:50000
+echo    phpMyAdmin: http://!LANIP!:50001
 echo ============================================
 echo Nada deve rodar na porta 8000 (era o 'php artisan serve' antigo).
 echo No celular (mesmo Wi-Fi), abra o IP acima.
